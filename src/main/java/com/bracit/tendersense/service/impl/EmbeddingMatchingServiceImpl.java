@@ -5,6 +5,7 @@ import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.service.CapabilityProfileService;
 import com.bracit.tendersense.service.MatchingService;
+import com.bracit.tendersense.service.TenderEmbeddingService;
 import com.bracit.tendersense.util.Vectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
 
     private final EmbeddingModel embeddingModel;
     private final CapabilityProfileService profileService;
+    private final TenderEmbeddingService tenderEmbeddingService;
 
     private List<String> statements = List.of();
     private List<float[]> statementVectors = List.of();
@@ -77,14 +79,19 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
             return Map.of();
         }
 
+        // Vectors are computed once per tender and shared across organisations; this
+        // only fills gaps (a new tender, or a model change).
+        tenderEmbeddingService.ensureEmbedded(tenders);
+        Map<Long, float[]> vectors = tenderEmbeddingService.vectorsFor(tenders);
+
         Map<Long, ScoredMatch> out = new LinkedHashMap<>();
         for (Tender tender : tenders) {
-            String text = tenderText(tender);
-            if (text.isBlank()) {
+            float[] vector = vectors.get(tender.getId());
+            if (vector == null || vector.length == 0) {
                 out.put(tender.getId(), ScoredMatch.zero());
                 continue;
             }
-            out.put(tender.getId(), scoreOne(text, embeddingModel.embed(text)));
+            out.put(tender.getId(), scoreOne(tenderText(tender), vector));
         }
         return out;
     }

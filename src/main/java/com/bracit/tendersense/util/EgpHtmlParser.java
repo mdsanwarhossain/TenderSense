@@ -35,7 +35,7 @@ public class EgpHtmlParser {
     private static final int MAX_LABEL_LENGTH = 130;
 
     /** Bump whenever field extraction changes, to force a re-parse on ingest. */
-    public static final String PARSER_VERSION = "egp-2";
+    public static final String PARSER_VERSION = "egp-3";
 
     public Map<String, String> extractLabelValues(String html) {
         Document doc = Jsoup.parse(html);
@@ -100,6 +100,7 @@ public class EgpHtmlParser {
                 .closingAt(parseDateTime(firstNonBlank(
                         f.get("Tender/Proposal Closing Date and Time"),
                         f.get("Closing Date and Time"))))
+                .cpvRaw(f.get("Category"))
                 .status(truncate(f.get("Tender/Proposal Status"), 64))
                 .eligibilityText(buildEligibility(f))
                 .rawSnapshotPath(snapshotPath)

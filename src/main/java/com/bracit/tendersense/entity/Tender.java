@@ -1,5 +1,6 @@
 package com.bracit.tendersense.entity;
 
+import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.entity.enums.SourcePortal;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,7 +25,8 @@ import java.time.LocalDateTime;
                 columnNames = {"source_portal", "external_id"}),
         indexes = {
                 @Index(name = "idx_tender_closing", columnList = "closing_at"),
-                @Index(name = "idx_tender_published", columnList = "published_at")
+                @Index(name = "idx_tender_published", columnList = "published_at"),
+                @Index(name = "idx_tender_sector", columnList = "sector")
         })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Tender {
@@ -99,11 +101,48 @@ public class Tender {
     private String status;
 
     /**
+     * The portal's own category string, semicolon-delimited broad-to-narrow. e-GP
+     * supplies CPV on every tender observed; World Bank supplies none.
+     */
+    @Column(name = "cpv_raw", columnDefinition = "text")
+    private String cpvRaw;
+
+    /** The CPV division — the first segment, which is what decides the sector. */
+    @Column(name = "cpv_top", length = 256)
+    private String cpvTop;
+
+    /**
+     * Shared across every organisation: classification is a property of the tender,
+     * not of who is looking at it.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sector", length = 32)
+    private Sector sector;
+
+    /**
      * Raw "Eligibility of Tenderer" text from e-GP. This is the rules engine's
      * primary input -- the reason eligibility does not need PDF extraction.
      */
     @Column(name = "eligibility_text", columnDefinition = "text")
     private String eligibilityText;
+
+    /**
+     * The tender's embedding — computed ONCE and reused by every organisation.
+     *
+     * <p>Embedding is ~99% of scoring cost (~70 ms/tender); cosine against a profile is
+     * microseconds. Storing the vector is what makes per-company scoring nearly free and
+     * turns a full rescore from minutes into seconds.
+     *
+     * <p>Stored as {@code real[]} rather than a pgvector column because scoring is an
+     * exact in-memory scan, which needs no index. A pgvector column plus ANN is the
+     * upgrade path if the organisation count ever outgrows a handful.
+     */
+    @Column(name = "embedding", columnDefinition = "real[]")
+    private float[] embedding;
+
+    /** Model that produced {@link #embedding}; a change here invalidates the vector. */
+    @Column(name = "embedding_model", length = 128)
+    private String embeddingModel;
 
     /** Path to the raw HTML/JSON snapshot this record was parsed from (provenance). */
     @Column(name = "raw_snapshot_path", length = 512)

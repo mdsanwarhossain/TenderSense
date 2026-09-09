@@ -5,6 +5,7 @@ import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.SourcePortal;
 import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.service.TenderIngestionService;
+import com.bracit.tendersense.util.SectorClassifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.Set;
 public class TenderIngestionServiceImpl implements TenderIngestionService {
 
     private final TenderRepository tenderRepository;
+    private final SectorClassifier sectorClassifier;
 
     @Override
     @Transactional
@@ -48,6 +50,10 @@ public class TenderIngestionServiceImpl implements TenderIngestionService {
 
             Optional<Tender> existing = tenderRepository.findBySourcePortalAndExternalId(
                     incoming.getSourcePortal(), incoming.getExternalId());
+
+            // Classification is tenant-independent, so it happens once here rather than
+            // per organisation at scoring time.
+            classify(incoming);
 
             if (existing.isEmpty()) {
                 changed.add(tenderRepository.save(incoming));
@@ -81,6 +87,15 @@ public class TenderIngestionServiceImpl implements TenderIngestionService {
         return new HashSet<>(tenderRepository.findAllExternalIds(portal));
     }
 
+    private void classify(Tender tender) {
+        tender.setCpvTop(sectorClassifier.topLevel(tender.getCpvRaw()));
+        tender.setSector(tender.getSourcePortal() == SourcePortal.WORLD_BANK
+                ? sectorClassifier.classifyWorldBank(
+                        tender.getProcurementNature(), tender.getProcurementType(), tender.getTitle())
+                : sectorClassifier.classify(
+                        tender.getCpvRaw(), tender.getProcurementMethod(), tender.getTitle()));
+    }
+
     /**
      * Copies the new content onto the stored row, preserving identity and
      * {@code firstSeenAt} so the audit trail keeps the original discovery time.
@@ -105,6 +120,9 @@ public class TenderIngestionServiceImpl implements TenderIngestionService {
         current.setPublishedAt(incoming.getPublishedAt());
         current.setClosingAt(incoming.getClosingAt());
         current.setStatus(incoming.getStatus());
+        current.setCpvRaw(incoming.getCpvRaw());
+        current.setCpvTop(incoming.getCpvTop());
+        current.setSector(incoming.getSector());
         current.setEligibilityText(incoming.getEligibilityText());
         current.setRawSnapshotPath(incoming.getRawSnapshotPath());
         current.setContentHash(incoming.getContentHash());

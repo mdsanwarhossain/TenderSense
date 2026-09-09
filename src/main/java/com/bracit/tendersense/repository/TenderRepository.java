@@ -32,4 +32,16 @@ public interface TenderRepository extends JpaRepository<Tender, Long> {
     List<Tender> findByClosingAtAfter(LocalDateTime cutoff);
 
     long countBySourcePortal(SourcePortal portal);
+
+    /** Rows predating the classifier, or ones a classification change left behind. */
+    List<Tender> findBySectorIsNull();
+
+    long countBySectorIsNull();
+
+    /** Tenders needing an embedding: never computed, or computed by a different model. */
+    @Query("select t from Tender t where t.embedding is null or t.embeddingModel <> :model")
+    List<Tender> findNeedingEmbedding(@Param("model") String model);
+
+    @Query("select count(t) from Tender t where t.embedding is null or t.embeddingModel <> :model")
+    long countNeedingEmbedding(@Param("model") String model);
 }
