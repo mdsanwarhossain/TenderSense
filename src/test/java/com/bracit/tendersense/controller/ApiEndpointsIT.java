@@ -29,7 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * controller serialises its response after the transaction has closed
  * ({@code open-in-view} is off). Only a request-level test catches that class of bug.
  */
-@SpringBootTest(properties = "tendersense.source.mode=cached")
+@SpringBootTest(properties = {"tendersense.source.mode=cached",
+        // Lets these tests name a company by header instead of signing in.
+        // Off everywhere else -- it is an authentication bypass.
+        "tendersense.auth.allow-header=true"})
 @AutoConfigureMockMvc
 class ApiEndpointsIT {
 

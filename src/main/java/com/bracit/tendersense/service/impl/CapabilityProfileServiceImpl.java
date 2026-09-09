@@ -6,6 +6,7 @@ import com.bracit.tendersense.entity.Certification;
 import com.bracit.tendersense.entity.PastProject;
 import com.bracit.tendersense.exception.NotFoundException;
 import com.bracit.tendersense.repository.CapabilityProfileRepository;
+import com.bracit.tendersense.service.AccountService;
 import com.bracit.tendersense.service.CapabilityProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.List;
 
 @Service
@@ -33,6 +35,7 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
             "data/capability-profile-construction.json");
 
     private final CapabilityProfileRepository repository;
+    private final AccountService accountService;
     private final com.bracit.tendersense.repository.OrganisationRepository organisationRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -71,16 +74,37 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
 
     @Override
     @Transactional
-    public void seedIfEmpty() {
-        if (repository.count() > 0) {
-            return;
-        }
+    public void seedMissing() {
         PROFILE_RESOURCES.forEach(this::seedOne);
     }
 
+    /**
+     * Seeds one bundled company, idempotently and per-company.
+     *
+     * <p>Deliberately not gated on a global "are there any profiles yet" count. That form
+     * had two failure modes: a database holding companies from before a new seeded field
+     * existed never received it, and -- once profiles became editable -- a single stored
+     * profile would suppress seeding of a company that had not been created yet.
+     *
+     * <p>An existing company is never overwritten, because by then its profile may have
+     * been edited in the product. Only genuinely missing pieces are filled in.
+     */
     private void seedOne(String resource) {
         try (InputStream in = new ClassPathResource(resource).getInputStream()) {
             JsonNode root = objectMapper.readTree(in);
+
+            String slug = root.path("slug").asString();
+            String loginEmail = root.path("loginEmail").asString(null);
+
+            Optional<Organisation> existing = organisationRepository.findBySlug(slug);
+            if (existing.isPresent()) {
+                // The company is already here. Give it an account if it predates sign-in,
+                // and leave everything else exactly as it is.
+                if (loginEmail != null) {
+                    accountService.seedFor(existing.get(), loginEmail);
+                }
+                return;
+            }
 
             List<com.bracit.tendersense.entity.enums.Sector> sectors = new ArrayList<>();
             root.path("sectors").forEach(n -> sectors.add(
@@ -95,6 +119,11 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
                     .demonstration(resource.contains("construction"))
                     .createdAt(Instant.now())
                     .build());
+
+            // A seeded company with no account is unreachable the moment sign-in lands.
+            if (loginEmail != null) {
+                accountService.seedFor(organisation, loginEmail);
+            }
 
             CapabilityProfile profile = CapabilityProfile.builder()
                     .organisation(organisation)

@@ -29,7 +29,7 @@ public class DataSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        profileService.seedIfEmpty();
+        profileService.seedMissing();
         closeOrphanedRuns();
         backfillSectors();
     }

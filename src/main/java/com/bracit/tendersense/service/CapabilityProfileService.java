@@ -20,5 +20,5 @@ public interface CapabilityProfileService {
     List<String> exclusionStatements(Organisation organisation);
 
     /** Seeds the profile from resources when the database has none. */
-    void seedIfEmpty();
+    void seedMissing();
 }

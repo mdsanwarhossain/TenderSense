@@ -1,6 +1,7 @@
 {
   "_NOTE": "DEMONSTRATION TENANT — not a real customer. Exists to show that the pipeline is company-agnostic: the same scraped corpus, scored against a completely different profile, produces a completely different shortlist. Every figure here is invented.",
   "orgName": "Padma Infrastructure Limited",
+  "loginEmail": "bids@padma-infra.com",
   "slug": "padma-infra",
   "description": "Demonstration tenant — a civil engineering and building contractor",
   "sectors": ["CONSTRUCTION", "ENGINEERING", "MAINTENANCE", "ELECTRICAL"],

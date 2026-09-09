@@ -28,7 +28,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * This test builds exactly that situation and asserts the semantic matcher closes
  * the gap. If this ever fails, the pitch is wrong, not just the code.
  */
-@SpringBootTest(properties = "tendersense.source.mode=cached")
+@SpringBootTest(properties = {"tendersense.source.mode=cached",
+        // Lets these tests name a company by header instead of signing in.
+        // Off everywhere else -- it is an authentication bypass.
+        "tendersense.auth.allow-header=true"})
 class MatchingComparisonIT {
 
     @Autowired
@@ -43,7 +46,7 @@ class MatchingComparisonIT {
 
     @BeforeEach
     void setUp() {
-        profileService.seedIfEmpty();
+        profileService.seedMissing();
         org = organisationRepository.findBySlug("bracit").orElseThrow();
         semantic = matchers.stream()
                 .filter(m -> m.type() == MatcherType.EMBEDDING)
