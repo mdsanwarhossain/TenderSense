@@ -1,7 +1,7 @@
 <header class="page-header">
   <div class="titles">
     <h1>Capability profile</h1>
-    <span class="sub">What every tender is compared against. The wording here decides what surfaces.</span>
+    <span class="sub"><strong>{{ org()?.name }}</strong> — what every tender is compared against. The wording here decides what surfaces.</span>
   </div>
   <button class="btn btn-primary" (click)="rescore()" [disabled]="rescoring()">
     @if (rescoring()) { <span class="spinner light"></span> Re-scoring… } @else { Re-score corpus }
@@ -46,7 +46,7 @@
           </div>
           <div class="card-note">
             <span class="swatch"></span>
-            Flagged statements match work BracIT does not want — narrowing them is the cheapest accuracy win.
+            Flagged statements match work the company does not want — narrowing them is the cheapest accuracy win.
           </div>
         </section>
 

@@ -63,11 +63,52 @@ dependencies {
 def frontendDir = file('frontend')
 def frontendOut = file('src/main/resources/static')
 
+// Angular 21 needs Node >= 20.19, and a machine's default node is often older --
+// Gradle's Exec does not read a shell's `nvm use`, so it would silently pick the
+// wrong one and fail with a version message. Resolve the version in frontend/.nvmrc
+// out of ~/.nvm ourselves and put it first on PATH.
+def nodeBinDir = {
+    def nvmrc = file('frontend/.nvmrc')
+    if (!nvmrc.exists()) {
+        return null
+    }
+    def wanted = nvmrc.text.trim().replaceFirst(/^v/, '')
+    def versions = file("${System.getProperty('user.home')}/.nvm/versions/node")
+    if (!versions.isDirectory()) {
+        return null
+    }
+    // .nvmrc may name a partial version (20 / 20.19); take the newest match.
+    def match = versions.listFiles()
+            .findAll { it.isDirectory() && (it.name == "v${wanted}" || it.name.startsWith("v${wanted}.")) }
+            .max { a, b -> compareVersions(a.name, b.name) }
+    return match == null ? null : new File(match, 'bin')
+}
+
+static int compareVersions(String a, String b) {
+    def pa = a.replaceFirst(/^v/, '').split(/\./)*.toInteger()
+    def pb = b.replaceFirst(/^v/, '').split(/\./)*.toInteger()
+    for (int i = 0; i < Math.max(pa.size(), pb.size()); i++) {
+        int c = (i < pa.size() ? pa[i] : 0) <=> (i < pb.size() ? pb[i] : 0)
+        if (c != 0) {
+            return c
+        }
+    }
+    return 0
+}
+
+def useResolvedNode = { Exec task ->
+    def bin = nodeBinDir()
+    if (bin != null) {
+        task.environment 'PATH', "${bin.absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
+    }
+}
+
 tasks.register('ngInstall', Exec) {
     description = 'Installs frontend dependencies'
     workingDir frontendDir
     commandLine 'npm', 'ci'
     onlyIf { !file('frontend/node_modules').exists() }
+    doFirst { useResolvedNode(it) }
 }
 
 tasks.register('ngCompile', Exec) {
@@ -78,6 +119,7 @@ tasks.register('ngCompile', Exec) {
     inputs.dir file('frontend/src')
     inputs.file file('frontend/package.json')
     outputs.dir file('frontend/dist')
+    doFirst { useResolvedNode(it) }
 }
 
 tasks.register('ngBuild', Copy) {

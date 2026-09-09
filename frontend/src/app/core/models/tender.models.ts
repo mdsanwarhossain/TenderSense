@@ -153,3 +153,13 @@ export interface BidDecisionRequest {
   note?: string;
   decidedBy?: string;
 }
+
+/** A subscribing company. `sectors` is the hard gate: it sees nothing outside them. */
+export interface Organisation {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  sectors: string[];
+  demonstration: boolean;
+}

@@ -2,7 +2,6 @@
   <div class="left">
     <a class="wordmark" routerLink="/shortlist">
       <span class="name">TenderSense</span>
-      <span class="org">BRAC IT SERVICES</span>
     </a>
     <div class="nav">
       <a routerLink="/shortlist" routerLinkActive="active">Shortlist</a>
@@ -12,9 +11,12 @@
     </div>
   </div>
   <div class="user">
+    <ts-org-switcher />
     <span class="avatar">BD</span>
     <span class="who">BD Team</span>
   </div>
 </nav>
 
-<router-outlet />
+@if (mounted()) {
+  <router-outlet />
+}

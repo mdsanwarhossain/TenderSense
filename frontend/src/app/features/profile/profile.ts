@@ -1,10 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
+import { OrgService } from '../../core/services/org.service';
 import { CapabilityProfile } from '../../core/models/tender.models';
 
 /**
- * BracIT's capability profile — what every tender is matched against.
+ * The selected company's capability profile — what every tender is matched against.
  *
  * The service lines are not decoration: their wording is the single biggest lever
  * on which tenders surface, so the screen names the ones currently causing trouble.
@@ -19,6 +20,9 @@ import { CapabilityProfile } from '../../core/models/tender.models';
 export class Profile {
   private readonly api = inject(ApiService);
 
+  /** Named on the page so a company switch is visibly reflected here, not just in the shortlist. */
+  readonly org = inject(OrgService).current;
+
   readonly profile = signal<CapabilityProfile | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -26,7 +30,7 @@ export class Profile {
   readonly rescored = signal<number | null>(null);
 
   /**
-   * Statements known to pull in work BracIT does not want. Flagged in the UI so the
+   * Statements known to pull in work the company does not want. Flagged in the UI so the
    * cause of a bad shortlist is visible on the screen that can fix it.
    */
   private readonly noisyTerms = ['outsourcing', 'technical resource', 'capacity building'];

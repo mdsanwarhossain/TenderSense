@@ -13,7 +13,6 @@
 .wordmark { display: flex; align-items: baseline; gap: 8px; }
 .wordmark:hover { text-decoration: none; }
 .name { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; color: var(--bg); }
-.org { font-size: 11px; color: #8c9296; letter-spacing: 0.3px; }
 
 .nav { display: flex; align-items: center; gap: 4px; }
 .nav a {
@@ -25,7 +24,7 @@
 .nav a:hover { color: var(--bg); text-decoration: none; }
 .nav a.active { color: var(--bg); font-weight: 500; background: var(--nav-active); }
 
-.user { display: flex; align-items: center; gap: 8px; }
+.user { display: flex; align-items: center; gap: 14px; }
 .avatar {
   display: flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 50%;
