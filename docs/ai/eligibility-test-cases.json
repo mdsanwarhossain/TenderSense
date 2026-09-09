@@ -1,0 +1,378 @@
+{
+  "_meta": {
+    "description": "Real-data test cases for LLM eligibility prompt. Each case covers a distinct scenario the system encounters. Source: e-GP Bangladesh snapshots + BracIT capability profile.",
+    "profile": {
+      "orgName": "ABC Company",
+      "annualTurnoverBdt": 1200000000,
+      "certifications": ["CMMI3", "ISO27001", "ISO9001"],
+      "geographies": ["Bangladesh", "South Asia", "Asia", "International"]
+    }
+  },
+
+  "cases": [
+
+    {
+      "_id": "case-01",
+      "_scenario": "ELIGIBLE — strong IT match, all rules pass, urgency (closes in 4 days)",
+      "tender": {
+        "externalId": "1308042",
+        "sourcePortal": "EGP",
+        "referenceNo": "ICT/DGHS/MIS/2026-27/01",
+        "title": "Supply, Installation and Implementation of Hospital Management Information System (HMIS) for Directorate General of Health Services",
+        "procuringEntity": "Directorate General of Health Services (DGHS)",
+        "ministry": "Ministry of Health and Family Welfare",
+        "organization": "Directorate General of Health Services (DGHS)",
+        "district": "Dhaka",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Services",
+        "closingAt": "2026-09-13T14:00:00",
+        "daysToDeadline": 4,
+        "description": "Supply, installation, configuration and go-live support of a Hospital Management Information System covering patient registration, OPD, IPD, pharmacy, laboratory, billing and HR modules for 64 district hospitals.",
+        "eligibilityText": "The tenderer must have ISO 9001 quality management certification. Minimum annual turnover BDT 50,000,000 (Five Crore) for last 3 years. The tenderer must have successfully completed at least one similar MIS implementation for a government health organization."
+      },
+      "match": {
+        "score": 0.712,
+        "evidence": [
+          {"rank": 1, "profileText": "Health information systems and eHealth platforms", "similarity": 0.74},
+          {"rank": 2, "profileText": "Management information system (MIS) design, development and rollout", "similarity": 0.71},
+          {"rank": 3, "profileText": "National social protection beneficiary management system. Design and rollout of a beneficiary registration, targeting and payment reconciliation MIS serving several million households.", "similarity": 0.62}
+        ],
+        "exclusionPenalty": null,
+        "exclusionText": null
+      },
+      "eligibility": {
+        "status": "ELIGIBLE",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [],
+        "verifyGaps": [],
+        "allPassed": true
+      },
+      "urgentDeadline": true
+    },
+
+    {
+      "_id": "case-02",
+      "_scenario": "INELIGIBLE — turnover shortfall, certification missing",
+      "tender": {
+        "externalId": "1317566",
+        "sourcePortal": "EGP",
+        "referenceNo": "ICT/a2i/2026/CMMI5/01",
+        "title": "Procurement of Enterprise Software Development Services for National Digital Transformation Programme",
+        "procuringEntity": "Aspire to Innovate (a2i), ICT Division",
+        "ministry": "Ministry of Posts, Telecommunications and Information Technology",
+        "organization": "ICT Division",
+        "district": "Dhaka",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Services",
+        "closingAt": "2026-10-15T14:00:00",
+        "daysToDeadline": 36,
+        "description": "Development of enterprise-grade digital services platform including mobile applications, API gateway, cloud-native microservices and integration with national identity infrastructure.",
+        "eligibilityText": "The tenderer must hold CMMI for Development Level 5 certification. ISO/IEC 27001 information security certification is mandatory. Minimum average annual turnover BDT 500,000,000 (Fifty Crore) for the last 3 fiscal years. At least 3 successfully completed e-governance projects in the last 5 years."
+      },
+      "match": {
+        "score": 0.681,
+        "evidence": [
+          {"rank": 1, "profileText": "e-Governance and public service digitisation", "similarity": 0.69},
+          {"rank": 2, "profileText": "Web and mobile application development", "similarity": 0.66},
+          {"rank": 3, "profileText": "Cloud migration and cloud managed services", "similarity": 0.58}
+        ],
+        "exclusionPenalty": null,
+        "exclusionText": null
+      },
+      "eligibility": {
+        "status": "INELIGIBLE",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [
+          {
+            "ruleCode": "CERTIFICATION",
+            "requirement": "Requires CMMI5",
+            "actual": "BracIT holds CMMI3, ISO27001, ISO9001",
+            "blocking": true,
+            "message": "Missing CMMI5. BracIT holds CMMI3. Would qualify once Level 5 is obtained or if Level 3 is accepted."
+          },
+          {
+            "ruleCode": "TURNOVER",
+            "requirement": "Minimum annual turnover BDT 500,000,000",
+            "actual": "BracIT annual turnover BDT 1,200,000,000",
+            "blocking": false,
+            "message": "Turnover requirement met."
+          }
+        ],
+        "verifyGaps": [],
+        "allPassed": false
+      },
+      "urgentDeadline": false
+    },
+
+    {
+      "_id": "case-03",
+      "_scenario": "NEEDS_VERIFICATION — eligibility text is 'As per TDS', cannot evaluate rules",
+      "tender": {
+        "externalId": "1321068",
+        "sourcePortal": "EGP",
+        "referenceNo": "UHC/RAJIB/KURI/TENDER/2026-27/GD-6",
+        "title": "Supply of MSR Goods (Hospital Furniture) for Rajibpur Upazila Health Complex, Kurigram in FY 2026-2027",
+        "procuringEntity": "Rajibpur Upazila Health Complex, Kurigram",
+        "ministry": "Ministry of Health and Family Welfare",
+        "organization": "Directorate General of Health Services (DGHS)",
+        "district": "Kurigram",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Goods",
+        "closingAt": "2026-09-13T14:00:00",
+        "daysToDeadline": 4,
+        "description": "Supply of MSR Goods (Hospital Furniture) for Rajibpur Upazila Health Complex, Kurigram in FY 2026-2027.",
+        "eligibilityText": "As Per TDS & PCc"
+      },
+      "match": {
+        "score": 0.108,
+        "evidence": [
+          {"rank": 1, "profileText": "Health information systems and eHealth platforms", "similarity": 0.18},
+          {"rank": 2, "profileText": "Management information system (MIS) design, development and rollout", "similarity": 0.12}
+        ],
+        "exclusionPenalty": 0.21,
+        "exclusionText": "Supply of computers, servers, networking equipment and office IT hardware"
+      },
+      "eligibility": {
+        "status": "NEEDS_VERIFICATION",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [],
+        "verifyGaps": [
+          {
+            "ruleCode": "CERTIFICATION",
+            "blocking": false,
+            "message": "Tender states no eligibility text; verify manually."
+          },
+          {
+            "ruleCode": "TURNOVER",
+            "blocking": false,
+            "message": "Tender states no eligibility text; verify manually."
+          }
+        ],
+        "allPassed": false
+      },
+      "urgentDeadline": true
+    },
+
+    {
+      "_id": "case-04",
+      "_scenario": "PASS — exclusion penalty fired, tender is about physical furniture/hardware supply",
+      "tender": {
+        "externalId": "1325272",
+        "sourcePortal": "EGP",
+        "referenceNo": "ICTD/HW/2026-27/15",
+        "title": "Supply and Installation of Desktop Computers, Laptops, Printers and Networking Equipment for District Education Offices",
+        "procuringEntity": "Directorate of Secondary and Higher Education",
+        "ministry": "Ministry of Education",
+        "organization": "Directorate of Secondary and Higher Education",
+        "district": "Dhaka",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Goods",
+        "closingAt": "2026-10-05T14:00:00",
+        "daysToDeadline": 26,
+        "description": "Supply, delivery and installation of 500 desktop computers, 200 laptops, 150 printers and structured network cabling for 64 district education offices across Bangladesh.",
+        "eligibilityText": "Minimum annual turnover BDT 30,000,000 (Three Crore). Must be an authorized dealer/distributor of the supplied brands. Trade license and VAT registration required."
+      },
+      "match": {
+        "score": 0.142,
+        "evidence": [
+          {"rank": 1, "profileText": "IT infrastructure design, deployment and managed services", "similarity": 0.31},
+          {"rank": 2, "profileText": "Technical training and knowledge transfer for software and systems teams", "similarity": 0.19}
+        ],
+        "exclusionPenalty": 0.34,
+        "exclusionText": "Resale or supply of computer hardware, desktops, laptops, printers, toners and accessories without an implementation service"
+      },
+      "eligibility": {
+        "status": "ELIGIBLE",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [],
+        "verifyGaps": [],
+        "allPassed": true
+      },
+      "urgentDeadline": false
+    },
+
+    {
+      "_id": "case-05",
+      "_scenario": "VERIFY — geography rule unknown (World Bank tender, country partially stated)",
+      "tender": {
+        "externalId": "P503241-OP-CS-2026-001",
+        "sourcePortal": "WORLD_BANK",
+        "referenceNo": "P503241/ICT/CONSULTING/01",
+        "title": "Digital Financial Services Platform Development and Integration — South Asia Regional Programme",
+        "procuringEntity": "Bangladesh Bank (on behalf of South Asia Finance Ministers Forum)",
+        "ministry": "Ministry of Finance",
+        "organization": "Bangladesh Bank",
+        "district": null,
+        "country": "Regional — Bangladesh, Nepal, Sri Lanka",
+        "procurementType": "International",
+        "procurementMethod": "Quality- and Cost-Based Selection (QCBS)",
+        "procurementNature": "Consultancy Services",
+        "closingAt": "2026-11-10T17:00:00",
+        "daysToDeadline": 62,
+        "description": "Design, development and integration of a regional digital financial services platform covering mobile payments, cross-border remittance, agent banking and regulatory reporting APIs for three South Asian central banks.",
+        "eligibilityText": "Firms must have ISO/IEC 27001 certification. Minimum average annual turnover USD 5,000,000 equivalent for last 3 years. At least 2 completed digital financial services or core banking implementation projects in the last 5 years. Open to firms from World Bank member countries."
+      },
+      "match": {
+        "score": 0.748,
+        "evidence": [
+          {"rank": 1, "profileText": "Financial technology and digital financial services platforms", "similarity": 0.79},
+          {"rank": 2, "profileText": "Core banking and microfinance system implementation", "similarity": 0.74},
+          {"rank": 3, "profileText": "Digital financial services and mobile wallet integration. Development of payment orchestration and mobile wallet integration services.", "similarity": 0.71}
+        ],
+        "exclusionPenalty": null,
+        "exclusionText": null
+      },
+      "eligibility": {
+        "status": "NEEDS_VERIFICATION",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [],
+        "verifyGaps": [
+          {
+            "ruleCode": "GEOGRAPHY",
+            "blocking": false,
+            "message": "Tender country is 'Regional — Bangladesh, Nepal, Sri Lanka'. BracIT covers Bangladesh and South Asia but the multi-country scope needs manual confirmation that a Bangladeshi firm may lead."
+          },
+          {
+            "ruleCode": "TURNOVER",
+            "blocking": false,
+            "message": "Turnover threshold stated in USD. Conversion to BDT needed to confirm: USD 5,000,000 ≈ BDT 550,000,000 at current rates. BracIT turnover BDT 1,200,000,000 appears sufficient but FX rate should be verified."
+          }
+        ],
+        "allPassed": false
+      },
+      "urgentDeadline": false
+    },
+
+    {
+      "_id": "case-06",
+      "_scenario": "BID — very strong match, staffing tender but with software delivery component, medium urgency",
+      "tender": {
+        "externalId": "1318201",
+        "sourcePortal": "EGP",
+        "referenceNo": "BRAC/IT/OTS/2026-27/003",
+        "title": "Provision of Dedicated Software Engineering, QA and Infrastructure Teams for Government Digital Service Delivery Unit",
+        "procuringEntity": "ICT Division, Ministry of Posts, Telecommunications and IT",
+        "ministry": "Ministry of Posts, Telecommunications and Information Technology",
+        "organization": "ICT Division",
+        "district": "Dhaka",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Services",
+        "closingAt": "2026-09-18T14:00:00",
+        "daysToDeadline": 9,
+        "description": "Multi-year engagement for a firm to provide dedicated software engineers, QA specialists and DevOps engineers embedded within the government digital service delivery unit, with structured knowledge transfer to government counterpart staff.",
+        "eligibilityText": "Minimum annual average turnover BDT 100,000,000 (Ten Crore) in the last 3 fiscal years. ISO 9001 certification required. CMMI Level 3 or above preferred. Firm must have completed at least 2 similar embedded team engagements for government clients."
+      },
+      "match": {
+        "score": 0.821,
+        "evidence": [
+          {"rank": 1, "profileText": "Dedicated software engineering and QA teams embedded with client delivery units", "similarity": 0.87},
+          {"rank": 2, "profileText": "Embedded software engineering and QA delivery teams. Multi-year provision of dedicated software engineers, quality assurance specialists and infrastructure engineers working inside client delivery teams.", "similarity": 0.84},
+          {"rank": 3, "profileText": "Technical training and knowledge transfer for software and systems teams", "similarity": 0.71}
+        ],
+        "exclusionPenalty": null,
+        "exclusionText": null
+      },
+      "eligibility": {
+        "status": "ELIGIBLE",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [],
+        "verifyGaps": [],
+        "allPassed": true
+      },
+      "urgentDeadline": false
+    },
+
+    {
+      "_id": "case-07",
+      "_scenario": "PASS — civil construction, completely outside BracIT scope, exclusion fires",
+      "tender": {
+        "externalId": "1319075",
+        "sourcePortal": "EGP",
+        "referenceNo": "44.01.0000.270.022.05.03.87",
+        "title": "Repair work of ground floor balcony tiles and special repair work from 1st to 5th floor of Barrack No. 5 of Police Lines, Rajarbag, DMP",
+        "procuringEntity": "Development Section, Dhaka Metropoliton Police, Dhaka",
+        "ministry": "Ministry of Home Affairs",
+        "organization": "Bangladesh Police",
+        "district": "Dhaka",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Works",
+        "closingAt": "2026-09-15T15:00:00",
+        "daysToDeadline": 6,
+        "description": "Repair work of ground floor balcony tiles and special repair work from 1st to 5th floor of Barrack No. 5 of Police Lines, Rajarbagh, DMP.",
+        "eligibilityText": "As per tender document"
+      },
+      "match": {
+        "score": 0.038,
+        "evidence": [
+          {"rank": 1, "profileText": "IT infrastructure design, deployment and managed services", "similarity": 0.09},
+          {"rank": 2, "profileText": "Custom software design and development", "similarity": 0.06}
+        ],
+        "exclusionPenalty": 0.18,
+        "exclusionText": "Civil construction, building works, roads, bridges, dredging, tube wells and earthworks"
+      },
+      "eligibility": {
+        "status": "NEEDS_VERIFICATION",
+        "rulesApplied": "CERTIFICATION,GEOGRAPHY,TURNOVER",
+        "blockingGaps": [],
+        "verifyGaps": [
+          {
+            "ruleCode": "CERTIFICATION",
+            "blocking": false,
+            "message": "Tender states 'As per tender document'; eligibility requirements cannot be evaluated without the TDS."
+          },
+          {
+            "ruleCode": "TURNOVER",
+            "blocking": false,
+            "message": "Tender states 'As per tender document'; turnover threshold cannot be evaluated without the TDS."
+          }
+        ],
+        "allPassed": false
+      },
+      "urgentDeadline": true
+    },
+
+    {
+      "_id": "case-08",
+      "_scenario": "VERIFY — eligibility verdict not yet computed (pipeline not run yet)",
+      "tender": {
+        "externalId": "1330380",
+        "sourcePortal": "EGP",
+        "referenceNo": "e-GP/CRD/EE/Minor/07/2026-2027",
+        "title": "Widening Works by DBS Wearing Course for Wireless Mor Portion at 68th Km of Comilla-Lalmai-Chandpur-Lakshmipur-Begumganj Road (R-140) under Road Division, Chandpur during 2026-2027",
+        "procuringEntity": "Roads & Highways Department (RHD), Road Division, Chandpur",
+        "ministry": "Ministry of Road Transport and Bridges",
+        "organization": "Roads & Highways Department (RHD)",
+        "district": "Chandpur",
+        "country": "Bangladesh",
+        "procurementType": "NCT",
+        "procurementMethod": "Open Tendering Method (OTM)",
+        "procurementNature": "Works",
+        "closingAt": "2026-09-22T12:00:00",
+        "daysToDeadline": 13,
+        "description": "Widening Works by DBS Wearing Course for Wireless Mor Portion at 68th Km of Comilla-Lalmai-Chandpur-Lakshmipur-Begumganj Road under Road Division, Chandpur during 2026-2027.",
+        "eligibilityText": null
+      },
+      "match": {
+        "score": 0.041,
+        "evidence": [],
+        "exclusionPenalty": null,
+        "exclusionText": null
+      },
+      "eligibility": null,
+      "urgentDeadline": false
+    }
+
+  ]
+}
