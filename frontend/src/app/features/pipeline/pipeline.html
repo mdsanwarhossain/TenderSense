@@ -1,0 +1,99 @@
+<header class="page-header">
+  <div class="titles">
+    <h1>Collection pipeline</h1>
+    <span class="sub">All schedules run on Asia/Dhaka. One job at a time — a reconcile never overlaps a sweep.</span>
+  </div>
+  <div class="actions">
+    <button class="btn" (click)="run('reconcile')" [disabled]="running() !== null">
+      @if (running() === 'reconcile') { <span class="spinner"></span> Reconciling… } @else { Full reconcile }
+    </button>
+    <button class="btn btn-primary" (click)="run('discovery')" [disabled]="running() !== null">
+      @if (running() === 'discovery') { <span class="spinner light"></span> Running… } @else {
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l11 7-11 7z"/></svg>
+        Run discovery now
+      }
+    </button>
+  </div>
+</header>
+
+@if (error(); as message) {
+  <div class="page-body"><div class="banner error">{{ message }}</div></div>
+} @else {
+  <div class="page-body cols">
+
+    <div class="col side">
+      <section class="card">
+        <div class="card-head">
+          <h2>Schedule</h2>
+          <span class="hint">Asia/Dhaka</span>
+        </div>
+        @for (s of schedule; track s.job) {
+          <div class="sched">
+            <div class="sched-body">
+              <span class="mono job">{{ s.job }}</span>
+              <span class="hint">{{ s.cadence }}</span>
+            </div>
+            <span class="hint">{{ s.cost }}</span>
+          </div>
+        }
+        <div class="card-note">
+          Discovery stays cheap because it stops after 20 consecutive already-known ids.
+          The expensive per-tender fetch never runs on a schedule — it is driven by what
+          discovery finds.
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <div class="stats">
+        <div class="stat">
+          <span class="label">Last successful run</span>
+          <span class="mono value">{{ duration(lastSuccess()?.durationMs ?? null) }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Results written</span>
+          <span class="mono value">{{ totalScored() | number }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Runs recorded</span>
+          <span class="mono value">{{ runs().length }}</span>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Recent runs</h2>
+          <span class="hint">Skipped runs are recorded too, not silently dropped</span>
+        </div>
+
+        @if (loading()) {
+          <div class="state"><span class="spinner"></span> Loading runs…</div>
+        } @else if (runs().length === 0) {
+          <div class="state">No runs recorded yet. Trigger one above.</div>
+        } @else {
+          <div class="thead cols-run">
+            <span>Job</span><span>Status</span><span>Duration</span>
+            <span>Found</span><span>Scored</span><span>Started</span>
+          </div>
+          @for (r of runs(); track r.id) {
+            <div class="trow cols-run" [class.failed]="r.status === 'FAILED'" [class.skipped]="r.status === 'SKIPPED'">
+              <span class="mono job">{{ r.jobName }}</span>
+              <span class="status" [class]="r.status.toLowerCase()">
+                <span class="dot"></span>{{ r.status | titlecase }}
+              </span>
+              <span class="mono">{{ duration(r.durationMs) }}</span>
+              <span class="mono">{{ r.tendersDiscovered ?? '—' }}</span>
+              <span class="mono">{{ r.tendersScored ?? '—' }}</span>
+              @if (r.errorMessage) {
+                <span class="err" [title]="r.errorMessage">{{ r.errorMessage }}</span>
+              } @else {
+                <span class="mono muted">{{ r.startedAt | date: 'dd MMM HH:mm' }}</span>
+              }
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </div>
+}

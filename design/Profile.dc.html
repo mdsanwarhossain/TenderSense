@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+           background: #f5f5f2; color: #15181c; -webkit-font-smoothing: antialiased; }
+    a { color: #0f4f4a; text-decoration: none; }
+    a:hover { color: #16706a; text-decoration: underline; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; min-height: 1000px; background: #f5f5f2; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 56px; padding: 0 28px; background: #15181c; color: #f5f5f2; flex-shrink: 0;">
+    <div style="display: flex; align-items: center; gap: 32px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 16px; font-weight: 600; letter-spacing: -0.2px;">TenderSense</span>
+        <span style="font-size: 11px; color: #8c9296; letter-spacing: 0.3px;">BRAC IT SERVICES</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Shortlist</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Benchmark</span>
+        <span style="font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 4px; background: #2a2f35;">Profile</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Pipeline</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #0f4f4a; color: #ffffff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;">BD</div>
+      <span style="font-size: 12px; color: #c9ced2;">BD Team</span>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 22px 28px 18px; background: #ffffff; border-bottom: 1px solid #e4e4df; flex-shrink: 0;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.3px;">Capability profile</h1>
+      <span style="font-size: 13px; color: #6b7178;">What every tender is compared against. Editing this re-scores the whole corpus.</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; height: 38px; padding: 0 14px; border: 1px solid #d8d8d3; border-radius: 4px; background: #ffffff; font-size: 13px; font-weight: 500; color: #35393f;">Edit profile</div>
+      <div style="display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 4px; background: #0f4f4a; color: #ffffff; font-size: 13px; font-weight: 500;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path><path d="M21 4v5h-5"></path></svg>
+        Re-score corpus
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: flex-start; gap: 11px; margin: 20px 28px 0; padding: 14px 18px; background: #fdfaf5; border: 1px solid #f0dfc0; border-radius: 5px;">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5209" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M12 4l9 16H3z"></path><path d="M12 10v4"></path><path d="M12 17.5v.01"></path></svg>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 13px; font-weight: 600; color: #6b4a17;">Placeholder profile in use</span>
+      <span style="font-size: 12px; color: #6b4a17; line-height: 1.6;">Turnover and past projects are invented stand-ins. Only the three certifications come from a real source. Replace with the profile from the project owner before the demo &mdash; the wording here directly drives which tenders surface.</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 20px; padding: 20px 28px 28px; align-items: start;">
+
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Service lines</h2>
+          <span style="font-size: 11px; color: #7c828c;">20 statements &middot; each embedded separately</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 20px;">
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Custom software design and development</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">MIS design, development and rollout</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">ERP implementation and support</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">ICT systems implementation and integration</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Digital transformation advisory</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Web and mobile application development</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Digital financial services platforms</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Core banking and microfinance systems</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Data analytics, reporting and business intelligence</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">IT infrastructure and managed services</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Cloud migration and managed cloud</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Cyber security and ISMS</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">IT capacity building and training</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Software QA and independent testing</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #fdf4e6; color: #6b4a17; border: 1px solid #f0dfc0;">IT outsourcing and technical resourcing</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">GIS and spatial data solutions</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Social protection delivery systems</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Health information systems</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #fdf4e6; color: #6b4a17; border: 1px solid #f0dfc0;">Education management information systems</span>
+          <span style="font-size: 12px; padding: 6px 11px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">e-Governance and public service digitisation</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: #fafaf8; border-top: 1px solid #ededea;">
+          <span style="width: 10px; height: 10px; border-radius: 2px; background: #fdf4e6; border: 1px solid #f0dfc0; flex-shrink: 0;"></span>
+          <span style="font-size: 11px; color: #6b7178;">Two statements drive the current false positives: &ldquo;IT outsourcing and technical resourcing&rdquo; pulls in manpower-supply notices, and the education MIS wording pulls in monitoring and evaluation roles. Narrowing them is the cheapest accuracy win.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Past projects</h2>
+          <span style="font-size: 11px; color: #7c828c;">12 references &middot; title and description both matched</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; padding: 9px 20px; background: #fafaf8; border-bottom: 1px solid #ededea;">
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Project</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Sector</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Value</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Year</span>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span style="font-size: 12px;">National social protection beneficiary management system</span>
+            <span style="font-size: 12px; color: #6b7178;">Social protection</span>
+            <span class="mono" style="font-size: 12px;">BDT 210M</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">2024</span>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span style="font-size: 12px;">e-Governance service digitisation programme</span>
+            <span style="font-size: 12px; color: #6b7178;">Public admin</span>
+            <span class="mono" style="font-size: 12px;">BDT 195M</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">2024</span>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span style="font-size: 12px;">Microfinance core banking platform modernisation</span>
+            <span style="font-size: 12px; color: #6b7178;">Financial services</span>
+            <span class="mono" style="font-size: 12px;">BDT 180M</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">2023</span>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span style="font-size: 12px;">Health management information system for primary care</span>
+            <span style="font-size: 12px; color: #6b7178;">Health</span>
+            <span class="mono" style="font-size: 12px;">BDT 160M</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">2022</span>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span style="font-size: 12px;">Digital financial services and mobile wallet integration</span>
+            <span style="font-size: 12px; color: #6b7178;">Fintech</span>
+            <span class="mono" style="font-size: 12px;">BDT 145M</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">2023</span>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 92px; gap: 14px; align-items: center; padding: 11px 20px;">
+            <span style="font-size: 12px; color: #6b7178;">Seven further references &mdash; education MIS, ERP, cloud migration, ISMS, GIS, QA, capacity building</span>
+            <span style="font-size: 12px; color: #7c828c;">&mdash;</span>
+            <span class="mono" style="font-size: 12px; color: #7c828c;">&mdash;</span>
+            <span class="mono" style="font-size: 12px; color: #7c828c;">&mdash;</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Organisation</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1px; background: #ededea;">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Legal name</span>
+            <span style="font-size: 13px; font-weight: 500;">BRAC IT Services Limited</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Annual turnover</span>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <span class="mono" style="font-size: 17px; font-weight: 600;">BDT 1,200,000,000</span>
+              <span style="font-size: 11px; color: #8a5209;">placeholder</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">Checked against every stated turnover threshold</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 7px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Geographies</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 12px; padding: 5px 10px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Bangladesh</span>
+              <span style="font-size: 12px; padding: 5px 10px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">South Asia</span>
+              <span style="font-size: 12px; padding: 5px 10px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">Asia</span>
+              <span style="font-size: 12px; padding: 5px 10px; border-radius: 3px; background: #eef2f1; color: #2f4b49;">International</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Certifications</h2>
+          <span style="font-size: 11px; color: #7c828c;">Expiry is enforced</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1px; background: #ededea;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 600;">CMMI3</span>
+              <span style="font-size: 11px; color: #6b7178;">CMMI for Development, Level 3</span>
+            </div>
+            <span class="mono" style="font-size: 11px; color: #6b7178;">to 31 Dec 2027</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 600;">ISO27001</span>
+              <span style="font-size: 11px; color: #6b7178;">Information security management</span>
+            </div>
+            <span class="mono" style="font-size: 11px; color: #6b7178;">to 31 Dec 2027</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 600;">ISO9001</span>
+              <span style="font-size: 11px; color: #6b7178;">Quality management system</span>
+            </div>
+            <span class="mono" style="font-size: 11px; color: #6b7178;">to 31 Dec 2027</span>
+          </div>
+        </div>
+        <div style="padding: 12px 20px; background: #fafaf8; border-top: 1px solid #ededea;">
+          <span style="font-size: 11px; color: #6b7178; line-height: 1.6;">Spelling variants are matched &mdash; a tender asking for &ldquo;ISO/IEC 27001&rdquo; resolves to ISO27001.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

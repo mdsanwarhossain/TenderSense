@@ -1,0 +1,300 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+           background: #f5f5f2; color: #15181c; -webkit-font-smoothing: antialiased; }
+    a { color: #0f4f4a; text-decoration: none; }
+    a:hover { color: #16706a; text-decoration: underline; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; min-height: 1080px; background: #f5f5f2; display: flex; flex-direction: column;">
+
+  <!-- Top bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 56px; padding: 0 28px; background: #15181c; color: #f5f5f2; flex-shrink: 0;">
+    <div style="display: flex; align-items: center; gap: 32px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 16px; font-weight: 600; letter-spacing: -0.2px;">TenderSense</span>
+        <span style="font-size: 11px; color: #8c9296; letter-spacing: 0.3px;">BRAC IT SERVICES</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span style="font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 4px; background: #2a2f35;">Shortlist</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Benchmark</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Profile</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Pipeline</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #0f4f4a; color: #ffffff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;">BD</div>
+      <span style="font-size: 12px; color: #c9ced2;">BD Team</span>
+    </div>
+  </div>
+
+  <!-- Tender header -->
+  <div style="display: flex; flex-direction: column; gap: 14px; padding: 20px 28px 20px; background: #ffffff; border-bottom: 1px solid #e4e4df; flex-shrink: 0;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7c828c;">
+      <span style="color: #0f4f4a;">Morning shortlist</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#b8bcc2" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+      <span class="mono">OP00446211</span>
+    </div>
+
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; gap: 16px; min-width: 0;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 40px; border-radius: 4px; background: #0f4f4a; color: #ffffff; font-size: 19px; font-weight: 700; flex-shrink: 0;">S</span>
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 600; line-height: 1.3; letter-spacing: -0.3px;">Selection of a Consulting Firm for the development of Integrated Management Information System</h1>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #6b7178;">
+            <span>World Bank</span>
+            <span style="color: #d0d0cb;">/</span>
+            <span>Statistics and Informatics Division</span>
+            <span style="color: #d0d0cb;">/</span>
+            <span class="mono">REOI-SID-2026-114</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-right: 14px; border-right: 1px solid #e4e4df;">
+          <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Match score</span>
+          <span class="mono" style="font-size: 20px; font-weight: 600; letter-spacing: -0.4px;">0.566</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-right: 14px; border-right: 1px solid #e4e4df;">
+          <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Closes in</span>
+          <span class="mono" style="font-size: 20px; font-weight: 600; letter-spacing: -0.4px;">14d</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; height: 40px; padding: 0 22px; border-radius: 4px; background: #0f4f4a; color: #ffffff; font-size: 14px; font-weight: 600; letter-spacing: 0.3px;">BID</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 520px; gap: 20px; padding: 20px 28px 28px; align-items: start;">
+
+    <!-- LEFT -->
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="padding: 14px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Tender particulars</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #ededea;">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Ministry</span>
+            <span style="font-size: 13px;">Ministry of Planning</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Division</span>
+            <span style="font-size: 13px;">Statistics and Informatics Division</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Procuring entity</span>
+            <span style="font-size: 13px;">Bangladesh Bureau of Statistics</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Procurement method</span>
+            <span style="font-size: 13px;">QCBS &mdash; Quality and Cost Based Selection</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Nature / type</span>
+            <span style="font-size: 13px;">Consultancy &middot; ICT</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Source of funds</span>
+            <span style="font-size: 13px;">IDA Credit</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Published</span>
+            <span class="mono" style="font-size: 13px;">06 Sep 2026 11:00</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Closing</span>
+            <span class="mono" style="font-size: 13px;">22 Sep 2026 17:00</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Document price</span>
+            <span class="mono" style="font-size: 13px;">BDT 3,000</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Eligibility of consultant</h2>
+          <span style="font-size: 11px; color: #7c828c;">Verbatim from the portal &mdash; the rules engine reads this text</span>
+        </div>
+        <div style="padding: 16px 20px; font-size: 13px; line-height: 1.65; color: #35393f;">
+          The consulting firm shall have a minimum average annual turnover of BDT 250,000,000 over the last three financial years. The firm must hold a valid ISO/IEC 27001 certification for information security management, together with documented experience of at least five similar management information system assignments completed within the last seven years, of which two shall be for public sector clients in Bangladesh. Key experts shall be proposed with verifiable curricula vitae.
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Provenance</h2>
+          <span style="font-size: 11px; color: #7c828c;">Every score traces back to a stored source document</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: #ededea;">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 13px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Source snapshot</span>
+            <span class="mono" style="font-size: 12px; color: #0f4f4a; word-break: break-all;">data/snapshots/wb/OP00446211.json</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 13px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Content hash</span>
+            <span class="mono" style="font-size: 12px; word-break: break-all;">6df69fa0b1135c79281875dd&hellip;</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 13px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Embedding model</span>
+            <span class="mono" style="font-size: 12px;">onnx:all-MiniLM-L6-v2:384</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 13px 20px; background: #ffffff;">
+            <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Scored / revisions</span>
+            <span class="mono" style="font-size: 12px;">08 Sep 16:09 &middot; rev 0</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 14px 18px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Why this matched</h2>
+          <span style="font-size: 11px; color: #7c828c; line-height: 1.5;">Each row is one BracIT capability compared against this tender&rsquo;s text, with its own similarity. The score is 60% of the strongest pair plus 40% of the top three.</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1px; background: #ededea;">
+
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 18px; background: #ffffff;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Strongest pair</span>
+              <span class="mono" style="font-size: 13px; font-weight: 600; color: #0f4f4a;">0.580</span>
+            </div>
+            <div style="display: block; width: 100%; height: 4px; border-radius: 2px; background: #eef2f1;"><span style="display: block; width: 58%; height: 4px; border-radius: 2px; background: #0f4f4a;"></span></div>
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="font-size: 10px; font-weight: 600; color: #0f4f4a; letter-spacing: 0.4px; padding-top: 2px; flex-shrink: 0; width: 46px;">OURS</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #35393f;">Management information system (MIS) design, development and rollout</span>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.4px; padding-top: 2px; flex-shrink: 0; width: 46px;">THEIRS</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #35393f;">&ldquo;&hellip;development of an Integrated Management Information System covering data capture, validation and dissemination&hellip;&rdquo;</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 18px; background: #ffffff;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Supporting</span>
+              <span class="mono" style="font-size: 13px; font-weight: 600; color: #35393f;">0.540</span>
+            </div>
+            <div style="display: block; width: 100%; height: 4px; border-radius: 2px; background: #eef2f1;"><span style="display: block; width: 54%; height: 4px; border-radius: 2px; background: #5b8b87;"></span></div>
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="font-size: 10px; font-weight: 600; color: #0f4f4a; letter-spacing: 0.4px; padding-top: 2px; flex-shrink: 0; width: 46px;">OURS</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #35393f;">National social protection beneficiary management system &mdash; registration, targeting and payment reconciliation MIS</span>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.4px; padding-top: 2px; flex-shrink: 0; width: 46px;">THEIRS</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #35393f;">&ldquo;&hellip;consolidating survey and administrative data across divisional offices into a single reporting platform&hellip;&rdquo;</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 18px; background: #ffffff;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Supporting</span>
+              <span class="mono" style="font-size: 13px; font-weight: 600; color: #35393f;">0.515</span>
+            </div>
+            <div style="display: block; width: 100%; height: 4px; border-radius: 2px; background: #eef2f1;"><span style="display: block; width: 51%; height: 4px; border-radius: 2px; background: #5b8b87;"></span></div>
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="font-size: 10px; font-weight: 600; color: #0f4f4a; letter-spacing: 0.4px; padding-top: 2px; flex-shrink: 0; width: 46px;">OURS</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #35393f;">Data analytics, reporting and business intelligence</span>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.4px; padding-top: 2px; flex-shrink: 0; width: 46px;">THEIRS</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #35393f;">&ldquo;&hellip;dashboards and analytical outputs for planning units at national and district level&hellip;&rdquo;</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="padding: 13px 18px; background: #fafaf8; border-top: 1px solid #ededea;">
+          <span style="font-size: 11px; color: #6b7178; line-height: 1.6;">A keyword alert would also have found this one. The value shows on tenders that describe the same work in different words &mdash; see the benchmark.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Eligibility check</h2>
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: #1f5c3d; background: #eaf3ed; border-radius: 3px; padding: 3px 8px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1f5c3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+            Eligible
+          </span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1px; background: #ededea;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 18px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+              <span style="font-size: 12px; font-weight: 500;">Minimum annual turnover BDT 250,000,000</span>
+              <span style="font-size: 11px; color: #6b7178;">BracIT annual turnover BDT 1,200,000,000</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f5c3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M20 6L9 17l-5-5"></path></svg>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 18px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+              <span style="font-size: 12px; font-weight: 500;">Requires ISO27001</span>
+              <span style="font-size: 11px; color: #6b7178;">BracIT holds CMMI3, ISO27001, ISO9001</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f5c3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M20 6L9 17l-5-5"></path></svg>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 18px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+              <span style="font-size: 12px; font-weight: 500;">Operates in Bangladesh</span>
+              <span style="font-size: 11px; color: #6b7178;">BracIT covers Bangladesh, South Asia, Asia, International</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f5c3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M20 6L9 17l-5-5"></path></svg>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 18px; background: #fdfaf5;">
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+              <span style="font-size: 12px; font-weight: 500;">Five similar MIS assignments in seven years</span>
+              <span style="font-size: 11px; color: #8a5209;">Not machine-checkable &mdash; confirm against the reference list before submitting</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a5209" stroke-width="2" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16.5v.01"></path></svg>
+          </div>
+        </div>
+
+        <div style="padding: 12px 18px; background: #fafaf8; border-top: 1px solid #ededea;">
+          <span style="font-size: 11px; color: #6b7178; line-height: 1.6;">Rules applied: TURNOVER, CERTIFICATION, GEOGRAPHY. Fixed rules, no model &mdash; eligibility is a compliance question, so it is never inferred.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Record the team&rsquo;s decision</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: flex; align-items: center; justify-content: center; flex-grow: 1; height: 40px; border-radius: 4px; background: #0f4f4a; color: #ffffff; font-size: 13px; font-weight: 600; letter-spacing: 0.3px;">Bid</span>
+          <span style="display: flex; align-items: center; justify-content: center; flex-grow: 1; height: 40px; border-radius: 4px; border: 1px solid #d8d8d3; color: #35393f; font-size: 13px; font-weight: 500;">Hold</span>
+          <span style="display: flex; align-items: center; justify-content: center; flex-grow: 1; height: 40px; border-radius: 4px; border: 1px solid #d8d8d3; color: #35393f; font-size: 13px; font-weight: 500;">Skip</span>
+        </div>
+        <span style="font-size: 11px; color: #6b7178; line-height: 1.6;">Skips are kept as negative examples and feed back into ranking.</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

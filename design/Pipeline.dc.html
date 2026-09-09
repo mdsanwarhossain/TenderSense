@@ -1,0 +1,242 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+           background: #f5f5f2; color: #15181c; -webkit-font-smoothing: antialiased; }
+    a { color: #0f4f4a; text-decoration: none; }
+    a:hover { color: #16706a; text-decoration: underline; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; min-height: 900px; background: #f5f5f2; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 56px; padding: 0 28px; background: #15181c; color: #f5f5f2; flex-shrink: 0;">
+    <div style="display: flex; align-items: center; gap: 32px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 16px; font-weight: 600; letter-spacing: -0.2px;">TenderSense</span>
+        <span style="font-size: 11px; color: #8c9296; letter-spacing: 0.3px;">BRAC IT SERVICES</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Shortlist</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Benchmark</span>
+        <span style="font-size: 13px; color: #a2a8ad; padding: 6px 12px;">Profile</span>
+        <span style="font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 4px; background: #2a2f35;">Pipeline</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #0f4f4a; color: #ffffff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;">BD</div>
+      <span style="font-size: 12px; color: #c9ced2;">BD Team</span>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 22px 28px 18px; background: #ffffff; border-bottom: 1px solid #e4e4df; flex-shrink: 0;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.3px;">Collection pipeline</h1>
+      <span style="font-size: 13px; color: #6b7178;">All schedules run on Asia/Dhaka. One job at a time &mdash; a reconcile never overlaps a sweep.</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; height: 38px; padding: 0 14px; border: 1px solid #d8d8d3; border-radius: 4px; background: #ffffff; font-size: 13px; font-weight: 500; color: #35393f;">Full reconcile</div>
+      <div style="display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 4px; background: #0f4f4a; color: #ffffff; font-size: 13px; font-weight: 500;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l11 7-11 7z"></path></svg>
+        Run discovery now
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 470px minmax(0, 1fr); gap: 20px; padding: 20px 28px 28px; align-items: start;">
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Sources</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1px; background: #ededea;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #1f5c3d;"></span>
+                <span style="font-size: 13px; font-weight: 500;">e-GP Bangladesh</span>
+              </div>
+              <span style="font-size: 11px; color: #6b7178;">Browser-rendered listing, then a plain detail fetch at 1 req/sec</span>
+            </div>
+            <span class="mono" style="font-size: 15px; font-weight: 600;">1,982</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #1f5c3d;"></span>
+                <span style="font-size: 13px; font-weight: 500;">World Bank</span>
+              </div>
+              <span style="font-size: 11px; color: #6b7178;">Public JSON API, filtered to Bangladesh</span>
+            </div>
+            <span class="mono" style="font-size: 15px; font-weight: 600;">2,100</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #b8bcc2;"></span>
+                <span style="font-size: 13px; font-weight: 500;">Offline snapshot</span>
+              </div>
+              <span style="font-size: 11px; color: #6b7178;">Replays stored pages &mdash; the fallback if the portal is unreachable</span>
+            </div>
+            <span class="mono" style="font-size: 15px; font-weight: 600; color: #6b7178;">3,229</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Schedule</h2>
+          <span style="font-size: 11px; color: #7c828c;">Asia/Dhaka</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1px; background: #ededea;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 500;">egpDiscovery</span>
+              <span style="font-size: 11px; color: #6b7178;">Every 30 min, 08:00&ndash;20:30</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">1&ndash;3 pages</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 500;">egpDetailDrain</span>
+              <span style="font-size: 11px; color: #6b7178;">Continuous, rate limited</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">1 req/sec</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 500;">egpReconcile</span>
+              <span style="font-size: 11px; color: #6b7178;">Nightly 02:00 &mdash; catches corrigenda</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">~1 hour</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 500;">worldBankSync</span>
+              <span style="font-size: 11px; color: #6b7178;">Every 6 hours</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">seconds</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 500;">urgencyRefresh</span>
+              <span style="font-size: 11px; color: #6b7178;">Daily 05:30</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">seconds</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: #ffffff;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="mono" style="font-size: 12px; font-weight: 500;">morningDigest</span>
+              <span style="font-size: 11px; color: #6b7178;">Daily 08:00 &mdash; the shortlist lands</span>
+            </div>
+            <span style="font-size: 11px; color: #6b7178;">seconds</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #e4e4df; border: 1px solid #e4e4df; border-radius: 5px; overflow: hidden;">
+        <div style="display: flex; flex-direction: column; gap: 3px; padding: 16px 20px; background: #ffffff;">
+          <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.4px; text-transform: uppercase;">Last full run</span>
+          <span class="mono" style="font-size: 19px; font-weight: 600;">4m 48s</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 3px; padding: 16px 20px; background: #ffffff;">
+          <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.4px; text-transform: uppercase;">Per tender</span>
+          <span class="mono" style="font-size: 19px; font-weight: 600;">71ms</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 3px; padding: 16px 20px; background: #ffffff;">
+          <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.4px; text-transform: uppercase;">Manual benchmark</span>
+          <span class="mono" style="font-size: 19px; font-weight: 600; color: #6b7178;">~2 hours</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 3px; padding: 16px 20px; background: #ffffff;">
+          <span style="font-size: 10px; color: #7c828c; letter-spacing: 0.4px; text-transform: uppercase;">Scored results</span>
+          <span class="mono" style="font-size: 19px; font-weight: 600;">8,164</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e4e4df; border-radius: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #ededea;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;">Recent runs</h2>
+          <span style="font-size: 11px; color: #7c828c;">Every run is recorded, including the ones that were skipped</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 180px 96px 88px 100px 96px minmax(0, 1fr); gap: 14px; padding: 9px 20px; background: #fafaf8; border-bottom: 1px solid #ededea;">
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Job</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Status</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Duration</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Discovered</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Scored</span>
+          <span style="font-size: 10px; font-weight: 600; color: #7c828c; letter-spacing: 0.5px; text-transform: uppercase;">Started</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: grid; grid-template-columns: 180px 96px 88px 100px 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span class="mono" style="font-size: 12px;">rescore:ALL</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #1f5c3d;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #1f5c3d;"></span>Success</span>
+            <span class="mono" style="font-size: 12px;">4m 48s</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">&mdash;</span>
+            <span class="mono" style="font-size: 12px;">8,164</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">08 Sep 16:05</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 180px 96px 88px 100px 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef; background: #fdfaf5;">
+            <span class="mono" style="font-size: 12px;">rescore:ALL</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #7c828c;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #b8bcc2;"></span>Skipped</span>
+            <span class="mono" style="font-size: 12px;">0s</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">&mdash;</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">&mdash;</span>
+            <span style="font-size: 11px; color: #8a5209;">another job was already running</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 180px 96px 88px 100px 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span class="mono" style="font-size: 12px;">reconcile:WORLD_BANK</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #1f5c3d;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #1f5c3d;"></span>Success</span>
+            <span class="mono" style="font-size: 12px;">18.9s</span>
+            <span class="mono" style="font-size: 12px;">2,100</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">0</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">08 Sep 15:41</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 180px 96px 88px 100px 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f2f2ef;">
+            <span class="mono" style="font-size: 12px;">reconcile:EGP_BANGLADESH</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #1f5c3d;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #1f5c3d;"></span>Success</span>
+            <span class="mono" style="font-size: 12px;">5.3s</span>
+            <span class="mono" style="font-size: 12px;">1,982</span>
+            <span class="mono" style="font-size: 12px;">1,882</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">08 Sep 15:41</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 180px 96px 88px 100px 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 11px 20px;">
+            <span class="mono" style="font-size: 12px;">manual:EGP_BANGLADESH</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #1f5c3d;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #1f5c3d;"></span>Success</span>
+            <span class="mono" style="font-size: 12px;">0.3s</span>
+            <span class="mono" style="font-size: 12px;">100</span>
+            <span class="mono" style="font-size: 12px;">100</span>
+            <span class="mono" style="font-size: 12px; color: #6b7178;">08 Sep 15:33</span>
+          </div>
+        </div>
+
+        <div style="padding: 13px 20px; background: #fafaf8; border-top: 1px solid #ededea;">
+          <span style="font-size: 11px; color: #6b7178; line-height: 1.6;">A reconcile re-reads tenders already stored, which is how amended notices and re-parsed fields get picked up. The 0 scored against World Bank above is correct &mdash; nothing had changed since the previous run.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

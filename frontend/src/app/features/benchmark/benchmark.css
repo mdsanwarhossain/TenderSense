@@ -1,0 +1,42 @@
+.cols { grid-template-columns: 90px 90px minmax(0, 1fr) 96px; }
+.titles { display: flex; flex-direction: column; gap: 6px; max-width: 900px; }
+.body { display: flex; flex-direction: column; gap: 20px; }
+.top { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; align-items: start; }
+
+.scores { padding-bottom: 0; }
+.matcher {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 20px 8px;
+}
+.who { display: flex; flex-direction: column; gap: 3px; }
+.name { font-size: 13px; font-weight: 600; }
+.figure { display: flex; align-items: baseline; gap: 8px; }
+.num { font-size: 26px; font-weight: 600; letter-spacing: -0.6px; }
+.of { font-size: 12px; color: var(--ink-4); }
+.bar { height: 5px; margin: 0 20px 8px; border-radius: 3px; background: var(--accent-wash); }
+.fill { display: block; height: 5px; border-radius: 3px; }
+.fill.semantic { background: var(--accent); }
+.fill.keyword { background: #9aa5a3; }
+
+.verdict { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-sm); }
+.verdict.tie { background: var(--warn-wash); color: var(--warn); }
+.verdict.semantic { background: var(--ok-wash); color: var(--ok); }
+.verdict.keyword { background: #f0f0ed; color: var(--ink-3); }
+
+.caveat {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-top: 8px; padding: 15px 20px;
+  background: var(--warn-row); border-top: 1px solid var(--line-2);
+  color: var(--warn-ink); font-size: 11px; line-height: 1.65;
+}
+
+.steps { margin: 0; padding: 16px 20px 16px 38px; font-size: 12px; line-height: 1.8; color: var(--ink-2); }
+.steps .mono { color: var(--ink); font-weight: 500; }
+
+.rank { font-size: 12px; color: var(--ink-3); }
+.rank.top { color: var(--ink); font-weight: 600; }
+.trow.hit { background: #f4f8f7; }
+.trow.hit:hover { background: #eef4f3; }
+.title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rel { font-size: 11px; color: var(--ink-4); }
+.rel.yes { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-weight: 500; }

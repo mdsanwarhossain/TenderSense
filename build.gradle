@@ -1,0 +1,101 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.bracit'
+version = '0.0.1-SNAPSHOT'
+description = 'TenderSense'
+
+java {
+    toolchain {
+        // JDK 21 (~/.jdks/ms-21.0.8). Note: JAVA_HOME on this machine points at a
+        // deleted openjdk-25 directory, so builds need JAVA_HOME overridden or
+        // org.gradle.java.home set in gradle.properties.
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+ext {
+    springAiVersion = '2.0.1'
+    seleniumVersion = '4.48.0'
+    jsoupVersion = '1.23.2'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Local ONNX embeddings (all-MiniLM-L6-v2): no API key, no network, runs in-JVM.
+    implementation 'org.springframework.ai:spring-ai-starter-model-transformers'
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+
+    // e-GP ingestion: Selenium drives the JS-rendered listing, Jsoup parses detail pages.
+    implementation "org.seleniumhq.selenium:selenium-java:${seleniumVersion}"
+    implementation "org.jsoup:jsoup:${jsoupVersion}"
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// --- Angular ---------------------------------------------------------------
+// Builds the frontend and copies it into static/ so `bootRun` serves one origin
+// with no proxy and no CORS. Run `./gradlew ngBuild bootRun` for the demo build.
+def frontendDir = file('frontend')
+def frontendOut = file('src/main/resources/static')
+
+tasks.register('ngInstall', Exec) {
+    description = 'Installs frontend dependencies'
+    workingDir frontendDir
+    commandLine 'npm', 'ci'
+    onlyIf { !file('frontend/node_modules').exists() }
+}
+
+tasks.register('ngCompile', Exec) {
+    description = 'Produces a production Angular bundle'
+    dependsOn 'ngInstall'
+    workingDir frontendDir
+    commandLine 'npx', 'ng', 'build', '--configuration', 'production'
+    inputs.dir file('frontend/src')
+    inputs.file file('frontend/package.json')
+    outputs.dir file('frontend/dist')
+}
+
+tasks.register('ngBuild', Copy) {
+    description = 'Copies the Angular bundle into the Spring static resources'
+    dependsOn 'ngCompile'
+    // Angular 17+ emits the browser bundle under dist/<project>/browser.
+    from file('frontend/dist/frontend/browser')
+    into frontendOut
+}
+
+tasks.register('ngClean', Delete) {
+    delete frontendOut
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

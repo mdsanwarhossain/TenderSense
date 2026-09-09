@@ -1,0 +1,178 @@
+@if (error(); as message) {
+  <div class="page-body"><div class="banner error">{{ message }}</div></div>
+} @else if (loading()) {
+  <div class="state"><span class="spinner"></span> Loading tender…</div>
+} @else if (tender(); as t) {
+
+  <header class="tender-head">
+    <div class="crumb">
+      <a routerLink="/shortlist">Morning shortlist</a>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#b8bcc2" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="mono">{{ t.externalId }}</span>
+    </div>
+
+    <div class="head-row">
+      <div class="identity">
+        <ts-grade-badge [grade]="evidence()?.grade ?? null" class="big" />
+        <div class="titles">
+          <h1>{{ t.title ?? '(untitled tender)' }}</h1>
+          <div class="meta">
+            <span>{{ sourceLabel(t.source) }}</span>
+            @if (t.procuringEntity) { <span class="sep">/</span><span>{{ t.procuringEntity }}</span> }
+            @if (t.referenceNo) { <span class="sep">/</span><span class="mono">{{ t.referenceNo }}</span> }
+          </div>
+        </div>
+      </div>
+
+      <div class="figures">
+        <div class="figure">
+          <span class="label">Match score</span>
+          <span class="mono big-num">{{ evidence()?.score | number: '1.3-3' }}</span>
+        </div>
+        <div class="figure">
+          <span class="label">Closes in</span>
+          <span class="mono big-num" [class.warn]="(t.daysToDeadline ?? 99) <= 7">
+            {{ t.daysToDeadline !== null ? t.daysToDeadline + 'd' : '—' }}
+          </span>
+        </div>
+        @if (evidence()?.recommendation; as rec) {
+          <span class="rec" [class.bid]="rec === 'BID'">{{ rec }}</span>
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="body">
+    <div class="col">
+      <section class="card">
+        <div class="card-head"><h2>Tender particulars</h2></div>
+        <div class="facts">
+          <div class="fact"><span class="label">Ministry</span><span>{{ t.ministry ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Division</span><span>{{ t.division ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Organization</span><span>{{ t.organization ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Procuring entity</span><span>{{ t.procuringEntity ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Procurement method</span><span>{{ t.procurementMethod ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Nature / type</span><span>{{ t.procurementNature ?? '—' }} @if (t.procurementType) { · {{ t.procurementType }} }</span></div>
+          <div class="fact"><span class="label">Source of funds</span><span>{{ t.sourceOfFunds ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Published</span><span class="mono">{{ t.publishedAt ? (t.publishedAt | date: 'dd MMM y HH:mm') : '—' }}</span></div>
+          <div class="fact"><span class="label">Closing</span><span class="mono">{{ t.closingAt ? (t.closingAt | date: 'dd MMM y HH:mm') : 'not stated' }}</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Eligibility text</h2>
+          <span class="hint">Verbatim from the portal — the rules engine reads this</span>
+        </div>
+        <div class="prose">
+          @if (t.eligibilityText) { {{ t.eligibilityText }} }
+          @else { <span class="muted">The portal states no eligibility text for this tender.</span> }
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Provenance</h2>
+          <span class="hint">Every score traces back to a stored source document</span>
+        </div>
+        <div class="facts two">
+          <div class="fact"><span class="label">Source snapshot</span><span class="mono break">{{ t.rawSnapshotPath ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Content hash</span><span class="mono break">{{ t.contentHash ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Embedding model</span><span class="mono">{{ evidence()?.modelVersion ?? '—' }}</span></div>
+          <div class="fact"><span class="label">Revisions</span><span class="mono">{{ t.revisionCount }}</span></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <div class="card-head col-head">
+          <h2>Why this matched</h2>
+          <span class="hint">Each row is one BracIT capability compared against this tender. The score is 60% of the strongest pair plus 40% of the top three.</span>
+        </div>
+
+        @if (evidence()?.evidence?.length) {
+          @for (e of evidence()!.evidence; track $index; let first = $first) {
+            <div class="ev">
+              <div class="ev-head">
+                <span class="label">{{ first ? 'Strongest pair' : 'Supporting' }}</span>
+                <span class="mono ev-score" [class.strong]="first">{{ e.similarity | number: '1.3-3' }}</span>
+              </div>
+              <span class="track"><span class="fill" [class.strong]="first" [style.width.%]="e.similarity * 100"></span></span>
+              @if (e.similarity < evidenceFloor) {
+                <span class="weak">Below the threshold used for the written summary.</span>
+              }
+              <div class="pair">
+                <span class="side ours">OURS</span>
+                <span class="text">{{ e.profileText }}</span>
+              </div>
+              <div class="pair">
+                <span class="side">THEIRS</span>
+                <span class="text">{{ e.tenderText }}</span>
+              </div>
+            </div>
+          }
+          @if (evidence()?.summary) {
+            <div class="card-note">{{ evidence()!.summary }}</div>
+          }
+        } @else {
+          <div class="state">Not yet scored.</div>
+        }
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Eligibility check</h2>
+          <ts-eligibility-chip [status]="eligibility()?.status ?? null" />
+        </div>
+
+        @if (blockingGaps().length === 0 && checkGaps().length === 0) {
+          <div class="gap ok-row">
+            <span class="gap-title">All checked requirements met</span>
+            <span class="hint">Turnover, certifications and geography all pass.</span>
+          </div>
+        }
+        @for (g of blockingGaps(); track g.ruleCode) {
+          <div class="gap blocking">
+            <div class="gap-body">
+              <span class="gap-title">{{ g.requirement ?? g.ruleCode }}</span>
+              @if (g.actual) { <span class="hint">{{ g.actual }}</span> }
+              @if (g.message) { <span class="gap-msg bad">{{ g.message }}</span> }
+            </div>
+          </div>
+        }
+        @for (g of checkGaps(); track g.ruleCode) {
+          <div class="gap check">
+            <div class="gap-body">
+              <span class="gap-title">{{ g.requirement ?? g.ruleCode }}</span>
+              @if (g.actual) { <span class="hint">{{ g.actual }}</span> }
+              @if (g.message) { <span class="gap-msg warn">{{ g.message }}</span> }
+            </div>
+          </div>
+        }
+
+        <div class="card-note">
+          Rules applied: {{ eligibility()?.rulesApplied ?? '—' }}. Fixed rules, no model — eligibility is a
+          compliance question, so it is never inferred.
+        </div>
+      </section>
+
+      <section class="card decide">
+        <span class="label">Record the team's decision</span>
+        @if (savedAction(); as saved) {
+          <div class="saved">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            Recorded as {{ saved }}
+          </div>
+        } @else {
+          <div class="buttons">
+            <button class="btn btn-primary" (click)="record('BID')" [disabled]="saving()">Bid</button>
+            <button class="btn" (click)="record('HOLD')" [disabled]="saving()">Hold</button>
+            <button class="btn" (click)="record('SKIP')" [disabled]="saving()">Skip</button>
+          </div>
+          <span class="hint">Skips are kept as negative examples and feed back into ranking.</span>
+        }
+      </section>
+    </div>
+  </div>
+}

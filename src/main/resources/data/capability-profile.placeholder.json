@@ -1,0 +1,137 @@
+{
+  "_PLACEHOLDER": "DUMMY DATA - replace with the real BracIT capability profile from the project owner (Aisha Tanjina, PIN 2348). Turnover and past projects are invented. Certifications are the only entries taken from a real source: the BRD footer states CMMI Dev/3, ISO 27001, ISO 9001.",
+  "orgName": "BRAC IT Services Limited (BracIT)",
+  "summary": "BracIT delivers software development, systems integration and managed IT services to government, development-sector and enterprise clients in Bangladesh and internationally. Core strengths are management information systems, digital transformation programmes, financial technology platforms and long-running IT capacity-building engagements.",
+  "annualTurnoverBdt": 1200000000,
+  "services": [
+    "Custom software design and development",
+    "Management information system (MIS) design, development and rollout",
+    "Enterprise resource planning (ERP) implementation and support",
+    "ICT systems implementation and systems integration",
+    "Digital transformation advisory and IT strategy consulting",
+    "Web and mobile application development",
+    "Financial technology and digital financial services platforms",
+    "Core banking and microfinance system implementation",
+    "Data analytics, reporting and business intelligence",
+    "IT infrastructure design, deployment and managed services",
+    "Cloud migration and cloud managed services",
+    "Cyber security assessment and information security management",
+    "IT capacity building, training and knowledge transfer",
+    "Software quality assurance and independent testing services",
+    "IT outsourcing and dedicated technical resource provision",
+    "Geographic information system (GIS) and spatial data solutions",
+    "Beneficiary registration and social protection delivery systems",
+    "Health information systems and eHealth platforms",
+    "Education management information systems",
+    "e-Governance and public service digitisation"
+  ],
+  "geographies": [
+    "Bangladesh",
+    "South Asia",
+    "Asia",
+    "International"
+  ],
+  "certifications": [
+    { "code": "CMMI3",    "name": "CMMI for Development, Maturity Level 3", "validUntil": "2027-12-31" },
+    { "code": "ISO27001", "name": "ISO/IEC 27001 Information Security Management", "validUntil": "2027-12-31" },
+    { "code": "ISO9001",  "name": "ISO 9001 Quality Management System", "validUntil": "2027-12-31" }
+  ],
+  "pastProjects": [
+    {
+      "title": "National social protection beneficiary management system",
+      "client": "Government social welfare programme",
+      "description": "Design and rollout of a beneficiary registration, targeting and payment reconciliation MIS serving several million households, including field data collection, grievance handling and disbursement reporting.",
+      "sector": "Social protection",
+      "valueBdt": 210000000,
+      "year": 2024
+    },
+    {
+      "title": "Microfinance core banking platform modernisation",
+      "client": "Large microfinance institution",
+      "description": "Replacement of a legacy loan management system with a modern core banking platform covering disbursement, collections, savings products and regulatory reporting across a nationwide branch network.",
+      "sector": "Financial services",
+      "valueBdt": 180000000,
+      "year": 2023
+    },
+    {
+      "title": "Digital financial services and mobile wallet integration",
+      "client": "Financial services provider",
+      "description": "Development of payment orchestration and mobile wallet integration services, including agent banking interfaces, transaction reconciliation and fraud monitoring.",
+      "sector": "Financial technology",
+      "valueBdt": 145000000,
+      "year": 2023
+    },
+    {
+      "title": "Health management information system for primary care",
+      "client": "Health sector development programme",
+      "description": "Nationwide eHealth platform capturing patient registration, service delivery statistics and commodity stock levels from primary care facilities, with dashboards for district health managers.",
+      "sector": "Health",
+      "valueBdt": 160000000,
+      "year": 2022
+    },
+    {
+      "title": "Education management information system",
+      "client": "Education sector authority",
+      "description": "Student, teacher and institution registry with examination processing, stipend management and analytics for planning units.",
+      "sector": "Education",
+      "valueBdt": 120000000,
+      "year": 2022
+    },
+    {
+      "title": "e-Governance service digitisation programme",
+      "client": "Government ICT division",
+      "description": "Digitisation of citizen-facing services including workflow automation, digital forms, payment gateway integration and interoperability with national identity infrastructure.",
+      "sector": "Public administration",
+      "valueBdt": 195000000,
+      "year": 2024
+    },
+    {
+      "title": "Enterprise resource planning implementation",
+      "client": "Large non-governmental organisation",
+      "description": "Finance, procurement, inventory and human resources modules deployed across country offices, with data migration and change management support.",
+      "sector": "Enterprise systems",
+      "valueBdt": 98000000,
+      "year": 2021
+    },
+    {
+      "title": "IT capacity building and technical resource outsourcing",
+      "client": "Development partner programme",
+      "description": "Multi-year provision of dedicated software engineering, quality assurance and infrastructure staff, alongside structured training and knowledge transfer to government counterparts.",
+      "sector": "Capacity building",
+      "valueBdt": 87000000,
+      "year": 2023
+    },
+    {
+      "title": "Cloud migration and managed infrastructure services",
+      "client": "Financial sector client",
+      "description": "Migration of core applications to a hybrid cloud environment with 24x7 managed operations, backup, disaster recovery and security monitoring.",
+      "sector": "Infrastructure",
+      "valueBdt": 76000000,
+      "year": 2024
+    },
+    {
+      "title": "Information security assessment and ISMS rollout",
+      "client": "Regulated financial institution",
+      "description": "Security gap assessment, penetration testing, policy development and support for ISO 27001 aligned information security management system implementation.",
+      "sector": "Cyber security",
+      "valueBdt": 54000000,
+      "year": 2023
+    },
+    {
+      "title": "Geographic information system for infrastructure planning",
+      "client": "Public infrastructure agency",
+      "description": "Spatial data platform for asset mapping, condition survey capture and planning analytics, integrated with existing project monitoring systems.",
+      "sector": "GIS",
+      "valueBdt": 64000000,
+      "year": 2021
+    },
+    {
+      "title": "Independent software quality assurance services",
+      "client": "Government digital programme",
+      "description": "Independent verification and validation of vendor-delivered systems, including functional, performance and security test execution and defect governance.",
+      "sector": "Quality assurance",
+      "valueBdt": 42000000,
+      "year": 2022
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+<header class="page-header">
+  <div class="titles">
+    <h1>Does meaning beat keywords?</h1>
+    <span class="sub">Both systems rank the same held-out tenders. Neither sees the labels.
+      The only thing being measured is the order they put them in.</span>
+  </div>
+</header>
+
+@if (error(); as message) {
+  <div class="page-body"><div class="banner error">{{ message }}</div></div>
+} @else if (loading()) {
+  <div class="state"><span class="spinner"></span> Running the comparison…</div>
+} @else if (result(); as r) {
+  <div class="page-body body">
+
+    <div class="top">
+      <section class="card scores">
+        <div class="card-head">
+          <h2>Precision&#64;{{ r.k }} on the held-out set</h2>
+          @if (verdict(); as v) {
+            <span class="verdict" [class]="v">
+              {{ v === 'tie' ? 'No separation' : v === 'semantic' ? 'Semantic ahead' : 'Keyword ahead' }}
+            </span>
+          }
+        </div>
+
+        <div class="matcher">
+          <div class="who">
+            <span class="name">Semantic</span>
+            <span class="hint">local ONNX embeddings, 384 dimensions</span>
+          </div>
+          <div class="figure">
+            <span class="mono num">{{ r.semantic.precisionAtK | number: '1.3-3' }}</span>
+            <span class="mono of">{{ r.semantic.hits }} / {{ r.semantic.total }}</span>
+          </div>
+        </div>
+        <div class="bar"><span class="fill semantic" [style.width.%]="r.semantic.precisionAtK * 100"></span></div>
+
+        <div class="matcher">
+          <div class="who">
+            <span class="name">Keyword baseline</span>
+            <span class="hint">PostgreSQL full-text ranking over the profile's terms</span>
+          </div>
+          <div class="figure">
+            <span class="mono num">{{ r.keyword.precisionAtK | number: '1.3-3' }}</span>
+            <span class="mono of">{{ r.keyword.hits }} / {{ r.keyword.total }}</span>
+          </div>
+        </div>
+        <div class="bar"><span class="fill keyword" [style.width.%]="r.keyword.precisionAtK * 100"></span></div>
+
+        @if (r.caveat) {
+          <div class="caveat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg>
+            <span>{{ r.caveat }}</span>
+          </div>
+        }
+      </section>
+
+      <section class="card method">
+        <div class="card-head"><h2>How this is measured</h2></div>
+        <ol class="steps">
+          <li>Take the <span class="mono">{{ r.heldOutCount }}</span> held-out tenders, of which
+              <span class="mono">{{ relevantCount() }}</span> are labelled relevant.</li>
+          <li>Rank that same pool with each matcher, using scores stored before this page loaded.</li>
+          <li>Count how many of each system's top <span class="mono">{{ r.k }}</span> are actually relevant.</li>
+        </ol>
+        <div class="card-note">
+          The keyword baseline is a real implementation, not a strawman — beating a crippled
+          opponent would demonstrate nothing. What it structurally cannot do is match a tender
+          that describes our work in words we do not use.
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Where each system placed the held-out tenders</h2>
+        <span class="hint">Lower rank is better</span>
+      </div>
+
+      <div class="thead cols">
+        <span>Semantic</span><span>Keyword</span><span>Tender</span><span>Relevant</span>
+      </div>
+
+      @for (c of r.comparisons; track c.tenderId) {
+        <a class="trow cols" [class.hit]="c.labelledRelevant" [routerLink]="['/tenders', c.tenderId]">
+          <span class="mono rank" [class.top]="(c.semanticRank ?? 99) <= r.k">{{ c.semanticRank ?? '—' }}</span>
+          <span class="mono rank" [class.top]="(c.keywordRank ?? 99) <= r.k">{{ c.keywordRank ?? '—' }}</span>
+          <span class="title">{{ c.title ?? '(untitled)' }}</span>
+          @if (c.labelledRelevant) {
+            <span class="rel yes">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              yes
+            </span>
+          } @else {
+            <span class="rel">no</span>
+          }
+        </a>
+      }
+
+      @if (r.comparisons.length === 0) {
+        <div class="state">No held-out tenders are present in the corpus yet.</div>
+      }
+    </section>
+  </div>
+}
