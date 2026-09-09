@@ -1,5 +1,7 @@
 package com.bracit.tendersense.service.impl;
 
+import com.bracit.tendersense.dto.ProfileUpdateRequest;
+import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.entity.CapabilityProfile;
 import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Certification;
@@ -7,10 +9,12 @@ import com.bracit.tendersense.entity.PastProject;
 import com.bracit.tendersense.exception.NotFoundException;
 import com.bracit.tendersense.repository.CapabilityProfileRepository;
 import com.bracit.tendersense.service.AccountService;
+import com.bracit.tendersense.service.MatchingService;
 import com.bracit.tendersense.service.CapabilityProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
@@ -36,6 +40,7 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
 
     private final CapabilityProfileRepository repository;
     private final AccountService accountService;
+    private final ObjectProvider<MatchingService> matcherProvider;
     private final com.bracit.tendersense.repository.OrganisationRepository organisationRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -179,5 +184,149 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
         } catch (Exception e) {
             return null;
         }
+    }
+    @Override
+    @Transactional
+    public CapabilityProfile update(Organisation organisation, ProfileUpdateRequest request) {
+        CapabilityProfile profile = repository.findByOrganisationId(organisation.getId())
+                .orElseThrow(() -> new NotFoundException(
+                        "no capability profile for " + organisation.getSlug()));
+
+        String name = text(request.orgName());
+        if (name == null) {
+            throw new IllegalArgumentException("Enter your company name");
+        }
+        List<String> services = cleaned(request.services());
+        if (services.isEmpty()) {
+            // Without a single capability statement there is nothing to compare a tender
+            // against, and every score would be zero. Better to refuse the save than to
+            // let someone wonder why their shortlist emptied.
+            throw new IllegalArgumentException("Keep at least one service line");
+        }
+        List<Sector> sectors = parseSectors(request.sectors());
+        if (sectors.isEmpty()) {
+            throw new IllegalArgumentException("Keep at least one sector");
+        }
+
+        profile.setOrgName(name);
+        profile.setSummary(text(request.summary()));
+        profile.setAnnualTurnoverBdt(request.annualTurnoverBdt());
+        replace(profile.getServices(), services);
+        replace(profile.getExclusions(), cleaned(request.exclusions()));
+        replace(profile.getGeographies(), cleaned(request.geographies()));
+
+        // orphanRemoval means clearing the collection deletes the rows; rebuilding it is
+        // simpler and safer than diffing, and these lists are a dozen entries at most.
+        profile.getPastProjects().clear();
+        for (ProfileUpdateRequest.ProjectInput in : nullSafe(request.pastProjects())) {
+            String title = text(in.title());
+            if (title == null) {
+                continue;
+            }
+            profile.getPastProjects().add(PastProject.builder()
+                    .profile(profile)
+                    .title(truncate(title, 512))
+                    .client(truncate(text(in.client()), 256))
+                    .description(text(in.description()))
+                    .sector(truncate(text(in.sector()), 128))
+                    .valueBdt(in.valueBdt())
+                    .year(in.year())
+                    .build());
+        }
+
+        profile.getCertifications().clear();
+        for (ProfileUpdateRequest.CertificationInput in : nullSafe(request.certifications())) {
+            String code = text(in.code());
+            if (code == null) {
+                continue;
+            }
+            profile.getCertifications().add(Certification.builder()
+                    .profile(profile)
+                    .code(truncate(code, 64))
+                    .name(truncate(text(in.name()), 256))
+                    .validUntil(parseValidUntil(in.validUntil()))
+                    .build());
+        }
+
+        profile.setUpdatedAt(Instant.now());
+        CapabilityProfile saved = repository.save(profile);
+
+        organisation.setName(name);
+        organisation.setSectors(new ArrayList<>(sectors));
+        organisationRepository.save(organisation);
+
+        // Both matchers cache per-company profile vectors and tsqueries. Without this the
+        // next score would silently use the wording that was just replaced.
+        matcherProvider.forEach(m -> m.invalidate(organisation));
+
+        log.info("{}: profile updated -- {} services, {} exclusions, {} sectors",
+                organisation.getSlug(), services.size(),
+                profile.getExclusions().size(), sectors.size());
+        return saved;
+    }
+
+    private List<Sector> parseSectors(List<String> raw) {
+        List<Sector> out = new ArrayList<>();
+        for (String s : nullSafe(raw)) {
+            String v = text(s);
+            if (v == null) {
+                continue;
+            }
+            try {
+                Sector sector = Sector.valueOf(v);
+                if (sector != Sector.OTHER && !out.contains(sector)) {
+                    out.add(sector);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Unknown sector: " + v);
+            }
+        }
+        return out;
+    }
+
+    /** Distinct from the seeder's lenient parseDate: an edit should report a bad date. */
+    private static java.time.LocalDate parseValidUntil(String raw) {
+        String v = text(raw);
+        if (v == null) {
+            return null;
+        }
+        try {
+            return java.time.LocalDate.parse(v);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new IllegalArgumentException("Use YYYY-MM-DD for certification dates, got: " + v);
+        }
+    }
+
+    private static List<String> cleaned(List<String> raw) {
+        List<String> out = new ArrayList<>();
+        for (String s : nullSafe(raw)) {
+            String v = text(s);
+            if (v != null && !out.contains(v)) {
+                out.add(truncate(v, 512));
+            }
+        }
+        return out;
+    }
+
+    /** Mutates in place: Hibernate tracks the collection instance it handed us. */
+    private static void replace(List<String> target, List<String> values) {
+        target.clear();
+        target.addAll(values);
+    }
+
+    private static <T> List<T> nullSafe(List<T> in) {
+        return in == null ? List.of() : in;
+    }
+
+    private static String text(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    private static String truncate(String s, int max) {
+        return s == null || s.length() <= max ? s : s.substring(0, max);
     }
 }

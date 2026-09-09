@@ -42,8 +42,17 @@ public class PipelineController {
      * embedding-model change, since both invalidate previously stored scores.
      */
     @PostMapping("/rescore")
-    public PipelineRunResponse rescore() {
-        return pipelineService.rescore();
+    public PipelineRunResponse rescore(@CurrentOrganisation Organisation organisation) {
+        return pipelineService.rescore(organisation);
+    }
+
+    /**
+     * Re-scores every company. Separate from the button above so that one company's
+     * profile edit cannot spend everyone else's compute.
+     */
+    @PostMapping("/rescore-all")
+    public PipelineRunResponse rescoreAll() {
+        return pipelineService.rescoreAll();
     }
 
     /** What the 08:00 Asia/Dhaka digest reports, on demand. */

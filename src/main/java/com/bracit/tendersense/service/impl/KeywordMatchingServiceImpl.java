@@ -146,6 +146,7 @@ public class KeywordMatchingServiceImpl implements MatchingService {
         return query;
     }
 
+    @Override
     public void invalidate(Organisation organisation) {
         queryByOrganisation.remove(organisation.getId());
     }

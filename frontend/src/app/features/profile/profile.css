@@ -1,59 +1,109 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
+:host { display: flex; flex-direction: column; gap: 16px; padding-bottom: 90px; }
+
+.card-head h2 { font-size: 15.5px; font-weight: 800; letter-spacing: -0.2px; margin: 0; }
+
+/* ---- editors ---- */
+.editor { display: flex; flex-direction: column; gap: 10px; padding: 4px 22px 20px; }
+
+.line { display: flex; align-items: center; gap: 8px; }
+.line input,
+.field input,
+.field textarea,
+.row-3 input,
+.project textarea {
+  flex: 1; min-width: 0;
+  padding: 10px 13px;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--ink);
+  font-family: inherit; font-size: 13.2px; line-height: 1.5;
+}
+.field textarea, .project textarea { resize: vertical; }
+.line input:focus,
+.field input:focus,
+.field textarea:focus,
+.row-3 input:focus,
+.project textarea:focus {
+  outline: none; background: var(--surface);
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.mono { font-family: var(--mono); }
+
+/* A flagged service line is coloured *and* left-marked: colour alone is not a signal. */
+.line.flagged input {
+  border-left: 3px solid var(--warn);
+  background: var(--warn-wash);
+}
+.line.negative input {
+  border-left: 3px solid var(--bad);
+  background: #fdf6f8;
+  color: #8d3350;
 }
 
-.cols-proj { grid-template-columns: minmax(240px, 1fr) 170px 130px 70px; }
-.table { min-width: 640px; }
-
-/* ---- service lines ---- */
-.tags { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 22px 20px; }
-.tag {
-  padding: 7px 13px;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  border: 1px solid var(--line);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-2);
+.remove {
+  flex: none;
+  width: 30px; height: 30px; border-radius: var(--r-sm);
+  border: 1px solid transparent; background: transparent;
+  color: var(--ink-4); font-size: 17px; line-height: 1; cursor: pointer;
 }
-/* A flagged statement is the cause of a bad shortlist, so it is marked on the
-   screen that can fix it. */
-.tag.noisy { background: var(--warn-wash); border-color: var(--warn-edge); color: var(--warn); }
-.tags.tight { padding: 0; }
+.remove:hover { background: var(--bad-wash); color: var(--bad); border-color: var(--bad-wash); }
+.remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-.swatch {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-right: 7px;
-  vertical-align: -1px;
-  border-radius: 3px;
+.add {
+  align-self: flex-start;
+  padding: 9px 14px;
+  border: 1px dashed var(--line); border-radius: var(--r-sm);
+  background: transparent; color: var(--ink-3);
+  font-family: inherit; font-size: 12.8px; font-weight: 700; cursor: pointer;
+}
+.add:hover { border-color: var(--accent); color: var(--accent); }
+.add:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field .hint { font-size: 11.5px; color: var(--ink-4); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.line.compact input { padding: 8px 11px; font-size: 12.6px; }
+
+.row-3 {
+  display: grid;
+  grid-template-columns: 150px 1fr 170px 30px;
+  gap: 8px; align-items: center;
+}
+.project { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line-soft); border-radius: var(--r); background: var(--surface-2); }
+.project textarea { background: var(--surface); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chips .chip { font-family: inherit; }
+.chips .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- banners ---- */
+.banner.welcome {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-wash);
+  border-left: 3px solid var(--accent);
+}
+.banner.stale {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
   background: var(--warn-wash);
   border: 1px solid var(--warn-edge);
+  border-left: 3px solid var(--warn);
 }
+.banner.stale .banner-title { color: var(--warn); }
 
-/* ---- organisation facts ---- */
-.fact-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px 22px;
-  border-top: 1px solid var(--line-soft);
+/* ---- save bar ---- */
+.savebar {
+  position: sticky; bottom: 16px; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-top: 4px; padding: 13px 20px;
+  border-radius: var(--r); background: var(--ink); color: #fff;
+  box-shadow: 0 18px 40px -18px rgba(23, 20, 60, 0.6);
 }
-.fact-block .strong { font-size: 15px; font-weight: 700; }
-.turnover { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.savebar .sd { font-size: 12.8px; font-weight: 700; }
+.savebar .acts { display: flex; gap: 9px; }
+.savebar .btn { border-color: rgba(255, 255, 255, 0.22); background: transparent; color: #fff; }
+.savebar .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.savebar .btn-primary { background: var(--accent); border-color: var(--accent); }
 
-/* ---- certifications ---- */
-.cert {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 22px;
-  border-top: 1px solid var(--line-soft);
+@media (max-width: 860px) {
+  .two { grid-template-columns: 1fr; }
+  .row-3 { grid-template-columns: 1fr 30px; }
 }
-.cert-body { display: flex; flex-direction: column; gap: 2px; }
-.cert-body .code { font-size: 13px; font-weight: 600; }

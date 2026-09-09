@@ -26,8 +26,16 @@ public interface PipelineService {
     /** Runs one source by portal, if a bean for it is active. */
     PipelineRunResponse runSource(SourcePortal portal, boolean full);
 
-    /** Re-scores every stored tender. Needed after a capability-profile edit. */
-    PipelineRunResponse rescore();
+    /**
+     * Re-scores every stored tender for one company. This is what the Re-score button
+     * on the profile editor calls: a company that edited its own wording must not spend
+     * its click recomputing every other company's scores and holding the pipeline lock
+     * for all of them.
+     */
+    PipelineRunResponse rescore(Organisation organisation);
+
+    /** Re-scores every active company. The scheduler's path, and manual admin use. */
+    PipelineRunResponse rescoreAll();
 
     /** The morning shortlist: what the 08:00 digest reports. */
     DigestResponse digest(Organisation organisation);

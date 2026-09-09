@@ -1,6 +1,7 @@
 package com.bracit.tendersense.repository;
 
 import com.bracit.tendersense.entity.Tender;
+import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.entity.enums.SourcePortal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -44,4 +45,12 @@ public interface TenderRepository extends JpaRepository<Tender, Long> {
 
     @Query("select count(t) from Tender t where t.embedding is null or t.embeddingModel <> :model")
     long countNeedingEmbedding(@Param("model") String model);
+    /**
+     * How many tenders a company's sector gate admits -- what a re-score would cover.
+     * OTHER is included for everyone, matching the gate in ScoringServiceImpl.
+     */
+    @Query("select count(t) from Tender t where t.sector is null "
+            + "or t.sector = com.bracit.tendersense.entity.enums.Sector.OTHER "
+            + "or t.sector in :sectors")
+    long countInSectors(@Param("sectors") Collection<Sector> sectors);
 }

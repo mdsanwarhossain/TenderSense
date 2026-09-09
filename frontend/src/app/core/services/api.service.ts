@@ -3,8 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   BenchmarkResult, BidDecisionRequest, CapabilityProfile, EligibilityReport,
-  MatchEvidence, MatchGrade, PageResponse, PipelineRun, SourcePortal,
-  TenderDetail, TenderSummary,
+  MatchEvidence, MatchGrade, PageResponse, PipelineRun, ProfileStaleness,
+  SectorOption, SourcePortal, TenderDetail, TenderSummary,
 } from '../models/tender.models';
 
 /**
@@ -54,6 +54,27 @@ export class ApiService {
 
   getProfile(): Observable<CapabilityProfile | null> {
     return this.http.get<CapabilityProfile | null>(`${this.base}/profile`);
+  }
+
+  updateProfile(body: unknown): Observable<CapabilityProfile> {
+    return this.http.put<CapabilityProfile>(`${this.base}/profile`, body);
+  }
+
+  /** Whether the stored scores still reflect the stored profile. */
+  getStaleness(): Observable<ProfileStaleness> {
+    return this.http.get<ProfileStaleness>(`${this.base}/profile/staleness`);
+  }
+
+  listSectors(): Observable<SectorOption[]> {
+    return this.http.get<SectorOption[]>(`${this.base}/sectors`);
+  }
+
+  /**
+   * Re-scores this company's tenders against its current profile. Distinct from
+   * {@link runPipeline}, which collects new tenders from the portals.
+   */
+  rescore(): Observable<PipelineRun> {
+    return this.http.post<PipelineRun>(`${this.base}/pipeline/rescore`, null);
   }
 
   /** `full` runs the reconcile crawl; the default incremental sweep skips known ids. */

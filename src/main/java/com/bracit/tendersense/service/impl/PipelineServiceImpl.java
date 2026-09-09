@@ -85,9 +85,21 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
-    public PipelineRunResponse rescore() {
-        return pipelineLock.runExclusively("rescore", this::doRescore)
-                .orElseGet(() -> recordSkipped("rescore"));
+    public PipelineRunResponse rescore(Organisation organisation) {
+        String job = "rescore:" + organisation.getSlug();
+        return pipelineLock.runExclusively(job, () -> doRescore(job, () -> {
+                    int written = scoringService.rescoreEverything(organisation);
+                    scoringService.recalibrateGrades(organisation);
+                    return written;
+                }))
+                .orElseGet(() -> recordSkipped(job));
+    }
+
+    @Override
+    public PipelineRunResponse rescoreAll() {
+        return pipelineLock.runExclusively("rescore:ALL",
+                        () -> doRescore("rescore:ALL", scoringService::rescoreAllOrganisations))
+                .orElseGet(() -> recordSkipped("rescore:ALL"));
     }
 
     @Override
@@ -170,12 +182,12 @@ public class PipelineServiceImpl implements PipelineService {
         return toDto(run);
     }
 
-    private PipelineRunResponse doRescore() {
+    private PipelineRunResponse doRescore(String jobName, java.util.function.IntSupplier work) {
         Instant started = Instant.now();
         PipelineRun run = runRepository.save(PipelineRun.builder()
-                .jobName("rescore:ALL").status(RunStatus.RUNNING).startedAt(started).build());
+                .jobName(jobName).status(RunStatus.RUNNING).startedAt(started).build());
         try {
-            run.setTendersScored(scoringService.rescoreAllOrganisations());
+            run.setTendersScored(work.getAsInt());
             run.setStatus(RunStatus.SUCCESS);
         } catch (Exception e) {
             log.error("rescore failed", e);

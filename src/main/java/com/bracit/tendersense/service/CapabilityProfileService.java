@@ -20,5 +20,16 @@ public interface CapabilityProfileService {
     List<String> exclusionStatements(Organisation organisation);
 
     /** Seeds the profile from resources when the database has none. */
+    /**
+     * Replaces the editable parts of a company's profile and stamps {@code updatedAt}.
+     * Sectors live on the {@link Organisation} and are updated alongside, because the
+     * editor presents them as one screen.
+     *
+     * <p>Does not re-score: that is a separate, explicit action. See
+     * {@code POST /api/pipeline/rescore}.
+     */
+    CapabilityProfile update(Organisation organisation,
+                             com.bracit.tendersense.dto.ProfileUpdateRequest request);
+
     void seedMissing();
 }

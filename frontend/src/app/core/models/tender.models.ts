@@ -140,6 +140,8 @@ export interface CapabilityProfile {
   summary: string | null;
   annualTurnoverBdt: number | null;
   services: string[];
+  exclusions: string[];
+  sectors: string[];
   geographies: string[];
   pastProjects: {
     id: number; title: string; client: string | null; description: string | null;
@@ -162,4 +164,18 @@ export interface Organisation {
   description: string | null;
   sectors: string[];
   demonstration: boolean;
+}
+
+/** Whether the stored scores still reflect the stored profile. */
+export interface ProfileStaleness {
+  stale: boolean;
+  profileUpdatedAt: string | null;
+  lastScoredAt: string | null;
+  scoredCount: number;
+  scorable: number;
+}
+
+export interface SectorOption {
+  value: string;
+  label: string;
 }

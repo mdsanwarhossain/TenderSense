@@ -27,6 +27,15 @@ public interface MatchingService {
 
     Map<Long, ScoredMatch> scoreAll(Organisation organisation, List<Tender> tenders);
 
+    /**
+     * Drops any cached profile state for a company. Both implementations cache per-company
+     * vectors or a compiled tsquery, so an edited profile would otherwise keep scoring
+     * against the wording it replaced.
+     */
+    default void invalidate(Organisation organisation) {
+        // Stateless matchers need do nothing.
+    }
+
     default ScoredMatch score(Organisation organisation, Tender tender) {
         return scoreAll(organisation, List.of(tender))
                 .getOrDefault(tender.getId(), ScoredMatch.zero());

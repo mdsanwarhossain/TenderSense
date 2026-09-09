@@ -177,6 +177,7 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
         });
     }
 
+    @Override
     public void invalidate(Organisation organisation) {
         byOrganisation.remove(organisation.getId());
     }

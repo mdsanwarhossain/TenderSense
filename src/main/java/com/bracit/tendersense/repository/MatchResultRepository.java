@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,6 +90,12 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
                    @Param("upper") double upper);
 
     long countByOrganisationId(Long organisationId);
+
+    /** Newest score for a company -- compared against the profile's updatedAt. */
+    @Query("select max(m.computedAt) from MatchResult m where m.organisation.id = :orgId")
+    Instant lastComputedAt(@Param("orgId") Long organisationId);
+
+    long countByOrganisationIdAndMatcherType(Long organisationId, MatcherType matcherType);
 
     void deleteByOrganisationId(Long organisationId);
 }
