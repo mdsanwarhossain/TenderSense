@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
+import { OrgService } from '../../core/services/org.service';
 import { GradeBadge } from '../../shared/grade-badge';
 import { ScoreBar } from '../../shared/score-bar';
 import { EligibilityChip } from '../../shared/eligibility-chip';
@@ -12,12 +12,15 @@ import { MatchGrade, SourcePortal, TenderSummary } from '../../core/models/tende
 @Component({
   selector: 'ts-shortlist',
   standalone: true,
-  imports: [RouterLink, DatePipe, GradeBadge, ScoreBar, EligibilityChip, Deadline],
+  imports: [RouterLink, GradeBadge, ScoreBar, EligibilityChip, Deadline],
   templateUrl: './shortlist.html',
   styleUrl: './shortlist.css',
 })
 export class Shortlist {
   private readonly api = inject(ApiService);
+
+  /** Named on the page so a company switch is visible here, not just in the ranking. */
+  readonly org = inject(OrgService).current;
 
   readonly rows = signal<TenderSummary[]>([]);
   readonly total = signal(0);
@@ -32,10 +35,24 @@ export class Shortlist {
   readonly includeClosed = signal(false);
 
   readonly size = 25;
-  readonly today = new Date();
 
-  /** The API already ranks and filters; the page renders what it returns. */
-  readonly visible = computed(() => this.rows());
+  /**
+   * Free-text narrowing of the page already fetched. The API ranks and filters
+   * server-side; this only hides rows the reader is not looking at right now, so
+   * it is labelled as filtering the page rather than searching the corpus.
+   */
+  readonly query = signal('');
+
+  readonly visible = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    const rows = this.rows();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      `${r.title ?? ''} ${r.procuringEntity ?? ''}`.toLowerCase().includes(q),
+    );
+  });
+
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.size)));
 
   readonly counts = computed(() => {
     const rows = this.rows();
@@ -73,6 +90,10 @@ export class Shortlist {
         this.loading.set(false);
       },
     });
+  }
+
+  filter(value: string): void {
+    this.query.set(value);
   }
 
   toggleGrade(grade: MatchGrade): void {

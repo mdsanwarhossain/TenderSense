@@ -10,15 +10,19 @@ import { MatchGrade } from '../core/models/tender.models';
   standalone: true,
   template: `<span class="badge" [class]="'g-' + (grade() ?? 'none')">{{ grade() ?? '–' }}</span>`,
   styles: [`
+    :host { display: inline-flex; }
     .badge {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 30px; height: 24px; border-radius: var(--radius-sm);
-      font-size: 12px; font-weight: 700;
+      width: 34px; height: 30px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 800;
     }
-    .g-S { background: var(--accent); color: var(--surface); }
-    .g-A { background: var(--accent-tint); color: var(--accent); }
-    .g-B { background: var(--accent-wash); color: #46605e; }
-    .g-C, .g-none { border: 1px solid var(--line); color: #8a9090; }
+    .g-S { background: var(--accent); color: #fff; }
+    .g-A { background: var(--accent-wash); color: var(--accent-ink); }
+    .g-B { background: var(--surface-3); color: var(--ink-3); border: 1px solid var(--line); }
+    .g-C, .g-none { color: var(--ink-4); border: 1px dashed var(--line); }
+
+    /* The detail screen leads with the grade, so it gets a larger tile. */
+    :host(.big) .badge { width: 52px; height: 48px; font-size: 21px; border-radius: var(--r); }
   `],
 })
 export class GradeBadge {

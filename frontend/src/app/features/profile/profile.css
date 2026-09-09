@@ -1,41 +1,59 @@
-.titles { display: flex; flex-direction: column; gap: 6px; }
-.body { display: flex; flex-direction: column; gap: 20px; }
-.cols { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 20px; align-items: start; }
-.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.cols-proj { grid-template-columns: minmax(0, 1fr) 150px 120px 92px; padding-left: 20px; padding-right: 20px; }
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
 
-.banner-body { display: flex; flex-direction: column; gap: 3px; }
-.banner-title { font-weight: 600; }
-.banner.ok-banner { background: var(--ok-wash); border-color: #c6ddcf; color: var(--ok); }
+.cols-proj { grid-template-columns: minmax(240px, 1fr) 170px 130px 70px; }
+.table { min-width: 640px; }
 
-.tags { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 20px; }
-.tags.tight { padding: 0; gap: 6px; }
+/* ---- service lines ---- */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 22px 20px; }
 .tag {
-  font-size: 12px; padding: 6px 11px; border-radius: var(--radius-sm);
-  background: var(--accent-wash); color: #2f4b49;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
-.tag.noisy { background: var(--warn-wash); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+/* A flagged statement is the cause of a bad shortlist, so it is marked on the
+   screen that can fix it. */
+.tag.noisy { background: var(--warn-wash); border-color: var(--warn-edge); color: var(--warn); }
+.tags.tight { padding: 0; }
+
 .swatch {
-  display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px;
-  background: var(--warn-wash); border: 1px solid var(--warn-line); border-radius: 2px;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 7px;
+  vertical-align: -1px;
+  border-radius: 3px;
+  background: var(--warn-wash);
+  border: 1px solid var(--warn-edge);
 }
 
-.proj { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.fact {
-  display: flex; flex-direction: column; gap: 5px;
-  padding: 14px 20px; border-top: 1px solid var(--line-2);
+/* ---- organisation facts ---- */
+.fact-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--line-soft);
 }
-.card-head + .fact { border-top: none; }
-.strong { font-size: 13px; font-weight: 500; }
-.turnover { display: flex; align-items: baseline; gap: 8px; }
-.turnover .strong { font-size: 17px; font-weight: 600; }
-.flag { font-size: 11px; color: var(--warn); }
+.fact-block .strong { font-size: 15px; font-weight: 700; }
+.turnover { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
+/* ---- certifications ---- */
 .cert {
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  padding: 13px 20px; border-top: 1px solid var(--line-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line-soft);
 }
 .cert-body { display: flex; flex-direction: column; gap: 2px; }
-.cert .strong { font-size: 12px; font-weight: 600; }
-.spinner.light { border-color: rgba(255,255,255,0.35); border-top-color: #fff; }
+.cert-body .code { font-size: 13px; font-weight: 600; }

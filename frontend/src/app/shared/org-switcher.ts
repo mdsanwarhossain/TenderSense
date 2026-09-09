@@ -73,72 +73,71 @@ import { Organisation } from '../core/models/tender.models';
 
     .trigger {
       display: flex; align-items: center; gap: 10px;
-      padding: 5px 10px 5px 6px;
-      background: transparent;
-      border: 1px solid #363b41;
-      border-radius: var(--radius-control);
-      color: var(--bg);
+      height: 42px; padding: 0 12px 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-pill);
+      color: var(--ink);
       cursor: pointer;
       font: inherit;
       text-align: left;
     }
-    .trigger:hover, .trigger.open { background: var(--nav-active); border-color: #4a5158; }
+    .trigger:hover, .trigger.open { border-color: var(--accent); }
 
     .mark {
       display: flex; align-items: center; justify-content: center;
-      width: 26px; height: 26px; border-radius: var(--radius-sm);
-      background: var(--accent); color: var(--surface);
-      font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-wash); color: var(--accent-ink);
+      font-size: 11px; font-weight: 800;
       flex: none;
     }
     .labels { display: flex; flex-direction: column; line-height: 1.25; }
-    .name { font-size: 12px; font-weight: 500; color: var(--bg); }
-    .meta { font-size: 10px; color: var(--nav-ink); }
-    .caret { font-size: 9px; color: var(--nav-ink); margin-left: 2px; }
+    .name { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+    .meta { font-size: 10.5px; color: var(--ink-4); }
+    .caret { font-size: 9px; color: var(--ink-4); margin-left: 2px; }
 
     .menu {
       position: absolute; top: calc(100% + 8px); right: 0; z-index: 40;
       width: 340px;
+      padding: 8px;
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-      padding: 6px;
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-pop);
     }
     .menu-head, .menu-foot {
-      margin: 0; padding: 6px 10px;
-      font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase;
+      margin: 0; padding: 8px 10px 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase;
       color: var(--ink-4);
     }
     .menu-foot {
-      text-transform: none; letter-spacing: 0;
-      font-size: 11px; color: var(--ink-3);
-      border-top: 1px solid var(--line-3); margin-top: 4px;
+      text-transform: none; letter-spacing: 0; font-weight: 500;
+      font-size: 11.5px; color: var(--ink-3); line-height: 1.5;
+      border-top: 1px solid var(--line-soft); margin-top: 6px; padding-top: 10px;
     }
 
     .option {
       display: block; width: 100%;
-      padding: 9px 10px;
-      background: transparent; border: 0; border-radius: var(--radius-sm);
+      padding: 10px;
+      background: transparent; border: 0; border-radius: var(--r);
       cursor: pointer; font: inherit; text-align: left;
     }
-    .option:hover { background: var(--surface-alt); }
-    .option.selected { background: var(--accent-wash); }
+    .option:hover { background: var(--surface-3); }
+    .option.selected { background: var(--accent-soft); }
 
     .row { display: flex; align-items: center; gap: 8px; }
-    .opt-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+    .opt-name { font-size: 13px; font-weight: 700; color: var(--ink); }
     .demo {
-      font-size: 9px; letter-spacing: 0.3px; text-transform: uppercase;
-      color: var(--warn-ink); background: var(--warn-wash);
-      border: 1px solid var(--warn-line); border-radius: var(--radius-sm);
-      padding: 1px 5px;
+      font-size: 10px; font-weight: 700;
+      color: var(--warn); background: var(--warn-wash);
+      border-radius: var(--r-pill); padding: 1px 8px;
     }
-    .desc { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-3); }
-    .sectors { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+    .desc { display: block; margin-top: 3px; font-size: 11.5px; color: var(--ink-3); }
+    .sectors { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
     .sector {
-      font-size: 10px; color: var(--ink-3);
-      background: var(--surface-alt); border: 1px solid var(--line-2);
-      border-radius: var(--radius-sm); padding: 1px 6px;
+      font-size: 10.5px; font-weight: 600; color: var(--ink-3);
+      background: var(--surface-3); border: 1px solid var(--line);
+      border-radius: var(--r-pill); padding: 2px 8px;
     }
   `,
 })

@@ -25,9 +25,9 @@ import { DatePipe } from '@angular/common';
     }`,
   styles: [`
     .wrap { display: flex; flex-direction: column; gap: 2px; }
-    .date { font-size: 12px; }
-    .days { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-4); }
-    .urgent { color: var(--warn); font-weight: 500; }
+    .date { font-size: 12.5px; font-weight: 500; }
+    .days { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--ink-4); }
+    .urgent { color: var(--warn); }
   `],
 })
 export class Deadline {

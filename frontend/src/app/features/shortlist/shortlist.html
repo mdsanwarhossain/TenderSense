@@ -1,92 +1,200 @@
-<header class="page-header">
-  <div class="titles">
-    <h1>Morning shortlist</h1>
-    <div class="meta">
-      <span>{{ today | date: 'EEEE, d MMMM y' }}</span>
-      <span class="sep">/</span>
-      <span>e-GP Bangladesh + World Bank</span>
-    </div>
+<div class="page-intro">
+  <div>
+    <h1>
+      {{ total() }} tracked {{ total() === 1 ? 'tender' : 'tenders' }}, ranked against
+      {{ org()?.name ?? 'your profile' }}
+    </h1>
+    <p class="lede">
+      Every tender in the corpus is scored against this company's capability profile and gated
+      to the sectors it subscribes to. Grades are calibrated on the live distribution, so S is
+      the top slice of what is open today, not a fixed score threshold.
+    </p>
   </div>
-  <div class="actions">
+  <div class="intro-actions">
     <button class="btn btn-primary" (click)="runCollection()" [disabled]="running()">
-      @if (running()) { <span class="spinner light"></span> Collecting… } @else {
+      @if (running()) {
+        <span class="spinner light"></span> Collecting…
+      } @else {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/>
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
         </svg>
         Run collection now
       }
     </button>
   </div>
-</header>
-
-<div class="stats">
-  <div class="stat"><span class="label">Tenders tracked</span><span class="mono value">{{ total() }}</span></div>
-  <div class="stat"><span class="label">S-grade shown</span><span class="mono value accent">{{ counts().s }}</span></div>
-  <div class="stat"><span class="label">A-grade shown</span><span class="mono value">{{ counts().a }}</span></div>
-  <div class="stat"><span class="label">Closing within 7 days</span><span class="mono value warn">{{ counts().urgent }}</span></div>
-  <div class="stat"><span class="label">Need verification</span><span class="mono value">{{ counts().verify }}</span></div>
 </div>
 
-<div class="filters">
-  <div class="group">
-    <span class="label">Grade</span>
-    @for (g of grades; track g) {
-      <button class="chip" [class.on]="activeGrade() === g" (click)="toggleGrade(g)">{{ g }}</button>
-    }
+<div class="stat-strip">
+  <div class="stat">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h12" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Tenders tracked</span>
+      <span class="stat-value">{{ total() }}</span>
+      <span class="stat-foot">across both portals</span>
+    </span>
   </div>
-  <div class="divider"></div>
-  <div class="group">
-    <span class="label">Source</span>
-    <button class="chip source" [class.on]="activeSource() === 'EGP_BANGLADESH'"
-            (click)="toggleSource('EGP_BANGLADESH')">e-GP Bangladesh</button>
-    <button class="chip source" [class.on]="activeSource() === 'WORLD_BANK'"
-            (click)="toggleSource('WORLD_BANK')">World Bank</button>
+  <div class="stat">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 3 2.7 5.6 6.3.9-4.5 4.3 1.1 6.2L12 17.1 6.4 20l1.1-6.2L3 9.5l6.3-.9z" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">S-grade on this page</span>
+      <span class="stat-value accent">{{ counts().s }}</span>
+      <span class="stat-foot">the strongest matches open now</span>
+    </span>
   </div>
-  <div class="divider"></div>
-  <button class="chip source" [class.on]="includeClosed()" (click)="toggleClosed()">
-    Include closed
-  </button>
-  <span class="showing">Showing <span class="mono">{{ visible().length }}</span> of <span class="mono">{{ total() }}</span></span>
+  <div class="stat">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-6" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">A-grade on this page</span>
+      <span class="stat-value">{{ counts().a }}</span>
+      <span class="stat-foot">worth a read this week</span>
+    </span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon i-warn">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" /><path d="M12 7v5.3l3.2 2" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Closing within 7 days</span>
+      <span class="stat-value warn">{{ counts().urgent }}</span>
+      <span class="stat-foot">flagged on the row edge</span>
+    </span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon i-warn">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" /><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4v1.4" />
+        <path d="M12.9 16.4v.01" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Need verification</span>
+      <span class="stat-value">{{ counts().verify }}</span>
+      <span class="stat-foot">eligibility not settled by the rules</span>
+    </span>
+  </div>
 </div>
 
-@if (error(); as message) {
-  <div class="page-body"><div class="banner error">{{ message }}</div></div>
-} @else if (loading()) {
-  <div class="state"><span class="spinner"></span> Loading the shortlist…</div>
-} @else if (visible().length === 0) {
-  <div class="state">No tenders match these filters.</div>
-} @else {
-  <div class="thead cols">
-    <span>Grade</span><span>Match</span><span>Tender</span>
-    <span>Source</span><span>Closes</span><span>Eligibility</span><span>Action</span>
-  </div>
-
-  @for (row of visible(); track row.id) {
-    <a class="trow cols" [class.urgent]="row.urgent" [routerLink]="['/tenders', row.id]">
-      <ts-grade-badge [grade]="row.grade" />
-      <ts-score-bar [score]="row.score" [strong]="row.grade === 'S'" />
-
-      <div class="tender">
-        <span class="title">{{ row.title ?? '(untitled)' }}</span>
-        @if (row.procuringEntity) { <span class="entity">{{ row.procuringEntity }}</span> }
-      </div>
-
-      <span class="source">{{ row.source === 'EGP_BANGLADESH' ? 'e-GP Bangladesh' : 'World Bank' }}</span>
-      <ts-deadline [closingAt]="row.closingAt" [days]="row.daysToDeadline" />
-      <ts-eligibility-chip [status]="row.eligibility" />
-
-      @if (row.recommendation; as action) {
-        <span class="rec" [class.bid]="action === 'BID'">{{ action }}</span>
-      } @else { <span class="rec none">—</span> }
-    </a>
-  }
-
-  <footer class="pager">
-    <span class="hint">Ranked by match score across the whole corpus. Grades are calibrated on the live distribution, so S is the top slice of what is open today.</span>
-    <div class="buttons">
-      <button class="btn" (click)="prevPage()" [disabled]="page() === 0">Previous</button>
-      <button class="btn" (click)="nextPage()" [disabled]="(page() + 1) * size >= total()">Next</button>
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Ranked shortlist</h2>
+      <span class="sub">
+        Ordered by match score across the whole corpus. Tenders closing within a week carry an
+        amber edge.
+      </span>
     </div>
-  </footer>
-}
+    <div class="card-tools">
+      <label class="search-inline">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
+        </svg>
+        <input type="search" placeholder="Filter this page" aria-label="Filter this page"
+               [value]="query()" (input)="filter($any($event.target).value)" />
+      </label>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="group">
+      <span class="glabel">Grade</span>
+      @for (g of grades; track g) {
+        <button class="chip" [class.on]="activeGrade() === g" (click)="toggleGrade(g)">{{ g }}</button>
+      }
+    </div>
+    <span class="divider"></span>
+    <div class="group">
+      <span class="glabel">Source</span>
+      <button class="chip" [class.on]="activeSource() === 'EGP_BANGLADESH'"
+              (click)="toggleSource('EGP_BANGLADESH')">e-GP Bangladesh</button>
+      <button class="chip" [class.on]="activeSource() === 'WORLD_BANK'"
+              (click)="toggleSource('WORLD_BANK')">World Bank</button>
+    </div>
+    <span class="divider"></span>
+    <button class="chip" [class.on]="includeClosed()" (click)="toggleClosed()">Include closed</button>
+    <span class="showing">
+      Showing <b class="mono">{{ visible().length }}</b> of <b class="mono">{{ total() }}</b>
+    </span>
+  </div>
+
+  @if (error(); as message) {
+    <div class="state-wrap"><div class="banner error">{{ message }}</div></div>
+  } @else if (loading()) {
+    <div class="state"><span class="spinner"></span> Loading the shortlist…</div>
+  } @else if (visible().length === 0) {
+    <div class="state">
+      @if (query()) {
+        Nothing on this page matches “{{ query() }}”. Clear the filter, or page on.
+      } @else {
+        No tenders match these filters. Widen the grade, or include closed tenders.
+      }
+    </div>
+  } @else {
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols">
+          <span>Grade</span><span>Match</span><span>Tender</span>
+          <span>Source</span><span>Closes</span><span>Eligibility</span><span>Action</span>
+        </div>
+
+        @for (row of visible(); track row.id) {
+          <a class="trow cols" [class.urgent]="row.urgent" [routerLink]="['/tenders', row.id]">
+            <ts-grade-badge [grade]="row.grade" />
+            <ts-score-bar [score]="row.score" [strong]="row.grade === 'S'" />
+
+            <span class="cell-title">
+              <span class="t">{{ row.title ?? '(untitled)' }}</span>
+              @if (row.procuringEntity) { <span class="e">{{ row.procuringEntity }}</span> }
+            </span>
+
+            <span class="source">
+              <span class="dot" [class.wb]="row.source === 'WORLD_BANK'"></span>
+              {{ row.source === 'EGP_BANGLADESH' ? 'e-GP Bangladesh' : 'World Bank' }}
+            </span>
+
+            <ts-deadline [closingAt]="row.closingAt" [days]="row.daysToDeadline" />
+            <ts-eligibility-chip [status]="row.eligibility" />
+
+            @if (row.recommendation; as action) {
+              <span class="pill" [class.accent]="action === 'BID'"
+                    [class.neutral]="action === 'HOLD'" [class.ghost]="action === 'SKIP'">{{ action }}</span>
+            } @else {
+              <span class="pill ghost">—</span>
+            }
+          </a>
+        }
+      </div>
+    </div>
+
+    <footer class="pager">
+      <span class="hint">
+        Page {{ page() + 1 }} of {{ pageCount() }} · {{ size }} tenders per page
+      </span>
+      <span class="buttons">
+        <button class="btn btn-sm" (click)="prevPage()" [disabled]="page() === 0">Previous</button>
+        <button class="btn btn-sm" (click)="nextPage()"
+                [disabled]="(page() + 1) * size >= total()">Next</button>
+      </span>
+    </footer>
+  }
+</section>

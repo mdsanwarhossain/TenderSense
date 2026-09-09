@@ -1,118 +1,144 @@
-<header class="page-header">
-  <div class="titles">
-    <h1>Capability profile</h1>
-    <span class="sub"><strong>{{ org()?.name }}</strong> — what every tender is compared against. The wording here decides what surfaces.</span>
+<div class="page-intro">
+  <div>
+    <h1>What every tender is compared against</h1>
+    <p class="lede">
+      {{ org()?.name ?? 'This company' }} is matched on the statements below. The wording here
+      decides what surfaces, so a vague service line costs accuracy directly.
+    </p>
   </div>
-  <button class="btn btn-primary" (click)="rescore()" [disabled]="rescoring()">
-    @if (rescoring()) { <span class="spinner light"></span> Re-scoring… } @else { Re-score corpus }
-  </button>
-</header>
+  <div class="intro-actions">
+    <button class="btn btn-primary" (click)="rescore()" [disabled]="rescoring()">
+      @if (rescoring()) { <span class="spinner light"></span> Re-scoring… } @else { Re-score corpus }
+    </button>
+  </div>
+</div>
 
 @if (error(); as message) {
-  <div class="page-body"><div class="banner error">{{ message }}</div></div>
+  <div class="banner error">{{ message }}</div>
 } @else if (loading()) {
   <div class="state"><span class="spinner"></span> Loading profile…</div>
 } @else if (profile(); as p) {
-  <div class="page-body body">
 
-    @if (rescored(); as n) {
-      <div class="banner ok-banner">Re-scored {{ n }} results against the current profile.</div>
-    }
+  @if (rescored(); as n) {
+    <div class="banner ok-banner">Re-scored {{ n }} results against the current profile.</div>
+  }
 
-    @if (isPlaceholder()) {
-      <div class="banner">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/></svg>
-        <div class="banner-body">
-          <span class="banner-title">Placeholder profile in use</span>
-          <span>Turnover and past projects are invented stand-ins. Replace them with the real
-            profile before the demo — the two flagged service lines below are what currently
-            put manpower-supply contracts at the top of the shortlist.</span>
+  @if (isPlaceholder()) {
+    <div class="banner">
+      <span class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4l9 16H3z" /><path d="M12 10v4" /><path d="M12 17.4v.01" />
+        </svg>
+      </span>
+      <span class="banner-body">
+        <span class="banner-title">Placeholder profile in use</span>
+        <span>
+          Turnover and past projects are invented stand-ins. Replace them with the real profile
+          before the demo — the flagged service lines below are what currently put
+          manpower-supply contracts at the top of the shortlist.
+        </span>
+      </span>
+    </div>
+  }
+
+  <div class="split">
+    <div class="stack">
+      <section class="card">
+        <div class="card-head">
+          <h2>Service lines</h2>
+          <span class="hint">{{ p.services.length }} statements · each embedded separately</span>
         </div>
-      </div>
-    }
-
-    <div class="cols">
-      <div class="col">
-        <section class="card">
-          <div class="card-head">
-            <h2>Service lines</h2>
-            <span class="hint">{{ p.services.length }} statements · each embedded separately</span>
-          </div>
-          <div class="tags">
-            @for (s of p.services; track s) {
-              <span class="tag" [class.noisy]="noisy(s)">{{ s }}</span>
-            }
-          </div>
-          <div class="card-note">
-            <span class="swatch"></span>
-            Flagged statements match work the company does not want — narrowing them is the cheapest accuracy win.
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>Past projects</h2>
-            <span class="hint">{{ p.pastProjects.length }} references · title and description both matched</span>
-          </div>
-          <div class="thead cols-proj">
-            <span>Project</span><span>Sector</span><span>Value</span><span>Year</span>
-          </div>
-          @for (pr of p.pastProjects; track pr.id) {
-            <div class="trow cols-proj">
-              <span class="proj">{{ pr.title }}</span>
-              <span class="muted">{{ pr.sector ?? '—' }}</span>
-              <span class="mono">{{ pr.valueBdt ? ('BDT ' + (pr.valueBdt / 1000000 | number: '1.0-0') + 'M') : '—' }}</span>
-              <span class="mono muted">{{ pr.year ?? '—' }}</span>
-            </div>
+        <div class="tags">
+          @for (s of p.services; track s) {
+            <span class="tag" [class.noisy]="noisy(s)">{{ s }}</span>
           }
-        </section>
-      </div>
+        </div>
+        <p class="card-note">
+          <span class="swatch"></span>
+          Flagged statements match work the company does not want — narrowing them is the
+          cheapest accuracy win available.
+        </p>
+      </section>
 
-      <div class="col side">
-        <section class="card">
-          <div class="card-head"><h2>Organisation</h2></div>
-          <div class="fact">
-            <span class="label">Legal name</span>
-            <span class="strong">{{ p.orgName }}</span>
-          </div>
-          <div class="fact">
-            <span class="label">Annual turnover</span>
-            <div class="turnover">
-              <span class="mono strong">BDT {{ p.annualTurnoverBdt | number }}</span>
-              @if (isPlaceholder()) { <span class="flag">placeholder</span> }
-            </div>
-            <span class="hint">Checked against every stated turnover threshold</span>
-          </div>
-          <div class="fact">
-            <span class="label">Geographies</span>
-            <div class="tags tight">
-              @for (g of p.geographies; track g) { <span class="tag">{{ g }}</span> }
-            </div>
-          </div>
-        </section>
+      <section class="card">
+        <div class="card-head">
+          <h2>Past projects</h2>
+          <span class="hint">{{ p.pastProjects.length }} references · title and description both matched</span>
+        </div>
 
-        <section class="card">
-          <div class="card-head">
-            <h2>Certifications</h2>
-            <span class="hint">Expiry is enforced</span>
-          </div>
-          @for (c of p.certifications; track c.id) {
-            <div class="cert">
-              <div class="cert-body">
-                <span class="mono strong">{{ c.code }}</span>
-                <span class="hint">{{ c.name ?? '—' }}</span>
+        @if (p.pastProjects.length === 0) {
+          <div class="state">No past projects are recorded for this company yet.</div>
+        } @else {
+          <div class="table-scroll">
+            <div class="table">
+              <div class="thead cols-proj">
+                <span>Project</span><span>Sector</span><span>Value</span><span>Year</span>
               </div>
-              <span class="mono hint">{{ c.validUntil ? ('to ' + c.validUntil) : 'no expiry' }}</span>
+              @for (pr of p.pastProjects; track pr.id) {
+                <div class="trow cols-proj">
+                  <span class="cell-title"><span class="t">{{ pr.title }}</span></span>
+                  <span class="muted">{{ pr.sector ?? '—' }}</span>
+                  <span class="mono">
+                    {{ pr.valueBdt ? ('BDT ' + (pr.valueBdt / 1000000 | number: '1.0-0') + 'M') : '—' }}
+                  </span>
+                  <span class="mono muted">{{ pr.year ?? '—' }}</span>
+                </div>
+              }
             </div>
-          }
-          <div class="card-note">
-            Spelling variants are matched — a tender asking for “ISO/IEC 27001” resolves to ISO27001.
           </div>
-        </section>
-      </div>
+        }
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card">
+        <div class="card-head"><h2>Organisation</h2></div>
+        <div class="fact-block">
+          <span class="label">Legal name</span>
+          <span class="strong">{{ p.orgName }}</span>
+        </div>
+        <div class="fact-block">
+          <span class="label">Annual turnover</span>
+          <span class="turnover">
+            <span class="mono strong">BDT {{ p.annualTurnoverBdt | number }}</span>
+            @if (isPlaceholder()) { <span class="pill warn">placeholder</span> }
+          </span>
+          <span class="hint">Checked against every stated turnover threshold.</span>
+        </div>
+        <div class="fact-block">
+          <span class="label">Geographies</span>
+          <span class="tags tight">
+            @for (g of p.geographies; track g) { <span class="tag">{{ g }}</span> }
+          </span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Certifications</h2>
+          <span class="hint">Expiry is enforced</span>
+        </div>
+        @for (c of p.certifications; track c.id) {
+          <div class="cert">
+            <span class="cert-body">
+              <span class="mono code">{{ c.code }}</span>
+              <span class="hint">{{ c.name ?? '—' }}</span>
+            </span>
+            <span class="pill" [class.ok]="c.validUntil" [class.neutral]="!c.validUntil">
+              {{ c.validUntil ? ('to ' + c.validUntil) : 'no expiry' }}
+            </span>
+          </div>
+        }
+        @if (p.certifications.length === 0) {
+          <div class="state">No certifications are on file.</div>
+        }
+        <p class="card-note">
+          Spelling variants are matched — a tender asking for “ISO/IEC 27001” resolves to ISO27001.
+        </p>
+      </section>
     </div>
   </div>
 } @else {
-  <div class="page-body"><div class="banner">No capability profile is configured yet.</div></div>
+  <div class="banner">No capability profile is configured yet.</div>
 }

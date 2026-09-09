@@ -1,41 +1,46 @@
-.titles { display: flex; flex-direction: column; gap: 6px; }
-.actions { display: flex; align-items: center; gap: 10px; }
-.cols { display: grid; grid-template-columns: 440px minmax(0, 1fr); gap: 20px; align-items: start; }
-.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.cols-run {
-  grid-template-columns: 180px 96px 88px 76px 76px minmax(0, 1fr);
-  padding-left: 20px; padding-right: 20px;
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
 }
 
+.stat-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.cols-run { grid-template-columns: minmax(180px, 1fr) 130px 100px 84px 84px 150px; }
+.table { min-width: 820px; }
+.trow.failed { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad-wash) 35%, transparent); }
+.job { font-size: 12.5px; font-weight: 600; }
+
+/* ---- schedule ---- */
 .sched {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 20px; border-top: 1px solid var(--line-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line-soft);
 }
-.sched-body { display: flex; flex-direction: column; gap: 2px; }
-.job { font-size: 12px; font-weight: 500; }
+.sched-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
-.stats {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px; background: var(--line); border: 1px solid var(--line);
-  border-radius: var(--radius); overflow: hidden;
-}
-.stat { display: flex; flex-direction: column; gap: 3px; padding: 16px 20px; background: var(--surface); }
-.value { font-size: 19px; font-weight: 600; letter-spacing: -0.3px; }
-
-.status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); }
+/* ---- run status ----
+   Dot plus word: the status survives a greyscale screenshot in a status report. */
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .status.success { color: var(--ok); }
 .status.success .dot { background: var(--ok); }
-.status.failed { color: #9c2f2f; }
-.status.failed .dot { background: #9c2f2f; }
-.status.skipped { color: var(--ink-3); }
-.status.running { color: var(--warn); }
-.status.running .dot { background: var(--warn); }
+.status.failed { color: var(--bad); }
+.status.failed .dot { background: var(--bad); }
+.status.skipped { color: var(--ink-4); }
+.status.skipped .dot { background: var(--ink-4); }
+.status.running { color: var(--accent-ink); }
+.status.running .dot { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
-.trow.failed { background: #fdf3f3; }
-.trow.skipped { background: var(--warn-row); }
 .err {
-  font-size: 11px; color: var(--warn);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--bad);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.spinner.light { border-color: rgba(255,255,255,0.35); border-top-color: #fff; }

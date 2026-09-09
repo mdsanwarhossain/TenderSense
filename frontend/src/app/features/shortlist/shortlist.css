@@ -1,67 +1,68 @@
-.cols { grid-template-columns: 62px 96px minmax(0, 1fr) 150px 120px 128px 108px; }
-
-.titles { display: flex; flex-direction: column; gap: 6px; }
-.meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-3); }
-.sep { color: #d0d0cb; }
-.actions { display: flex; align-items: center; gap: 10px; }
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border-bottom: 1px solid var(--line);
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
 }
-.stat { display: flex; flex-direction: column; gap: 3px; padding: 14px 20px; background: var(--surface); }
-.stat:first-child { padding-left: 28px; }
-.value { font-size: 19px; font-weight: 600; letter-spacing: -0.3px; }
-.value.accent { color: var(--accent); }
-.value.warn { color: var(--warn); }
+
+.stat-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* Seven columns: the tender title takes whatever the fixed ones leave. */
+.cols { grid-template-columns: 52px 96px minmax(260px, 1fr) 150px 110px 128px 96px; }
+.table { min-width: 1080px; }
+
+.search-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 230px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--ink-4);
+}
+.search-inline input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  outline: none;
+}
+.search-inline input::placeholder { color: var(--ink-4); }
 
 .filters {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 12px 28px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line-soft);
 }
-.group { display: flex; align-items: center; gap: 6px; }
-.group .label { margin-right: 2px; }
-.chip.source { font-weight: 500; }
-.divider { width: 1px; height: 22px; background: var(--line); }
-.showing { margin-left: auto; font-size: 12px; color: var(--ink-3); }
-.showing .mono { color: var(--ink); }
+.filters .group { display: flex; align-items: center; gap: 7px; }
+.filters .glabel {
+  margin-right: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.filters .divider { width: 1px; height: 22px; background: var(--line); }
+.filters .showing { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+.filters .showing b { color: var(--ink); font-weight: 600; }
 
-.tender { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.title {
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.35;
-  /* Some portal titles run to a full paragraph; two lines keeps rows scannable. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
-.entity {
-  font-size: 11px; color: var(--ink-4);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.source { font-size: 12px; color: var(--ink-2); }
+.source .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.source .dot.wb { background: #2f8fbe; }
 
-.rec {
-  display: inline-flex; align-items: center; justify-content: center;
-  height: 30px; padding: 0 14px;
-  border: 1px solid var(--control-border); border-radius: var(--radius-sm);
-  font-size: 12px; font-weight: 600; letter-spacing: 0.3px; color: var(--ink-2);
-}
-.rec.bid { background: var(--accent); border-color: var(--accent); color: var(--surface); }
-.rec.none { border: none; color: var(--ink-4); }
-
-.pager {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 14px 28px; background: var(--surface); border-top: 1px solid var(--line);
-}
-.buttons { display: flex; gap: 8px; }
-.spinner.light { border-color: rgba(255, 255, 255, 0.35); border-top-color: #fff; }
+.state-wrap { padding: 20px 22px; }

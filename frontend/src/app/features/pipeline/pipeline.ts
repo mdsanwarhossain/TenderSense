@@ -31,6 +31,8 @@ export class Pipeline {
 
   readonly lastSuccess = computed(() => this.runs().find((r) => r.status === 'SUCCESS') ?? null);
 
+  readonly failures = computed(() => this.runs().filter((r) => r.status === 'FAILED').length);
+
   readonly totalScored = computed(() =>
     this.runs().filter((r) => r.status === 'SUCCESS').reduce((n, r) => n + (r.tendersScored ?? 0), 0),
   );
