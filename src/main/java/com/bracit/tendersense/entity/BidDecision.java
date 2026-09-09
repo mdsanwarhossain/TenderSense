@@ -23,6 +23,10 @@ public class BidDecision {
     @JoinColumn(name = "tender_id")
     private Tender tender;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organisation_id")
+    private Organisation organisation;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private BidAction action;

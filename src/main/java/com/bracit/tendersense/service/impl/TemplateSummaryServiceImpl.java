@@ -3,6 +3,7 @@ package com.bracit.tendersense.service.impl;
 import com.bracit.tendersense.dto.ScoredMatch;
 import com.bracit.tendersense.entity.EligibilityGap;
 import com.bracit.tendersense.entity.EligibilityVerdict;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.service.SummaryService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,7 +31,8 @@ public class TemplateSummaryServiceImpl implements SummaryService {
     private static final double EVIDENCE_FLOOR = 0.20;
 
     @Override
-    public String summarise(Tender tender, ScoredMatch match, EligibilityVerdict verdict) {
+    public String summarise(Organisation organisation, Tender tender, ScoredMatch match,
+                            EligibilityVerdict verdict) {
         StringBuilder sb = new StringBuilder();
 
         List<ScoredMatch.Evidence> strong = match.evidence().stream()
@@ -40,7 +42,7 @@ public class TemplateSummaryServiceImpl implements SummaryService {
         if (strong.isEmpty()) {
             sb.append("No strong overlap with BracIT's capability profile.");
         } else {
-            sb.append("Matches BracIT's ")
+            sb.append("Matches ").append(organisation.getName()).append("'s ")
                     .append(strong.stream()
                             .map(e -> quote(e.profileText()))
                             .collect(Collectors.joining("; ")))

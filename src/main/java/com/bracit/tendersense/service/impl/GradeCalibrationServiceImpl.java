@@ -1,5 +1,6 @@
 package com.bracit.tendersense.service.impl;
 
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.enums.MatchGrade;
 import com.bracit.tendersense.service.GradeCalibrationService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +33,22 @@ public class GradeCalibrationServiceImpl implements GradeCalibrationService {
     private static final Thresholds FALLBACK =
             new Thresholds(0.55, 0.45, 0.35, "uncalibrated defaults");
 
-    private volatile Thresholds current = FALLBACK;
+    /**
+     * Per organisation. A construction firm's score distribution is not an IT firm's, so
+     * one set of thresholds across tenants would grade one of them against the other's
+     * corpus.
+     */
+    private final java.util.Map<Long, Thresholds> byOrganisation =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
-    public Thresholds calibrate(List<Double> scores) {
+    public Thresholds calibrate(Organisation organisation, List<Double> scores) {
         List<Double> sorted = new ArrayList<>(scores.stream().filter(s -> s != null && s > 0).toList());
+        Thresholds existing = byOrganisation.getOrDefault(organisation.getId(), FALLBACK);
         if (sorted.size() < 20) {
-            log.warn("only {} usable scores - keeping {} thresholds", sorted.size(), current.basis());
-            return current;
+            log.warn("{}: only {} usable scores - keeping {} thresholds",
+                    organisation.getSlug(), sorted.size(), existing.basis());
+            return existing;
         }
         sorted.sort(Double::compareTo);
 
@@ -49,20 +58,20 @@ public class GradeCalibrationServiceImpl implements GradeCalibrationService {
                 percentile(sorted, B_PERCENTILE),
                 "percentiles p98/p90/p70 over %d scored tenders".formatted(sorted.size()));
 
-        current = t;
-        log.info("grade thresholds calibrated: S>={} A>={} B>={} ({})",
-                fmt(t.s()), fmt(t.a()), fmt(t.b()), t.basis());
+        byOrganisation.put(organisation.getId(), t);
+        log.info("grade thresholds for {}: S>={} A>={} B>={} ({})",
+                organisation.getSlug(), fmt(t.s()), fmt(t.a()), fmt(t.b()), t.basis());
         return t;
     }
 
     @Override
-    public Thresholds thresholds() {
-        return current;
+    public Thresholds thresholds(Organisation organisation) {
+        return byOrganisation.getOrDefault(organisation.getId(), FALLBACK);
     }
 
     @Override
-    public MatchGrade grade(double score) {
-        Thresholds t = current;
+    public MatchGrade grade(Organisation organisation, double score) {
+        Thresholds t = thresholds(organisation);
         if (score >= t.s()) {
             return MatchGrade.S;
         }

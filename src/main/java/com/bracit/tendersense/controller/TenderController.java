@@ -1,9 +1,12 @@
 package com.bracit.tendersense.controller;
 
 import com.bracit.tendersense.dto.*;
+import com.bracit.tendersense.config.CurrentOrganisation;
 import com.bracit.tendersense.entity.MatchResult;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.*;
+import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.exception.NotFoundException;
 import com.bracit.tendersense.repository.EligibilityVerdictRepository;
 import com.bracit.tendersense.repository.MatchResultRepository;
@@ -46,8 +49,10 @@ public class TenderController {
 
     @GetMapping
     public PageResponse<TenderSummaryResponse> list(
+            @CurrentOrganisation Organisation organisation,
             @RequestParam(required = false) MatchGrade grade,
             @RequestParam(required = false) SourcePortal source,
+            @RequestParam(required = false) Sector sector,
             @RequestParam(defaultValue = "false") boolean includeClosed,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -56,8 +61,9 @@ public class TenderController {
                 Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE));
 
         Page<MatchResult> ranked =
-                matchResultRepository.findRanked(MatcherType.EMBEDDING, grade, source,
-                        includeClosed, java.time.LocalDateTime.now(), pageable);
+                matchResultRepository.findRanked(MatcherType.EMBEDDING, organisation.getId(),
+                        grade, source, sector, includeClosed,
+                        java.time.LocalDateTime.now(), pageable);
 
         // m.getTender() is a lazy proxy: reading its id is safe, reading its fields
         // outside the transaction is not. Load the real rows in one query instead.
@@ -67,7 +73,8 @@ public class TenderController {
         Map<Long, Tender> tenders = new HashMap<>();
         tenderRepository.findAllById(tenderIds).forEach(t -> tenders.put(t.getId(), t));
 
-        Map<Long, EligibilityVerdictView> verdicts = verdictsFor(List.copyOf(tenders.values()));
+        Map<Long, EligibilityVerdictView> verdicts =
+                verdictsFor(organisation, List.copyOf(tenders.values()));
 
         List<TenderSummaryResponse> rows = ranked.getContent().stream()
                 .map(m -> {
@@ -88,13 +95,15 @@ public class TenderController {
     }
 
     @GetMapping("/{id}/evidence")
-    public MatchEvidenceResponse evidence(@PathVariable Long id) {
+    public MatchEvidenceResponse evidence(@CurrentOrganisation Organisation organisation,
+                                          @PathVariable Long id) {
         require(id);
-        Optional<MatchResult> match =
-                matchResultRepository.findByTenderIdAndMatcherType(id, MatcherType.EMBEDDING);
+        Optional<MatchResult> match = matchResultRepository
+                .findByTenderIdAndOrganisationIdAndMatcherType(
+                        id, organisation.getId(), MatcherType.EMBEDDING);
         // Use the projection, never findByTenderId().getGaps(): the gaps collection
         // is lazy and this method serialises after the transaction has closed.
-        EligibilityVerdictView view = verdictViewFor(id);
+        EligibilityVerdictView view = verdictViewFor(organisation, id);
 
         return match.map(m -> new MatchEvidenceResponse(
                         id, m.getGrade(), m.getScore(), m.getModelVersion(),
@@ -106,9 +115,10 @@ public class TenderController {
     }
 
     @GetMapping("/{id}/eligibility")
-    public EligibilityGapResponse eligibility(@PathVariable Long id) {
+    public EligibilityGapResponse eligibility(@CurrentOrganisation Organisation organisation,
+                                             @PathVariable Long id) {
         require(id);
-        return eligibilityRepository.findByTenderIdWithGaps(id)
+        return eligibilityRepository.findByTenderIdWithGaps(id, organisation.getId())
                 .map(v -> new EligibilityGapResponse(
                         id, v.getStatus(), v.getRulesApplied(),
                         v.getGaps().stream()
@@ -140,20 +150,23 @@ public class TenderController {
      * collection here would trigger lazy loading outside the transaction.
      */
     /** Single-tender projection, built on the same query the list endpoint uses. */
-    private EligibilityVerdictView verdictViewFor(Long tenderId) {
-        for (Object[] row : eligibilityRepository.findSummariesByTenderIds(List.of(tenderId))) {
+    private EligibilityVerdictView verdictViewFor(Organisation organisation, Long tenderId) {
+        for (Object[] row : eligibilityRepository.findSummariesByTenderIds(
+                List.of(tenderId), organisation.getId())) {
             return new EligibilityVerdictView((EligibilityStatus) row[1], ((Number) row[2]).intValue());
         }
         return null;
     }
 
-    private Map<Long, EligibilityVerdictView> verdictsFor(List<Tender> tenders) {
+    private Map<Long, EligibilityVerdictView> verdictsFor(Organisation organisation,
+                                                          List<Tender> tenders) {
         if (tenders.isEmpty()) {
             return Map.of();
         }
         List<Long> ids = tenders.stream().map(Tender::getId).toList();
         Map<Long, EligibilityVerdictView> out = new HashMap<>();
-        for (Object[] row : eligibilityRepository.findSummariesByTenderIds(ids)) {
+        for (Object[] row : eligibilityRepository.findSummariesByTenderIds(
+                ids, organisation.getId())) {
             out.put(((Number) row[0]).longValue(),
                     new EligibilityVerdictView((EligibilityStatus) row[1],
                             ((Number) row[2]).intValue()));

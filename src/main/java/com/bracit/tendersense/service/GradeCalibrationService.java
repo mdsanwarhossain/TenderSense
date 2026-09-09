@@ -1,5 +1,6 @@
 package com.bracit.tendersense.service;
 
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.enums.MatchGrade;
 
 import java.util.List;
@@ -14,11 +15,11 @@ import java.util.List;
 public interface GradeCalibrationService {
 
     /** Recomputes thresholds from an observed score distribution. */
-    Thresholds calibrate(List<Double> scores);
+    Thresholds calibrate(Organisation organisation, List<Double> scores);
 
-    Thresholds thresholds();
+    Thresholds thresholds(Organisation organisation);
 
-    MatchGrade grade(double score);
+    MatchGrade grade(Organisation organisation, double score);
 
     record Thresholds(double s, double a, double b, String basis) {
     }

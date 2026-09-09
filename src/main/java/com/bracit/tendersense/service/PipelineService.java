@@ -2,6 +2,7 @@ package com.bracit.tendersense.service;
 
 import com.bracit.tendersense.dto.DigestResponse;
 import com.bracit.tendersense.dto.PipelineRunResponse;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.enums.SourcePortal;
 
 import java.util.List;
@@ -29,5 +30,5 @@ public interface PipelineService {
     PipelineRunResponse rescore();
 
     /** The morning shortlist: what the 08:00 digest reports. */
-    DigestResponse digest();
+    DigestResponse digest(Organisation organisation);
 }

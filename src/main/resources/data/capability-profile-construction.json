@@ -1,0 +1,90 @@
+{
+  "_NOTE": "DEMONSTRATION TENANT — not a real customer. Exists to show that the pipeline is company-agnostic: the same scraped corpus, scored against a completely different profile, produces a completely different shortlist. Every figure here is invented.",
+  "orgName": "Padma Infrastructure Limited",
+  "slug": "padma-infra",
+  "description": "Demonstration tenant — a civil engineering and building contractor",
+  "sectors": ["CONSTRUCTION", "ENGINEERING", "MAINTENANCE", "ELECTRICAL"],
+  "summary": "Padma Infrastructure Limited delivers civil engineering and building construction for government and development-sector clients across Bangladesh. Core strengths are road and bridge works, water infrastructure, multi-storey building construction, and the long-term maintenance contracts that follow them.",
+  "annualTurnoverBdt": 3400000000,
+  "services": [
+    "Road construction, widening and bituminous carpeting works",
+    "Bridge, culvert and box-culvert construction",
+    "Multi-storey building construction with reinforced concrete foundations",
+    "Vertical extension and structural strengthening of existing buildings",
+    "Deep tube well installation and submersible pump commissioning",
+    "Water supply networks, overhead tanks and distribution pipelines",
+    "River dredging, embankment protection and re-excavation works",
+    "Site preparation, earthworks and land development",
+    "Electrical installation, substation and distribution line works",
+    "Building services — plumbing, sanitary and HVAC installation",
+    "Routine and periodic maintenance of roads and drainage",
+    "Repair, renovation and thorough repair of government quarters and offices",
+    "Precast concrete production and supply for infrastructure projects",
+    "Construction supervision and quantity surveying",
+    "Flood protection and coastal embankment works"
+  ],
+  "exclusions": [
+    "Software development, information technology services and systems integration",
+    "Supply of computers, servers, networking equipment and office IT hardware",
+    "Management consultancy, feasibility studies and institutional capacity building",
+    "Supply of manpower, security guards, cleaners and office support personnel",
+    "Medical equipment, laboratory devices and pharmaceutical supply",
+    "Food, agricultural commodities and consumable goods supply",
+    "Printing, publication, advertising and media production"
+  ],
+  "geographies": ["Bangladesh"],
+  "certifications": [
+    { "code": "ISO9001", "name": "ISO 9001 Quality Management System", "validUntil": "2028-06-30" },
+    { "code": "ISO45001", "name": "ISO 45001 Occupational Health and Safety", "validUntil": "2028-06-30" }
+  ],
+  "pastProjects": [
+    {
+      "title": "Rural road improvement by bituminous carpeting",
+      "client": "Local Government Engineering Department",
+      "description": "Widening and bituminous carpeting of 42 km of rural roads including culvert reconstruction, shoulder work and drainage across three upazilas.",
+      "sector": "Roads",
+      "valueBdt": 480000000,
+      "year": 2024
+    },
+    {
+      "title": "Deep tube well installation programme",
+      "client": "Public water supply authority",
+      "description": "Installation of 220 deep tube wells with submersible pumps, platform construction and commissioning across two districts.",
+      "sector": "Water infrastructure",
+      "valueBdt": 260000000,
+      "year": 2024
+    },
+    {
+      "title": "Six-storey academic building construction",
+      "client": "Education engineering department",
+      "description": "Construction of a six-storey academic building with six-storey foundation, including electrical and plumbing installation and external development.",
+      "sector": "Buildings",
+      "valueBdt": 390000000,
+      "year": 2023
+    },
+    {
+      "title": "River re-excavation and embankment protection",
+      "client": "Water development board",
+      "description": "Re-excavation of 18 km of river channel by cutter suction dredger with disposal, plus embankment slope protection.",
+      "sector": "Water infrastructure",
+      "valueBdt": 310000000,
+      "year": 2023
+    },
+    {
+      "title": "Government quarters thorough repair programme",
+      "client": "Public works department",
+      "description": "Thorough repair and renovation of multi-unit government residential quarters including structural repair, re-roofing and services replacement.",
+      "sector": "Maintenance",
+      "valueBdt": 145000000,
+      "year": 2022
+    },
+    {
+      "title": "Rural electrification distribution works",
+      "client": "Rural electrification board",
+      "description": "Construction of distribution lines, substation civil works and installation of transformers across rural feeder networks.",
+      "sector": "Electrical",
+      "valueBdt": 205000000,
+      "year": 2022
+    }
+  ]
+}

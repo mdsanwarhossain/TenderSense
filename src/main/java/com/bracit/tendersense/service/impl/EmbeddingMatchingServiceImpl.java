@@ -1,6 +1,7 @@
 package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.dto.ScoredMatch;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.service.CapabilityProfileService;
@@ -13,6 +14,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Semantic matching against BracIT's capability profile.
@@ -56,10 +58,19 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
     private final CapabilityProfileService profileService;
     private final TenderEmbeddingService tenderEmbeddingService;
 
-    private List<String> statements = List.of();
-    private List<float[]> statementVectors = List.of();
-    private List<String> exclusions = List.of();
-    private List<float[]> exclusionVectors = List.of();
+    /** One profile's embedded statements. Immutable once built. */
+    private record ProfileVectors(List<String> statements,
+                                  List<float[]> statementVectors,
+                                  List<String> exclusions,
+                                  List<float[]> exclusionVectors) {
+    }
+
+    /**
+     * Cached per organisation. This used to be four instance fields holding a single
+     * profile, which is what made the service single-tenant — embedding a profile costs
+     * ~2 seconds, so it is cached, but it must be cached per company.
+     */
+    private final Map<Long, ProfileVectors> byOrganisation = new ConcurrentHashMap<>();
 
     @Override
     public MatcherType type() {
@@ -72,10 +83,11 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
     }
 
     @Override
-    public Map<Long, ScoredMatch> scoreAll(List<Tender> tenders) {
-        ensureProfileEmbedded();
-        if (statementVectors.isEmpty()) {
-            log.warn("capability profile has no statements - every score will be zero");
+    public Map<Long, ScoredMatch> scoreAll(Organisation organisation, List<Tender> tenders) {
+        ProfileVectors profile = profileFor(organisation);
+        if (profile.statementVectors().isEmpty()) {
+            log.warn("{} has no capability statements - every score will be zero",
+                    organisation.getSlug());
             return Map.of();
         }
 
@@ -91,15 +103,17 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
                 out.put(tender.getId(), ScoredMatch.zero());
                 continue;
             }
-            out.put(tender.getId(), scoreOne(tenderText(tender), vector));
+            out.put(tender.getId(), scoreOne(profile, tenderText(tender), vector));
         }
         return out;
     }
 
-    private ScoredMatch scoreOne(String tenderText, float[] tenderVector) {
+    private ScoredMatch scoreOne(ProfileVectors profile, String tenderText, float[] tenderVector) {
+        List<String> statements = profile.statements();
         List<ScoredMatch.Evidence> ranked = new ArrayList<>(statements.size());
         for (int i = 0; i < statements.size(); i++) {
-            double sim = Vectors.clamp01(Vectors.cosine(tenderVector, statementVectors.get(i)));
+            double sim = Vectors.clamp01(
+                    Vectors.cosine(tenderVector, profile.statementVectors().get(i)));
             ranked.add(new ScoredMatch.Evidence(statements.get(i), snippet(tenderText), sim));
         }
         ranked.sort(Comparator.comparingDouble(ScoredMatch.Evidence::similarity).reversed());
@@ -118,11 +132,12 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
         // Does this look more like work we have excluded than like work we do?
         String worstText = null;
         double worstSim = 0d;
-        for (int i = 0; i < exclusions.size(); i++) {
-            double sim = Vectors.clamp01(Vectors.cosine(tenderVector, exclusionVectors.get(i)));
+        for (int i = 0; i < profile.exclusions().size(); i++) {
+            double sim = Vectors.clamp01(
+                    Vectors.cosine(tenderVector, profile.exclusionVectors().get(i)));
             if (sim > worstSim) {
                 worstSim = sim;
-                worstText = exclusions.get(i);
+                worstText = profile.exclusions().get(i);
             }
         }
 
@@ -139,42 +154,35 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
     }
 
     /**
-     * Embeds the profile once per process. Profile edits require a restart or an
-     * explicit {@link #invalidate()}, which is also when stored scores must be
-     * recomputed -- both are recorded as a re-score trigger.
+     * Embeds one organisation's profile, once. Profile edits require an
+     * {@link #invalidate(Organisation)} or a restart, which is also when that
+     * organisation's stored scores must be recomputed.
      */
-    private synchronized void ensureProfileEmbedded() {
-        if (!statementVectors.isEmpty()) {
-            return;
-        }
-        List<String> loaded = profileService.capabilityStatements();
-        if (loaded.isEmpty()) {
-            return;
-        }
-        List<float[]> vectors = new ArrayList<>(loaded.size());
-        for (String s : loaded) {
-            vectors.add(embeddingModel.embed(s));
-        }
-        statements = List.copyOf(loaded);
-        statementVectors = List.copyOf(vectors);
-
-        List<String> excl = profileService.exclusionStatements();
-        List<float[]> exclVectors = new ArrayList<>(excl.size());
-        for (String s : excl) {
-            exclVectors.add(embeddingModel.embed(s));
-        }
-        exclusions = List.copyOf(excl);
-        exclusionVectors = List.copyOf(exclVectors);
-
-        log.info("embedded {} capability statements and {} exclusions with {}",
-                statements.size(), exclusions.size(), modelVersion());
+    private ProfileVectors profileFor(Organisation organisation) {
+        return byOrganisation.computeIfAbsent(organisation.getId(), id -> {
+            List<String> loaded = profileService.capabilityStatements(organisation);
+            List<float[]> vectors = new ArrayList<>(loaded.size());
+            for (String s : loaded) {
+                vectors.add(embeddingModel.embed(s));
+            }
+            List<String> excl = profileService.exclusionStatements(organisation);
+            List<float[]> exclVectors = new ArrayList<>(excl.size());
+            for (String s : excl) {
+                exclVectors.add(embeddingModel.embed(s));
+            }
+            log.info("embedded {} capability statements and {} exclusions for {}",
+                    loaded.size(), excl.size(), organisation.getSlug());
+            return new ProfileVectors(List.copyOf(loaded), List.copyOf(vectors),
+                    List.copyOf(excl), List.copyOf(exclVectors));
+        });
     }
 
-    public synchronized void invalidate() {
-        statements = List.of();
-        statementVectors = List.of();
-        exclusions = List.of();
-        exclusionVectors = List.of();
+    public void invalidate(Organisation organisation) {
+        byOrganisation.remove(organisation.getId());
+    }
+
+    public void invalidateAll() {
+        byOrganisation.clear();
     }
 
     private static String tenderText(Tender t) {

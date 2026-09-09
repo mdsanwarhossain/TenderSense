@@ -12,13 +12,20 @@ import java.util.List;
 
 /** What every tender is matched against. Editing it triggers a full re-score. */
 @Entity
-@Table(name = "capability_profile")
+@Table(name = "capability_profile",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_profile_org", columnNames = "organisation_id"))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class CapabilityProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** One profile per organisation — the profile IS the tenant's configuration. */
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "organisation_id")
+    private Organisation organisation;
 
     @Column(name = "org_name", nullable = false, length = 256)
     private String orgName;

@@ -1,6 +1,8 @@
 package com.bracit.tendersense.controller;
 
+import com.bracit.tendersense.config.CurrentOrganisation;
 import com.bracit.tendersense.dto.DigestResponse;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.dto.PipelineRunResponse;
 import com.bracit.tendersense.entity.PipelineRun;
 import com.bracit.tendersense.repository.PipelineRunRepository;
@@ -46,8 +48,8 @@ public class PipelineController {
 
     /** What the 08:00 Asia/Dhaka digest reports, on demand. */
     @GetMapping("/digest")
-    public DigestResponse digest() {
-        return pipelineService.digest();
+    public DigestResponse digest(@CurrentOrganisation Organisation organisation) {
+        return pipelineService.digest(organisation);
     }
 
     @GetMapping("/runs")

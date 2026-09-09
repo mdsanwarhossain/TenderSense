@@ -1,6 +1,7 @@
 package com.bracit.tendersense.service;
 
 import com.bracit.tendersense.dto.ScoredMatch;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.MatcherType;
 
@@ -24,9 +25,10 @@ public interface MatchingService {
     /** Identifies the scoring model, so stored scores can be invalidated on change. */
     String modelVersion();
 
-    Map<Long, ScoredMatch> scoreAll(List<Tender> tenders);
+    Map<Long, ScoredMatch> scoreAll(Organisation organisation, List<Tender> tenders);
 
-    default ScoredMatch score(Tender tender) {
-        return scoreAll(List.of(tender)).getOrDefault(tender.getId(), ScoredMatch.zero());
+    default ScoredMatch score(Organisation organisation, Tender tender) {
+        return scoreAll(organisation, List.of(tender))
+                .getOrDefault(tender.getId(), ScoredMatch.zero());
     }
 }

@@ -16,9 +16,12 @@ import java.time.Instant;
 @Table(
         name = "match_result",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_match_tender_matcher",
-                columnNames = {"tender_id", "matcher_type"}),
-        indexes = @Index(name = "idx_match_score", columnList = "score"))
+                name = "uk_match_tender_org_matcher",
+                columnNames = {"tender_id", "organisation_id", "matcher_type"}),
+        indexes = {
+                @Index(name = "idx_match_score", columnList = "score"),
+                @Index(name = "idx_match_org", columnList = "organisation_id")
+        })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class MatchResult {
 
@@ -29,6 +32,11 @@ public class MatchResult {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tender_id")
     private Tender tender;
+
+    /** Whose score this is. The same tender scores differently for different companies. */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organisation_id")
+    private Organisation organisation;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "matcher_type", nullable = false, length = 32)

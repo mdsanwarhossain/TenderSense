@@ -10,6 +10,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -111,5 +118,40 @@ class ApiEndpointsIT {
     void unknownTenderIsNotFound() throws Exception {
         mockMvc.perform(get("/api/tenders/{id}", 99_999_999L))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("the same URL with two X-Org-Id headers returns disjoint shortlists")
+    void orgHeaderScopesTheShortlist() throws Exception {
+        List<Long> bracit = topTenIds("1");
+        List<Long> padma = topTenIds("2");
+        Assumptions.assumeFalse(bracit.isEmpty() || padma.isEmpty(), "a scored corpus is required");
+
+        List<Long> overlap = bracit.stream().filter(padma::contains).toList();
+        System.out.printf("top-10 overlap between the two organisations: %d%n", overlap.size());
+        assertTrue(overlap.isEmpty(),
+                "the two companies' top tenders overlap -- the header is not scoping the query");
+    }
+
+    @Test
+    @DisplayName("an omitted X-Org-Id falls back; an unknown one is a 404, not a silent fallback")
+    void orgHeaderResolution() throws Exception {
+        mockMvc.perform(get("/api/tenders").param("size", "1"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/tenders").param("size", "1").header("X-Org-Id", "999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    private List<Long> topTenIds(String orgId) throws Exception {
+        String json = mockMvc.perform(get("/api/tenders").param("size", "10")
+                        .header("X-Org-Id", orgId))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<Long> ids = new ArrayList<>();
+        Matcher m = Pattern.compile("\\{\"id\":(\\d+)").matcher(json);
+        while (m.find()) {
+            ids.add(Long.parseLong(m.group(1)));
+        }
+        return ids;
     }
 }

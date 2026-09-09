@@ -5,11 +5,13 @@ import com.bracit.tendersense.dto.FetchResult;
 import com.bracit.tendersense.dto.PipelineRunResponse;
 import com.bracit.tendersense.dto.TenderSummaryResponse;
 import com.bracit.tendersense.entity.MatchResult;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.PipelineRun;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.*;
 import com.bracit.tendersense.repository.EligibilityVerdictRepository;
 import com.bracit.tendersense.repository.MatchResultRepository;
+import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.repository.PipelineRunRepository;
 import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.service.*;
@@ -42,6 +44,7 @@ public class PipelineServiceImpl implements PipelineService {
     private final EligibilityVerdictRepository eligibilityRepository;
     private final TenderRepository tenderRepository;
     private final TenderMapper mapper;
+    private final OrganisationRepository organisationRepository;
     private final PipelineLock pipelineLock;
 
     @Override
@@ -54,7 +57,7 @@ public class PipelineServiceImpl implements PipelineService {
                     // Grades are comparative, so new scores shift the thresholds for
                     // everyone. Recalibrate once after the batch, not per source.
                     if (runs.stream().anyMatch(r -> (r.tendersScored() != null && r.tendersScored() > 0))) {
-                        scoringService.recalibrateGrades();
+                        activeOrganisations().forEach(scoringService::recalibrateGrades);
                     }
                     return runs;
                 })
@@ -74,7 +77,7 @@ public class PipelineServiceImpl implements PipelineService {
                 .runExclusively(job, () -> {
                     PipelineRunResponse run = execute(source.get(), full);
                     if (run.tendersScored() != null && run.tendersScored() > 0) {
-                        scoringService.recalibrateGrades();
+                        activeOrganisations().forEach(scoringService::recalibrateGrades);
                     }
                     return run;
                 })
@@ -88,10 +91,10 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
-    public DigestResponse digest() {
+    public DigestResponse digest(Organisation organisation) {
         Page<MatchResult> ranked = matchResultRepository.findRanked(
-                MatcherType.EMBEDDING, null, null, false, LocalDateTime.now(),
-                PageRequest.of(0, DIGEST_SIZE));
+                MatcherType.EMBEDDING, organisation.getId(), null, null, null, false,
+                LocalDateTime.now(), PageRequest.of(0, DIGEST_SIZE));
 
         List<Long> ids = ranked.getContent().stream().map(m -> m.getTender().getId()).toList();
         Map<Long, Tender> tenders = new HashMap<>();
@@ -99,7 +102,8 @@ public class PipelineServiceImpl implements PipelineService {
 
         Map<Long, EligibilityVerdictView> verdicts = new HashMap<>();
         if (!ids.isEmpty()) {
-            for (Object[] row : eligibilityRepository.findSummariesByTenderIds(ids)) {
+            for (Object[] row : eligibilityRepository.findSummariesByTenderIds(
+                    ids, organisation.getId())) {
                 verdicts.put(((Number) row[0]).longValue(),
                         new EligibilityVerdictView((EligibilityStatus) row[1],
                                 ((Number) row[2]).intValue()));
@@ -143,7 +147,12 @@ public class PipelineServiceImpl implements PipelineService {
             // Only new and revised tenders are scored: unchanged ones already have
             // results, and re-embedding them would spend the whole run's budget.
             List<Tender> ingested = ingestionService.ingest(fetched);
-            int scored = scoringService.scoreAll(ingested);
+
+            // Collection and classification happen once; scoring happens per company.
+            int scored = 0;
+            for (Organisation org : activeOrganisations()) {
+                scored += scoringService.scoreAll(org, ingested);
+            }
 
             run.setStatus(RunStatus.SUCCESS);
             run.setTendersDiscovered(fetched.count());
@@ -166,7 +175,7 @@ public class PipelineServiceImpl implements PipelineService {
         PipelineRun run = runRepository.save(PipelineRun.builder()
                 .jobName("rescore:ALL").status(RunStatus.RUNNING).startedAt(started).build());
         try {
-            run.setTendersScored(scoringService.rescoreEverything());
+            run.setTendersScored(scoringService.rescoreAllOrganisations());
             run.setStatus(RunStatus.SUCCESS);
         } catch (Exception e) {
             log.error("rescore failed", e);
@@ -192,6 +201,10 @@ public class PipelineServiceImpl implements PipelineService {
                 .errorMessage("another pipeline job (" + pipelineLock.currentHolder()
                         + ") was already running")
                 .build()));
+    }
+
+    private List<Organisation> activeOrganisations() {
+        return organisationRepository.findByActiveTrueOrderByIdAsc();
     }
 
     private PipelineRunResponse toDto(PipelineRun r) {

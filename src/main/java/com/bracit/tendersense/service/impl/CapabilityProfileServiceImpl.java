@@ -1,6 +1,7 @@
 package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.entity.CapabilityProfile;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Certification;
 import com.bracit.tendersense.entity.PastProject;
 import com.bracit.tendersense.exception.NotFoundException;
@@ -26,16 +27,20 @@ import java.util.List;
 @Slf4j
 public class CapabilityProfileServiceImpl implements CapabilityProfileService {
 
-    private static final String PROFILE_RESOURCE = "data/capability-profile.json";
+    /** Every profile resource seeds one organisation. */
+    private static final List<String> PROFILE_RESOURCES = List.of(
+            "data/capability-profile.json",
+            "data/capability-profile-construction.json");
 
     private final CapabilityProfileRepository repository;
+    private final com.bracit.tendersense.repository.OrganisationRepository organisationRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public CapabilityProfile current() {
-        return repository.findFirstByOrderByIdAsc()
+    public CapabilityProfile forOrganisation(Organisation organisation) {
+        return repository.findByOrganisationId(organisation.getId())
                 .orElseThrow(() -> new NotFoundException(
-                        "no capability profile configured - seed one before scoring"));
+                        "no capability profile for " + organisation.getSlug()));
     }
 
     /**
@@ -44,8 +49,8 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
      * the domain vocabulary a tender is most likely to echo.
      */
     @Override
-    public List<String> capabilityStatements() {
-        CapabilityProfile p = current();
+    public List<String> capabilityStatements(Organisation organisation) {
+        CapabilityProfile p = forOrganisation(organisation);
         List<String> out = new ArrayList<>(p.getServices());
         for (PastProject project : p.getPastProjects()) {
             String text = project.getDescription() == null || project.getDescription().isBlank()
@@ -60,8 +65,8 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
     }
 
     @Override
-    public List<String> exclusionStatements() {
-        return List.copyOf(current().getExclusions());
+    public List<String> exclusionStatements(Organisation organisation) {
+        return List.copyOf(forOrganisation(organisation).getExclusions());
     }
 
     @Override
@@ -70,10 +75,29 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
         if (repository.count() > 0) {
             return;
         }
-        try (InputStream in = new ClassPathResource(PROFILE_RESOURCE).getInputStream()) {
+        PROFILE_RESOURCES.forEach(this::seedOne);
+    }
+
+    private void seedOne(String resource) {
+        try (InputStream in = new ClassPathResource(resource).getInputStream()) {
             JsonNode root = objectMapper.readTree(in);
 
+            List<com.bracit.tendersense.entity.enums.Sector> sectors = new ArrayList<>();
+            root.path("sectors").forEach(n -> sectors.add(
+                    com.bracit.tendersense.entity.enums.Sector.valueOf(n.asString())));
+
+            Organisation organisation = organisationRepository.save(Organisation.builder()
+                    .name(root.path("orgName").asString())
+                    .slug(root.path("slug").asString())
+                    .description(root.path("description").asString(null))
+                    .sectors(sectors)
+                    .active(true)
+                    .demonstration(resource.contains("construction"))
+                    .createdAt(Instant.now())
+                    .build());
+
             CapabilityProfile profile = CapabilityProfile.builder()
+                    .organisation(organisation)
                     .orgName(root.path("orgName").asString())
                     .summary(root.path("summary").asString())
                     .annualTurnoverBdt(new BigDecimal(root.path("annualTurnoverBdt").asLong()))
@@ -105,11 +129,12 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
             }
 
             repository.save(profile);
-            log.info("Seeded capability profile: {} services, {} exclusions, {} projects, {} certs",
-                    profile.getServices().size(), profile.getExclusions().size(),
-                    profile.getPastProjects().size(), profile.getCertifications().size());
+            log.info("Seeded {}: {} sectors, {} services, {} exclusions, {} projects, {} certs",
+                    organisation.getSlug(), sectors.size(), profile.getServices().size(),
+                    profile.getExclusions().size(), profile.getPastProjects().size(),
+                    profile.getCertifications().size());
         } catch (Exception e) {
-            log.error("could not seed capability profile: {}", e.getMessage());
+            log.error("could not seed {}: {}", resource, e.getMessage());
         }
     }
 

@@ -157,5 +157,13 @@
     "Individual consultant positions for a single named person rather than an engagement for a firm",
     "Monitoring and evaluation, audit, survey enumeration and social research assignments",
     "Printing, publication, event management, advertising and media production"
+  ],
+  "slug": "bracit",
+  "description": "BRAC IT Services \u2014 software, systems integration and managed IT",
+  "sectors": [
+    "IT_SERVICES",
+    "IT_HARDWARE",
+    "TELECOM",
+    "CONSULTANCY"
   ]
 }

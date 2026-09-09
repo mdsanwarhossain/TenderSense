@@ -13,7 +13,10 @@ import java.util.List;
  * decided by fixed rules that are transparent and reproducible.
  */
 @Entity
-@Table(name = "eligibility_verdict")
+@Table(name = "eligibility_verdict",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_verdict_tender_org",
+                columnNames = {"tender_id", "organisation_id"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class EligibilityVerdict {
 
@@ -21,9 +24,17 @@ public class EligibilityVerdict {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tender_id", unique = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tender_id")
     private Tender tender;
+
+    /**
+     * Eligibility is per organisation, not per tender: turnover thresholds and required
+     * certifications are checked against a specific company's profile.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organisation_id")
+    private Organisation organisation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)

@@ -1,6 +1,8 @@
 package com.bracit.tendersense.controller;
 
+import com.bracit.tendersense.config.CurrentOrganisation;
 import com.bracit.tendersense.dto.CapabilityProfileDto;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.CapabilityProfile;
 import com.bracit.tendersense.repository.CapabilityProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +22,9 @@ public class ProfileController {
     private final CapabilityProfileRepository profileRepository;
 
     @GetMapping
-    public CapabilityProfileDto profile() {
-        return profileRepository.findFirstByOrderByIdAsc().map(this::toDto).orElse(null);
+    public CapabilityProfileDto profile(@CurrentOrganisation Organisation organisation) {
+        return profileRepository.findByOrganisationId(organisation.getId())
+                .map(this::toDto).orElse(null);
     }
 
     private CapabilityProfileDto toDto(CapabilityProfile p) {

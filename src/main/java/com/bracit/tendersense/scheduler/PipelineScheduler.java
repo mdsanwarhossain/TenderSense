@@ -4,6 +4,8 @@ import com.bracit.tendersense.dto.DigestResponse;
 import com.bracit.tendersense.dto.PipelineRunResponse;
 import com.bracit.tendersense.entity.enums.RunStatus;
 import com.bracit.tendersense.entity.enums.SourcePortal;
+import com.bracit.tendersense.entity.Organisation;
+import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.service.PipelineService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,7 @@ public class PipelineScheduler {
     private static final int FAILURE_LIMIT = 3;
 
     private final PipelineService pipelineService;
+    private final OrganisationRepository organisationRepository;
 
     @Value("${tendersense.schedule.zone}")
     private String zone;
@@ -124,12 +127,15 @@ public class PipelineScheduler {
             zone = "${tendersense.schedule.zone}")
     public void morningDigest() {
         try {
-            DigestResponse digest = pipelineService.digest();
-            log.info("morning digest {}: {} open tenders, top {} — {} S-grade, {} A-grade, "
-                            + "{} closing within 7 days, {} need verification",
-                    digest.date(), digest.openTenders(), digest.top().size(),
-                    digest.sGrade(), digest.aGrade(),
-                    digest.closingWithinSevenDays(), digest.needingVerification());
+            // One digest per subscribing company — the corpus is shared, the shortlist is not.
+            for (Organisation org : organisationRepository.findByActiveTrueOrderByIdAsc()) {
+                DigestResponse digest = pipelineService.digest(org);
+                log.info("morning digest {} for {}: {} open tenders, top {} — {} S-grade, "
+                                + "{} A-grade, {} closing within 7 days, {} need verification",
+                        digest.date(), org.getSlug(), digest.openTenders(), digest.top().size(),
+                        digest.sGrade(), digest.aGrade(),
+                        digest.closingWithinSevenDays(), digest.needingVerification());
+            }
         } catch (Exception e) {
             // A failed digest must never take the application down with it.
             log.error("morning digest failed", e);

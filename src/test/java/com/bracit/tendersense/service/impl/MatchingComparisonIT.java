@@ -1,9 +1,11 @@
 package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.dto.ScoredMatch;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.entity.enums.SourcePortal;
+import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.service.CapabilityProfileService;
 import com.bracit.tendersense.service.MatchingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,12 +35,16 @@ class MatchingComparisonIT {
     private List<MatchingService> matchers;
     @Autowired
     private CapabilityProfileService profileService;
+    @Autowired
+    private OrganisationRepository organisationRepository;
 
     private MatchingService semantic;
+    private Organisation org;
 
     @BeforeEach
     void setUp() {
         profileService.seedIfEmpty();
+        org = organisationRepository.findBySlug("bracit").orElseThrow();
         semantic = matchers.stream()
                 .filter(m -> m.type() == MatcherType.EMBEDDING)
                 .findFirst()
@@ -80,7 +86,7 @@ class MatchingComparisonIT {
                 "Civil works including foundation, superstructure and finishing.");
 
         Map<Long, ScoredMatch> scores =
-                semantic.scoreAll(List.of(vocabularyGap, keywordDecoy, unrelated));
+                semantic.scoreAll(org, List.of(vocabularyGap, keywordDecoy, unrelated));
 
         double gapScore = scores.get(1L).score();
         double decoyScore = scores.get(2L).score();
@@ -104,7 +110,7 @@ class MatchingComparisonIT {
                 "Design and rollout of a management information system for social protection",
                 "Beneficiary registration, targeting and payment reconciliation.");
 
-        ScoredMatch match = semantic.scoreAll(List.of(t)).get(4L);
+        ScoredMatch match = semantic.scoreAll(org, List.of(t)).get(4L);
 
         assertFalse(match.evidence().isEmpty());
         ScoredMatch.Evidence top = match.evidence().get(0);
@@ -118,7 +124,7 @@ class MatchingComparisonIT {
     @Test
     @DisplayName("scores stay within 0..1 so grading thresholds mean something")
     void scoresAreNormalised() {
-        Map<Long, ScoredMatch> scores = semantic.scoreAll(List.of(
+        Map<Long, ScoredMatch> scores = semantic.scoreAll(org, List.of(
                 tender(5L, "Software development services", "Custom application build."),
                 tender(6L, "Supply of rice", "Coarse rice for ration distribution.")));
 

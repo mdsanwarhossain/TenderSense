@@ -1,6 +1,7 @@
 package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.dto.ScoredMatch;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.service.CapabilityProfileService;
@@ -62,7 +63,7 @@ public class KeywordMatchingServiceImpl implements MatchingService {
     private final EntityManager entityManager;
     private final CapabilityProfileService profileService;
 
-    private String cachedQuery;
+    private final Map<Long, String> queryByOrganisation = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     public MatcherType type() {
@@ -76,11 +77,11 @@ public class KeywordMatchingServiceImpl implements MatchingService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<Long, ScoredMatch> scoreAll(List<Tender> tenders) {
+    public Map<Long, ScoredMatch> scoreAll(Organisation organisation, List<Tender> tenders) {
         if (tenders.isEmpty()) {
             return Map.of();
         }
-        String tsquery = queryTerms();
+        String tsquery = queryTerms(organisation);
         if (tsquery.isBlank()) {
             return Map.of();
         }
@@ -122,12 +123,14 @@ public class KeywordMatchingServiceImpl implements MatchingService {
         return out;
     }
 
-    private synchronized String queryTerms() {
-        if (cachedQuery != null) {
-            return cachedQuery;
-        }
+    private String queryTerms(Organisation organisation) {
+        return queryByOrganisation.computeIfAbsent(organisation.getId(),
+                id -> buildQuery(organisation));
+    }
+
+    private String buildQuery(Organisation organisation) {
         Set<String> terms = new LinkedHashSet<>();
-        for (String statement : profileService.capabilityStatements()) {
+        for (String statement : profileService.capabilityStatements(organisation)) {
             for (String raw : statement.toLowerCase(Locale.ENGLISH).split("[^a-z0-9]+")) {
                 if (raw.length() >= MIN_TERM_LENGTH && !STOP_TERMS.contains(raw)) {
                     terms.add(raw);
@@ -137,12 +140,13 @@ public class KeywordMatchingServiceImpl implements MatchingService {
                 }
             }
         }
-        cachedQuery = String.join(" | ", terms);
-        log.info("keyword baseline built from {} distinct profile terms", terms.size());
-        return cachedQuery;
+        String query = String.join(" | ", terms);
+        log.info("keyword baseline for {} built from {} distinct profile terms",
+                organisation.getSlug(), terms.size());
+        return query;
     }
 
-    public synchronized void invalidate() {
-        cachedQuery = null;
+    public void invalidate(Organisation organisation) {
+        queryByOrganisation.remove(organisation.getId());
     }
 }
