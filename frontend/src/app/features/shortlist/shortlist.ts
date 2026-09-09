@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-import { OrgService } from '../../core/services/org.service';
+import { AuthService } from '../../core/services/auth.service';
 import { GradeBadge } from '../../shared/grade-badge';
 import { ScoreBar } from '../../shared/score-bar';
 import { EligibilityChip } from '../../shared/eligibility-chip';
@@ -20,7 +20,7 @@ export class Shortlist {
   private readonly api = inject(ApiService);
 
   /** Named on the page so a company switch is visible here, not just in the ranking. */
-  readonly org = inject(OrgService).current;
+  readonly org = inject(AuthService).company;
 
   readonly rows = signal<TenderSummary[]>([]);
   readonly total = signal(0);

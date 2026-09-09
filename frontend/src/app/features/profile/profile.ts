@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
-import { OrgService } from '../../core/services/org.service';
+import { AuthService } from '../../core/services/auth.service';
 import { CapabilityProfile } from '../../core/models/tender.models';
 
 /**
@@ -21,7 +21,7 @@ export class Profile {
   private readonly api = inject(ApiService);
 
   /** Named on the page so a company switch is visibly reflected here, not just in the shortlist. */
-  readonly org = inject(OrgService).current;
+  readonly org = inject(AuthService).company;
 
   readonly profile = signal<CapabilityProfile | null>(null);
   readonly loading = signal(true);

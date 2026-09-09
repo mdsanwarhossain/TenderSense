@@ -1,3 +1,4 @@
+@if (company()) {
 <div class="shell">
   <aside class="rail">
     <a class="brand" routerLink="/shortlist">
@@ -51,8 +52,8 @@
       <div class="rail-card">
         <span class="t">Scoring is per company</span>
         <span class="d">
-          Every screen reads the same corpus and scores it against the acting company's
-          profile. Switch companies from the top bar.
+          Every screen reads the same corpus and scores it against your company's
+          profile. Tenders outside your sectors are never scored for you.
         </span>
       </div>
     </div>
@@ -65,15 +66,16 @@
         <span class="sub">{{ section().sub }}</span>
       </div>
       <div class="topbar-right">
-        <ts-org-switcher />
-        <span class="avatar" title="BD Team">BD</span>
+        <ts-account-menu />
       </div>
     </header>
 
     <main class="page">
-      @if (mounted()) {
-        <router-outlet />
-      }
+      <router-outlet />
     </main>
   </div>
 </div>
+} @else {
+  <!-- Signed out, or still asking: /login and /signup paint their own full page. -->
+  <router-outlet />
+}

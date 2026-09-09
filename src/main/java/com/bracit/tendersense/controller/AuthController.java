@@ -3,11 +3,13 @@ package com.bracit.tendersense.controller;
 import com.bracit.tendersense.config.OrganisationArgumentResolver;
 import com.bracit.tendersense.dto.LoginRequest;
 import com.bracit.tendersense.dto.OrganisationDto;
+import com.bracit.tendersense.dto.SignupRequest;
 import com.bracit.tendersense.entity.Account;
 import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.exception.UnauthenticatedException;
 import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.service.AccountService;
+import com.bracit.tendersense.service.RegistrationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -30,20 +32,22 @@ public class AuthController {
 
     private final AccountService accountService;
     private final OrganisationRepository organisationRepository;
+    private final RegistrationService registrationService;
+
+    /** Registers a new company and signs it straight in. */
+    @PostMapping("/signup")
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrganisationDto signup(@RequestBody SignupRequest request, HttpServletRequest http) {
+        Organisation organisation = registrationService.register(request);
+        startSession(http, organisation.getId());
+        return OrganisationDto.of(organisation);
+    }
 
     @PostMapping("/login")
     public OrganisationDto login(@RequestBody LoginRequest request, HttpServletRequest http) {
         Account account = accountService.authenticate(request.email(), request.password());
 
-        // Drop any pre-existing session before establishing the authenticated one, so a
-        // session id observed before sign-in cannot be replayed after it.
-        HttpSession existing = http.getSession(false);
-        if (existing != null) {
-            existing.invalidate();
-        }
-        http.getSession(true).setAttribute(
-                OrganisationArgumentResolver.SESSION_KEY, account.getOrganisation().getId());
-
+        startSession(http, account.getOrganisation().getId());
         log.info("signed in: {}", account.getOrganisation().getSlug());
         return OrganisationDto.of(account.getOrganisation());
     }
@@ -76,5 +80,18 @@ public class AuthController {
                     return new UnauthenticatedException("Not signed in");
                 });
         return OrganisationDto.of(organisation);
+    }
+
+    /**
+     * Starts an authenticated session, discarding any anonymous one first so a session id
+     * observed before sign-in cannot be replayed after it.
+     */
+    private static void startSession(HttpServletRequest http, Long organisationId) {
+        HttpSession existing = http.getSession(false);
+        if (existing != null) {
+            existing.invalidate();
+        }
+        http.getSession(true).setAttribute(
+                OrganisationArgumentResolver.SESSION_KEY, organisationId);
     }
 }

@@ -1,30 +1,26 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { OrgService } from './core/services/org.service';
-import { OrgSwitcher } from './shared/org-switcher';
+import { AuthService } from './core/services/auth.service';
+import { AccountMenu } from './shared/account-menu';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, OrgSwitcher],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AccountMenu],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
-  private readonly orgService = inject(OrgService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
   /**
-   * Gates the router outlet so that switching company tears the current screen down
-   * and builds it again. Every feature loads its data in its constructor, so a
-   * remount is what makes the whole app refetch under the new `X-Org-Id` — without
-   * a page reload, and without each screen having to subscribe to the selection.
+   * The signed-in company, or null on /login and /signup. The shell — rail, top bar —
+   * renders only when this is set, so the auth pages get the full window.
    */
-  readonly mounted = signal(true);
-
-  private lastOrgId = this.orgService.currentId();
+  readonly company = this.auth.company;
 
   /** Tracks the active URL so the rail and the top bar agree on where we are. */
   private readonly url = toSignal(
@@ -42,7 +38,7 @@ export class App {
    */
   readonly section = computed<{ title: string; sub: string }>(() => {
     const url = this.url();
-    const org = this.orgService.current()?.name;
+    const org = this.company()?.name;
     if (url.startsWith('/tenders/')) {
       return { title: 'Tender detail', sub: 'Opened from the morning shortlist' };
     }
@@ -66,31 +62,8 @@ export class App {
   }).format(new Date());
 
   constructor() {
-    this.orgService.load();
-
-    effect(() => {
-      const id = this.orgService.currentId();
-      untracked(() => {
-        if (id === this.lastOrgId) {
-          return;
-        }
-        this.lastOrgId = id;
-        // A tender detail is scoped to one company; the other may not be able to
-        // see that tender at all. Everything else is a view of the same corpus and
-        // is meaningful for either, so it stays put and reloads in place.
-        if (this.router.url.startsWith('/tenders/')) {
-          this.router.navigate(['/shortlist']);
-          return;
-        }
-        this.remount();
-      });
-    });
-  }
-
-  private remount(): void {
-    this.mounted.set(false);
-    // One tick with the outlet empty: long enough for Angular to destroy the
-    // component, short enough that nothing flickers.
-    setTimeout(() => this.mounted.set(true));
+    // The route guard resolves this before any protected screen renders; calling it
+    // here as well means a hard refresh on /login does not flash the shell first.
+    void this.auth.ensureLoaded();
   }
 }
