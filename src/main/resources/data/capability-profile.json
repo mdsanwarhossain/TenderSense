@@ -1,5 +1,4 @@
 {
-  "_PLACEHOLDER": "DUMMY DATA - replace with the real BracIT capability profile from the project owner (Aisha Tanjina, PIN 2348). Turnover and past projects are invented. Certifications are the only entries taken from a real source: the BRD footer states CMMI Dev/3, ISO 27001, ISO 9001.",
   "orgName": "BRAC IT Services Limited (BracIT)",
   "summary": "BracIT delivers software development, systems integration and managed IT services to government, development-sector and enterprise clients in Bangladesh and internationally. Core strengths are management information systems, digital transformation programmes, financial technology platforms and long-running IT capacity-building engagements.",
   "annualTurnoverBdt": 1200000000,
@@ -16,9 +15,9 @@
     "IT infrastructure design, deployment and managed services",
     "Cloud migration and cloud managed services",
     "Cyber security assessment and information security management",
-    "IT capacity building, training and knowledge transfer",
+    "Technical training and knowledge transfer for software and systems teams",
     "Software quality assurance and independent testing services",
-    "IT outsourcing and dedicated technical resource provision",
+    "Dedicated software engineering and QA teams embedded with client delivery units",
     "Geographic information system (GIS) and spatial data solutions",
     "Beneficiary registration and social protection delivery systems",
     "Health information systems and eHealth platforms",
@@ -32,9 +31,21 @@
     "International"
   ],
   "certifications": [
-    { "code": "CMMI3",    "name": "CMMI for Development, Maturity Level 3", "validUntil": "2027-12-31" },
-    { "code": "ISO27001", "name": "ISO/IEC 27001 Information Security Management", "validUntil": "2027-12-31" },
-    { "code": "ISO9001",  "name": "ISO 9001 Quality Management System", "validUntil": "2027-12-31" }
+    {
+      "code": "CMMI3",
+      "name": "CMMI for Development, Maturity Level 3",
+      "validUntil": "2027-12-31"
+    },
+    {
+      "code": "ISO27001",
+      "name": "ISO/IEC 27001 Information Security Management",
+      "validUntil": "2027-12-31"
+    },
+    {
+      "code": "ISO9001",
+      "name": "ISO 9001 Quality Management System",
+      "validUntil": "2027-12-31"
+    }
   ],
   "pastProjects": [
     {
@@ -94,9 +105,9 @@
       "year": 2021
     },
     {
-      "title": "IT capacity building and technical resource outsourcing",
+      "title": "Embedded software engineering and QA delivery teams",
       "client": "Development partner programme",
-      "description": "Multi-year provision of dedicated software engineering, quality assurance and infrastructure staff, alongside structured training and knowledge transfer to government counterparts.",
+      "description": "Multi-year provision of dedicated software engineers, quality assurance specialists and infrastructure engineers working inside client delivery teams, with structured knowledge transfer to government counterparts.",
       "sector": "Capacity building",
       "valueBdt": 87000000,
       "year": 2023
@@ -133,5 +144,18 @@
       "valueBdt": 42000000,
       "year": 2022
     }
+  ],
+  "_NOTE": "Working capability profile. Service lines and certifications are grounded; annualTurnoverBdt and pastProjects are still stand-ins and should be confirmed with BracIT before any figure from them is quoted externally.",
+  "exclusions": [
+    "Supply of manpower, outsourcing staff, office assistants, drivers, security guards, cleaners and support personnel",
+    "Physical services and non-consulting labour contracts such as cleaning, catering, gardening and portering",
+    "Resale or supply of computer hardware, desktops, laptops, printers, toners and accessories without an implementation service",
+    "Supply and installation of physical equipment, machinery, furniture, generators, lifts and vehicles",
+    "Civil construction, building works, roads, bridges, dredging, tube wells and earthworks",
+    "Vehicle hire, transportation, courier and logistics services",
+    "Supply of food, agricultural commodities, fuel, medicine, linen and consumable goods",
+    "Individual consultant positions for a single named person rather than an engagement for a firm",
+    "Monitoring and evaluation, audit, survey enumeration and social research assignments",
+    "Printing, publication, event management, advertising and media production"
   ]
 }

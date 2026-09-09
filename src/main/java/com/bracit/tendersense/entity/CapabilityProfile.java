@@ -35,6 +35,16 @@ public class CapabilityProfile {
     @Builder.Default
     private List<String> services = new ArrayList<>();
 
+    /**
+     * What BracIT does NOT do. A profile that only asserts the positive has nothing
+     * to push back with, which is why staffing contracts once ranked first.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "profile_exclusion", joinColumns = @JoinColumn(name = "profile_id"))
+    @Column(name = "exclusion", length = 512)
+    @Builder.Default
+    private List<String> exclusions = new ArrayList<>();
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "profile_geography", joinColumns = @JoinColumn(name = "profile_id"))
     @Column(name = "geography", length = 128)

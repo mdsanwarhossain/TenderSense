@@ -15,6 +15,9 @@ public record MatchEvidenceResponse(
         String modelVersion,
         String summary,
         com.bracit.tendersense.entity.enums.BidAction recommendation,
+        /** Set when the score was pulled down for resembling excluded work. */
+        String demotedFor,
+        Double demotionPenalty,
         List<EvidencePair> evidence) {
 
     public record EvidencePair(String profileText, String tenderText, double similarity) {

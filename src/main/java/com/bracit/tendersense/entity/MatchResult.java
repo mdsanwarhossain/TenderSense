@@ -50,6 +50,13 @@ public class MatchResult {
     @Column(name = "summary_text", columnDefinition = "text")
     private String summaryText;
 
+    /** The excluded-work statement this tender resembled, if the penalty fired. */
+    @Column(name = "exclusion_text", length = 512)
+    private String exclusionText;
+
+    @Column(name = "exclusion_penalty")
+    private Double exclusionPenalty;
+
     /** Embedding model identity; a change here invalidates every stored score. */
     @Column(name = "model_version", length = 128)
     private String modelVersion;

@@ -47,6 +47,12 @@ public class TemplateSummaryServiceImpl implements SummaryService {
                     .append('.');
         }
 
+        if (match.exclusion() != null) {
+            sb.append(" Scored down: reads more like ")
+              .append(quote(match.exclusion().text()))
+              .append(" than like our work.");
+        }
+
         if (verdict != null) {
             List<EligibilityGap> blocking = verdict.getGaps().stream()
                     .filter(EligibilityGap::isBlocking).toList();

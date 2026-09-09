@@ -41,11 +41,23 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
     /** Tender text is truncated before embedding: the model has a token limit. */
     private static final int MAX_TENDER_CHARS = 2000;
 
+    /**
+     * How hard an excluded-work resemblance pulls a score down.
+     *
+     * <p>The penalty is a <em>margin</em>: it only applies when the tender matches an
+     * exclusion better than it matches anything we do. Subtracting raw exclusion
+     * similarity instead would shift every score down uniformly and change no ranking,
+     * because near-neighbours in this embedding space score in the same narrow band.
+     */
+    private static final double EXCLUSION_WEIGHT = 1.0;
+
     private final EmbeddingModel embeddingModel;
     private final CapabilityProfileService profileService;
 
     private List<String> statements = List.of();
     private List<float[]> statementVectors = List.of();
+    private List<String> exclusions = List.of();
+    private List<float[]> exclusionVectors = List.of();
 
     @Override
     public MatcherType type() {
@@ -54,7 +66,7 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
 
     @Override
     public String modelVersion() {
-        return "onnx:all-MiniLM-L6-v2:384";
+        return "onnx:all-MiniLM-L6-v2:384+excl";
     }
 
     @Override
@@ -92,8 +104,31 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
                 .average()
                 .orElse(0d);
 
-        double score = Vectors.clamp01(PEAK_WEIGHT * peak + BREADTH_WEIGHT * breadth);
-        return new ScoredMatch(score, ranked.subList(0, Math.min(EVIDENCE_COUNT, ranked.size())));
+        double positive = Vectors.clamp01(PEAK_WEIGHT * peak + BREADTH_WEIGHT * breadth);
+        List<ScoredMatch.Evidence> top =
+                ranked.subList(0, Math.min(EVIDENCE_COUNT, ranked.size()));
+
+        // Does this look more like work we have excluded than like work we do?
+        String worstText = null;
+        double worstSim = 0d;
+        for (int i = 0; i < exclusions.size(); i++) {
+            double sim = Vectors.clamp01(Vectors.cosine(tenderVector, exclusionVectors.get(i)));
+            if (sim > worstSim) {
+                worstSim = sim;
+                worstText = exclusions.get(i);
+            }
+        }
+
+        double margin = Math.max(0d, worstSim - peak);
+        if (margin <= 0d || worstText == null) {
+            return new ScoredMatch(positive, top, null);
+        }
+
+        double penalty = EXCLUSION_WEIGHT * margin;
+        return new ScoredMatch(
+                Vectors.clamp01(positive - penalty),
+                top,
+                new ScoredMatch.Exclusion(worstText, worstSim, penalty));
     }
 
     /**
@@ -115,12 +150,24 @@ public class EmbeddingMatchingServiceImpl implements MatchingService {
         }
         statements = List.copyOf(loaded);
         statementVectors = List.copyOf(vectors);
-        log.info("embedded {} capability statements with {}", statements.size(), modelVersion());
+
+        List<String> excl = profileService.exclusionStatements();
+        List<float[]> exclVectors = new ArrayList<>(excl.size());
+        for (String s : excl) {
+            exclVectors.add(embeddingModel.embed(s));
+        }
+        exclusions = List.copyOf(excl);
+        exclusionVectors = List.copyOf(exclVectors);
+
+        log.info("embedded {} capability statements and {} exclusions with {}",
+                statements.size(), exclusions.size(), modelVersion());
     }
 
     public synchronized void invalidate() {
         statements = List.of();
         statementVectors = List.of();
+        exclusions = List.of();
+        exclusionVectors = List.of();
     }
 
     private static String tenderText(Tender t) {

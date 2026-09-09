@@ -15,6 +15,9 @@ public interface CapabilityProfileService {
      */
     List<String> capabilityStatements();
 
-    /** Seeds the placeholder profile when the database has none. */
+    /** The "not our work" statements matching scores against as a penalty. */
+    List<String> exclusionStatements();
+
+    /** Seeds the profile from resources when the database has none. */
     void seedIfEmpty();
 }

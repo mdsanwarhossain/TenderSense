@@ -26,7 +26,7 @@ import java.util.List;
 @Slf4j
 public class CapabilityProfileServiceImpl implements CapabilityProfileService {
 
-    private static final String PLACEHOLDER = "data/capability-profile.placeholder.json";
+    private static final String PROFILE_RESOURCE = "data/capability-profile.json";
 
     private final CapabilityProfileRepository repository;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -60,12 +60,17 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
     }
 
     @Override
+    public List<String> exclusionStatements() {
+        return List.copyOf(current().getExclusions());
+    }
+
+    @Override
     @Transactional
     public void seedIfEmpty() {
         if (repository.count() > 0) {
             return;
         }
-        try (InputStream in = new ClassPathResource(PLACEHOLDER).getInputStream()) {
+        try (InputStream in = new ClassPathResource(PROFILE_RESOURCE).getInputStream()) {
             JsonNode root = objectMapper.readTree(in);
 
             CapabilityProfile profile = CapabilityProfile.builder()
@@ -73,6 +78,7 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
                     .summary(root.path("summary").asString())
                     .annualTurnoverBdt(new BigDecimal(root.path("annualTurnoverBdt").asLong()))
                     .services(stringList(root.path("services")))
+                    .exclusions(stringList(root.path("exclusions")))
                     .geographies(stringList(root.path("geographies")))
                     .updatedAt(Instant.now())
                     .build();
@@ -99,10 +105,9 @@ public class CapabilityProfileServiceImpl implements CapabilityProfileService {
             }
 
             repository.save(profile);
-            log.warn("Seeded PLACEHOLDER capability profile ({} services, {} projects, {} certs). "
-                            + "Replace with the real BracIT profile before the demo.",
-                    profile.getServices().size(), profile.getPastProjects().size(),
-                    profile.getCertifications().size());
+            log.info("Seeded capability profile: {} services, {} exclusions, {} projects, {} certs",
+                    profile.getServices().size(), profile.getExclusions().size(),
+                    profile.getPastProjects().size(), profile.getCertifications().size());
         } catch (Exception e) {
             log.error("could not seed capability profile: {}", e.getMessage());
         }

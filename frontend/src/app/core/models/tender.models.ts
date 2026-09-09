@@ -77,6 +77,9 @@ export interface MatchEvidence {
   modelVersion: string | null;
   summary: string | null;
   recommendation: BidAction | null;
+  /** Set when the score was pulled down for resembling excluded work. */
+  demotedFor: string | null;
+  demotionPenalty: number | null;
   evidence: EvidencePair[];
 }
 

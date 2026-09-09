@@ -120,6 +120,10 @@ public class ScoringServiceImpl implements ScoringService {
                 .orElseGet(() -> MatchResult.builder().tender(tender).matcherType(type).build());
 
         result.setScore(match.score());
+        result.setExclusionText(match.exclusion() == null ? null
+                : truncate(match.exclusion().text()));
+        result.setExclusionPenalty(match.exclusion() == null ? null
+                : match.exclusion().penalty());
         result.setModelVersion(modelVersion);
         result.setComputedAt(Instant.now());
         result.setEvidenceJson(writeEvidence(match));
@@ -130,6 +134,10 @@ public class ScoringServiceImpl implements ScoringService {
             result.setSummaryText(summaryService.summarise(tender, match, verdict));
         }
         matchResultRepository.save(result);
+    }
+
+    private static String truncate(String s) {
+        return s == null || s.length() <= 512 ? s : s.substring(0, 512);
     }
 
     private String writeEvidence(ScoredMatch match) {

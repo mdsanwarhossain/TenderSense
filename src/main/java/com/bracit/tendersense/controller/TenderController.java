@@ -99,9 +99,10 @@ public class TenderController {
         return match.map(m -> new MatchEvidenceResponse(
                         id, m.getGrade(), m.getScore(), m.getModelVersion(),
                         m.getSummaryText(), mapper.recommend(m, view),
+                        m.getExclusionText(), m.getExclusionPenalty(),
                         readEvidence(m.getEvidenceJson())))
                 .orElseGet(() -> new MatchEvidenceResponse(id, null, 0d, null,
-                        "Not yet scored.", null, List.of()));
+                        "Not yet scored.", null, null, null, List.of()));
     }
 
     @GetMapping("/{id}/eligibility")
