@@ -43,5 +43,20 @@ public enum Sector {
     STAFFING,
 
     /** Unclassified. Scored for everyone, by design. */
-    OTHER
+    OTHER;
+
+    /** {@code IT_SERVICES} reads as noise in a chip; "IT services" does not. */
+    public String label() {
+        String[] words = name().toLowerCase(java.util.Locale.ROOT).split("_");
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            String w = words[i];
+            if (i == 0) {
+                out.append(w.equals("it") ? "IT" : Character.toUpperCase(w.charAt(0)) + w.substring(1));
+            } else {
+                out.append(' ').append(w);
+            }
+        }
+        return out.toString();
+    }
 }

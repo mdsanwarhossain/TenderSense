@@ -39,7 +39,7 @@ export const routes: Routes = [
     path: 'profile',
     canActivate: [authGuard],
     loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
-    title: 'Capability profile · TenderSense',
+    title: 'Profile · TenderSense',
   },
   {
     path: 'pipeline',

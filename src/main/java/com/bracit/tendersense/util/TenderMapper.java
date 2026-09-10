@@ -65,6 +65,10 @@ public class TenderMapper {
     }
 
     public TenderDetailResponse toDetail(Tender t) {
+        return toDetail(t, null);
+    }
+
+    public TenderDetailResponse toDetail(Tender t, TrackingState tracking) {
         return new TenderDetailResponse(
                 t.getId(), t.getExternalId(), t.getSourcePortal(), t.getReferenceNo(),
                 t.getTitle(), t.getDescription(), t.getMinistry(), t.getDivision(),
@@ -73,7 +77,12 @@ public class TenderMapper {
                 t.getBudgetType(), t.getSourceOfFunds(), t.getDocumentPriceBdt(),
                 t.getPublishedAt(), t.getClosingAt(), daysToDeadline(t.getClosingAt()),
                 t.getStatus(), t.getEligibilityText(), t.getRawSnapshotPath(),
-                t.getContentHash(), t.getRevisionCount());
+                t.getContentHash(), t.getRevisionCount(),
+                t.getSector(), t.getSector() == null ? null : t.getSector().label(),
+                tracking != null && tracking.wishlisted(),
+                tracking != null && tracking.submitted(),
+                tracking == null ? null : tracking.submittedAt(),
+                sourceUrl(t));
     }
 
     /**

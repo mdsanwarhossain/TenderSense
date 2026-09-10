@@ -3,6 +3,10 @@ import { DatePipe } from '@angular/common';
 import { ApiService } from '../core/services/api.service';
 import { SOURCE_LABELS, TenderSummary, TrackingState } from '../core/models/tender.models';
 
+/** What the buttons need: a list row and the detail page both carry these fields. */
+export type TrackableTender =
+  Pick<TenderSummary, 'id' | 'source' | 'wishlisted' | 'submitted' | 'submittedAt' | 'sourceUrl'>;
+
 /**
  * What the tender team does about a tender: save it for later, mark that they bid on
  * the portal, and open it there.
@@ -76,7 +80,7 @@ import { SOURCE_LABELS, TenderSummary, TrackingState } from '../core/models/tend
 export class TenderActions {
   private readonly api = inject(ApiService);
 
-  readonly row = input.required<TenderSummary>();
+  readonly row = input.required<TrackableTender>();
   /** The server's answer after a successful change, so the list can react to it. */
   readonly changed = output<TrackingState>();
   /** A message for the page to show when a change could not be saved. */

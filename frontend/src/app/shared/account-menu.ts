@@ -35,7 +35,7 @@ import { AuthService } from '../core/services/auth.service';
               }
             </div>
             <a class="mi" role="menuitem" routerLink="/profile" (click)="open.set(false)">
-              Capability profile
+              Profile
             </a>
             <a class="mi" role="menuitem" routerLink="/pipeline" (click)="open.set(false)">
               Pipeline activity

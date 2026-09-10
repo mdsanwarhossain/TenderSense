@@ -47,7 +47,7 @@ export class App {
       return { title: 'Benchmark', sub: 'Semantic matching against the keyword baseline' };
     }
     if (url.startsWith('/profile')) {
-      return { title: 'Capability profile', sub: org ?? 'What every tender is compared against' };
+      return { title: 'Profile', sub: org ?? 'What every tender is compared against' };
     }
     if (url.startsWith('/pipeline')) {
       return { title: 'Collection pipeline', sub: 'Asia/Dhaka · one job at a time' };

@@ -141,9 +141,13 @@ public class TenderController {
                 .getTotalElements();
     }
 
+    /** Carries this company's save / submit marks, so the page shows the same buttons as the list. */
     @GetMapping("/{id}")
-    public TenderDetailResponse detail(@PathVariable Long id) {
-        return mapper.toDetail(require(id));
+    public TenderDetailResponse detail(@CurrentOrganisation Organisation organisation,
+                                       @PathVariable Long id) {
+        Tender tender = require(id);
+        TrackingState tracking = trackingService.statesFor(organisation, List.of(id)).get(id);
+        return mapper.toDetail(tender, tracking);
     }
 
     @GetMapping("/{id}/evidence")

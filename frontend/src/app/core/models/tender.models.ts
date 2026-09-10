@@ -99,6 +99,14 @@ export interface TenderDetail {
   rawSnapshotPath: string | null;
   contentHash: string | null;
   revisionCount: number;
+  sector: string | null;
+  /** The sector as the screen shows it, e.g. "IT services". */
+  sectorLabel: string | null;
+  wishlisted: boolean;
+  submitted: boolean;
+  submittedAt: string | null;
+  /** The tender's own page on its portal; null when there is no verified link. */
+  sourceUrl: string | null;
 }
 
 export interface EvidencePair {
