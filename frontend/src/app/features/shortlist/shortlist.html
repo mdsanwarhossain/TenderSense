@@ -153,7 +153,7 @@
     <div class="table-scroll">
       <div class="table">
         <div class="thead cols">
-          <span>Grade</span><span>Match</span><span>Tender</span>
+          <span>Grade</span><span>Match</span><span>AI</span><span>Tender</span>
           <span>Source</span><span>Closes</span><span>Eligibility</span><span>Action</span>
         </div>
 
@@ -161,10 +161,14 @@
           <a class="trow cols" [class.urgent]="row.urgent" [routerLink]="['/tenders', row.id]">
             <ts-grade-badge [grade]="row.grade" />
             <ts-score-bar [score]="row.score" [strong]="row.grade === 'S'" />
+            <ts-ai-score [score]="row.aiScore" [status]="row.aiStatus" />
 
             <span class="cell-title">
               <span class="t">{{ row.title ?? '(untitled)' }}</span>
               @if (row.procuringEntity) { <span class="e">{{ row.procuringEntity }}</span> }
+              @if (row.aiReasoning) {
+                <span class="ai-why" [title]="row.aiReasoning">{{ row.aiReasoning }}</span>
+              }
             </span>
 
             <span class="source">

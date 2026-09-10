@@ -44,6 +44,10 @@ dependencies {
 
     // Local ONNX embeddings (all-MiniLM-L6-v2): no API key, no network, runs in-JVM.
     implementation 'org.springframework.ai:spring-ai-starter-model-transformers'
+    // Second-stage scorer: a local LLM reads each shortlisted tender. The transformers
+    // starter above stays the embedding model -- spring.ai.model.embedding pins it, since
+    // this starter would otherwise register a second EmbeddingModel.
+    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
 
     // e-GP ingestion: Selenium drives the JS-rendered listing, Jsoup parses detail pages.

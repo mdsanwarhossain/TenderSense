@@ -7,9 +7,9 @@
 
 .stat-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
-/* Seven columns: the tender title takes whatever the fixed ones leave. */
-.cols { grid-template-columns: 52px 96px minmax(260px, 1fr) 150px 110px 128px 96px; }
-.table { min-width: 1080px; }
+/* Eight columns: the tender title takes whatever the fixed ones leave. */
+.cols { grid-template-columns: 52px 96px 64px minmax(260px, 1fr) 150px 110px 128px 96px; }
+.table { min-width: 1150px; }
 
 .search-inline {
   display: flex;
@@ -66,3 +66,15 @@
 .source .dot.wb { background: #2f8fbe; }
 
 .state-wrap { padding: 20px 22px; }
+
+/* The local LLM's reason, under the title. Two lines at most; the full text is in title="". */
+.cell-title .ai-why {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}

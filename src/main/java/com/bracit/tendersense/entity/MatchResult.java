@@ -1,8 +1,10 @@
 package com.bracit.tendersense.entity;
 
 import com.bracit.tendersense.entity.enums.MatchGrade;
+import com.bracit.tendersense.entity.enums.LlmReviewStatus;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.DynamicUpdate;
 import lombok.*;
 
 import java.time.Instant;
@@ -22,6 +24,13 @@ import java.time.Instant;
                 @Index(name = "idx_match_score", columnList = "score"),
                 @Index(name = "idx_match_org", columnList = "organisation_id")
         })
+/*
+ * @DynamicUpdate: ScoringServiceImpl.persist() loads this row and saves the whole entity.
+ * Without it, a rescore overlapping the background LLM review would write back the llm_*
+ * values it read -- stale nulls -- over a verdict committed a moment earlier. With it,
+ * Hibernate writes only the columns persist() actually changed, which never include llm_*.
+ */
+@DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class MatchResult {
 
@@ -74,4 +83,34 @@ public class MatchResult {
 
     @Column(name = "duration_ms")
     private Long durationMs;
+
+    // ---- second-stage LLM review. Written only by LlmReviewService, via targeted
+    // ---- updates; only ever populated on the EMBEDDING row.
+
+    /** The model's 0-100 verdict. Shown beside {@link #score}; never used for ranking. */
+    @Column(name = "llm_score")
+    private Integer llmScore;
+
+    @Column(name = "llm_reasoning", columnDefinition = "text")
+    private String llmReasoning;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "llm_status", length = 16)
+    private LlmReviewStatus llmStatus;
+
+    @Column(name = "llm_model", length = 64)
+    private String llmModel;
+
+    /** Fingerprint of tender, profile version, model and prompt; decides staleness. */
+    @Column(name = "llm_input_hash", length = 64)
+    private String llmInputHash;
+
+    @Column(name = "llm_error", length = 512)
+    private String llmError;
+
+    @Column(name = "llm_scored_at")
+    private Instant llmScoredAt;
+
+    @Column(name = "llm_duration_ms")
+    private Long llmDurationMs;
 }

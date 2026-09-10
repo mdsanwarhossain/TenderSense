@@ -3,6 +3,7 @@ package com.bracit.tendersense.util;
 import com.bracit.tendersense.dto.TenderDetailResponse;
 import com.bracit.tendersense.dto.TenderSummaryResponse;
 import com.bracit.tendersense.entity.MatchResult;
+import com.bracit.tendersense.entity.enums.LlmReviewStatus;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.BidAction;
 import com.bracit.tendersense.entity.enums.EligibilityStatus;
@@ -37,7 +38,18 @@ public class TenderMapper {
                 elig == null ? null : elig.status(),
                 elig == null ? 0 : elig.blockingGapCount(),
                 recommend(match, elig),
-                match == null ? null : match.getSummaryText());
+                match == null ? null : match.getSummaryText(),
+                scoredOnly(match, match == null ? null : match.getLlmScore()),
+                scoredOnly(match, match == null ? null : match.getLlmReasoning()),
+                match == null ? null : match.getLlmStatus());
+    }
+
+    /**
+     * A verdict is shown only while it is current. A STALE or FAILED row still holds its
+     * old values in the database, for comparison, but must not read as today's answer.
+     */
+    private static <T> T scoredOnly(MatchResult match, T value) {
+        return match != null && match.getLlmStatus() == LlmReviewStatus.SCORED ? value : null;
     }
 
     public TenderDetailResponse toDetail(Tender t) {

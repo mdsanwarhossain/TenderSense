@@ -4,6 +4,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GradeBadge } from '../../shared/grade-badge';
 import { ScoreBar } from '../../shared/score-bar';
+import { AiScore } from '../../shared/ai-score';
 import { EligibilityChip } from '../../shared/eligibility-chip';
 import { Deadline } from '../../shared/deadline';
 import { MatchGrade, SourcePortal, TenderSummary } from '../../core/models/tender.models';
@@ -12,7 +13,7 @@ import { MatchGrade, SourcePortal, TenderSummary } from '../../core/models/tende
 @Component({
   selector: 'ts-shortlist',
   standalone: true,
-  imports: [RouterLink, GradeBadge, ScoreBar, EligibilityChip, Deadline],
+  imports: [RouterLink, GradeBadge, ScoreBar, AiScore, EligibilityChip, Deadline],
   templateUrl: './shortlist.html',
   styleUrl: './shortlist.css',
 })

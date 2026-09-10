@@ -6,8 +6,11 @@ import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.dto.PipelineRunResponse;
 import com.bracit.tendersense.entity.PipelineRun;
 import com.bracit.tendersense.repository.PipelineRunRepository;
+import com.bracit.tendersense.config.LlmProperties;
+import com.bracit.tendersense.service.LlmReviewService;
 import com.bracit.tendersense.service.PipelineService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +28,8 @@ public class PipelineController {
 
     private final PipelineService pipelineService;
     private final PipelineRunRepository runRepository;
+    private final LlmReviewService llmReviewService;
+    private final LlmProperties llmProperties;
 
     /**
      * @param full when true, runs the full reconcile crawl instead of an incremental
@@ -53,6 +58,26 @@ public class PipelineController {
     @PostMapping("/rescore-all")
     public PipelineRunResponse rescoreAll() {
         return pipelineService.rescoreAll();
+    }
+
+    public record LlmReviewQueued(boolean queued, String message) {}
+
+    /**
+     * Queues the LLM review of this company's shortlist page one. 202, because the work
+     * happens afterwards on its own thread -- progress shows on the pipeline screen as
+     * {@code llm-review:<slug>}. Re-running is cheap: unchanged tenders make no model call.
+     */
+    @PostMapping("/llm-review")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public LlmReviewQueued llmReview(@CurrentOrganisation Organisation organisation) {
+        if (!llmProperties.isEnabled()) {
+            return new LlmReviewQueued(false,
+                    "LLM review is switched off -- set tendersense.llm.enabled=true");
+        }
+        boolean queued = llmReviewService.request(organisation);
+        return new LlmReviewQueued(queued, queued
+                ? "Queued -- follow it on the pipeline screen as llm-review:" + organisation.getSlug()
+                : "A review for this company is already waiting in the queue");
     }
 
     /** What the 08:00 Asia/Dhaka digest reports, on demand. */

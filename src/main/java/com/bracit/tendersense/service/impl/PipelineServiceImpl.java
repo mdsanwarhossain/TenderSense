@@ -46,6 +46,7 @@ public class PipelineServiceImpl implements PipelineService {
     private final TenderMapper mapper;
     private final OrganisationRepository organisationRepository;
     private final PipelineLock pipelineLock;
+    private final LlmReviewService llmReviewService;
 
     @Override
     public List<PipelineRunResponse> runAll(boolean full) {
@@ -58,6 +59,8 @@ public class PipelineServiceImpl implements PipelineService {
                     // everyone. Recalibrate once after the batch, not per source.
                     if (runs.stream().anyMatch(r -> (r.tendersScored() != null && r.tendersScored() > 0))) {
                         activeOrganisations().forEach(scoringService::recalibrateGrades);
+                        // Non-blocking: the LLM review runs on its own thread, after this.
+                        llmReviewService.requestAll();
                     }
                     return runs;
                 })
@@ -78,6 +81,8 @@ public class PipelineServiceImpl implements PipelineService {
                     PipelineRunResponse run = execute(source.get(), full);
                     if (run.tendersScored() != null && run.tendersScored() > 0) {
                         activeOrganisations().forEach(scoringService::recalibrateGrades);
+                        // Non-blocking: the LLM review runs on its own thread, after this.
+                        llmReviewService.requestAll();
                     }
                     return run;
                 })
@@ -87,19 +92,29 @@ public class PipelineServiceImpl implements PipelineService {
     @Override
     public PipelineRunResponse rescore(Organisation organisation) {
         String job = "rescore:" + organisation.getSlug();
-        return pipelineLock.runExclusively(job, () -> doRescore(job, () -> {
+        PipelineRunResponse run = pipelineLock.runExclusively(job, () -> doRescore(job, () -> {
                     int written = scoringService.rescoreEverything(organisation);
                     scoringService.recalibrateGrades(organisation);
                     return written;
                 }))
                 .orElseGet(() -> recordSkipped(job));
+        // Page one has just been re-ranked, so review it. Queued, not run: the button
+        // still returns in seconds and the verdicts fill in behind it.
+        if (run.status() == RunStatus.SUCCESS) {
+            llmReviewService.request(organisation);
+        }
+        return run;
     }
 
     @Override
     public PipelineRunResponse rescoreAll() {
-        return pipelineLock.runExclusively("rescore:ALL",
+        PipelineRunResponse run = pipelineLock.runExclusively("rescore:ALL",
                         () -> doRescore("rescore:ALL", scoringService::rescoreAllOrganisations))
                 .orElseGet(() -> recordSkipped("rescore:ALL"));
+        if (run.status() == RunStatus.SUCCESS) {
+            llmReviewService.requestAll();
+        }
+        return run;
     }
 
     @Override

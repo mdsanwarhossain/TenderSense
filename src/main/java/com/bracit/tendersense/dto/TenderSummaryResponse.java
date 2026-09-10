@@ -1,5 +1,6 @@
 package com.bracit.tendersense.dto;
 
+import com.bracit.tendersense.entity.enums.LlmReviewStatus;
 import com.bracit.tendersense.entity.enums.BidAction;
 import com.bracit.tendersense.entity.enums.EligibilityStatus;
 import com.bracit.tendersense.entity.enums.MatchGrade;
@@ -24,5 +25,10 @@ public record TenderSummaryResponse(
         EligibilityStatus eligibility,
         int blockingGapCount,
         BidAction recommendation,
-        String whyMatched) {
+        String whyMatched,
+        // Second-stage LLM verdict. Score and reasoning are present only when SCORED;
+        // the status alone tells the UI "pending" or "failed".
+        Integer aiScore,
+        String aiReasoning,
+        LlmReviewStatus aiStatus) {
 }

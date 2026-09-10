@@ -20,5 +20,17 @@ services:
       timeout: 5s
       retries: 20
 
+  # Local LLM for the second-stage tender review (CPU-only on this machine). The model
+  # lives in the named volume, so it is pulled once:
+  #   docker exec tendersense-ollama ollama pull qwen2.5:7b
+  ollama:
+    image: ollama/ollama:0.34.0
+    container_name: tendersense-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - tendersense-ollama:/root/.ollama
+
 volumes:
   tendersense-pgdata:
+  tendersense-ollama:

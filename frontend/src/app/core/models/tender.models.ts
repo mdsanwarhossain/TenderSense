@@ -6,6 +6,8 @@ export type MatchGrade = 'S' | 'A' | 'B' | 'C';
 export type BidAction = 'BID' | 'HOLD' | 'SKIP';
 export type EligibilityStatus = 'ELIGIBLE' | 'INELIGIBLE' | 'NEEDS_VERIFICATION';
 export type RunStatus = 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED';
+/** Where a tender stands in the local LLM's second-stage review. null = never selected. */
+export type AiReviewStatus = 'PENDING' | 'SCORED' | 'FAILED' | 'STALE';
 
 export interface PageResponse<T> {
   content: T[];
@@ -32,6 +34,10 @@ export interface TenderSummary {
   blockingGapCount: number;
   recommendation: BidAction | null;
   whyMatched: string | null;
+  /** 0-100 from the local LLM. Present only when aiStatus is SCORED. */
+  aiScore: number | null;
+  aiReasoning: string | null;
+  aiStatus: AiReviewStatus | null;
 }
 
 export interface TenderDetail {

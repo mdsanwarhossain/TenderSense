@@ -2,6 +2,7 @@ package com.bracit.tendersense.repository;
 
 import com.bracit.tendersense.entity.MatchResult;
 import com.bracit.tendersense.entity.enums.MatchGrade;
+import com.bracit.tendersense.entity.enums.LlmReviewStatus;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.entity.enums.SourcePortal;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
@@ -98,4 +100,56 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
     long countByOrganisationIdAndMatcherType(Long organisationId, MatcherType matcherType);
 
     void deleteByOrganisationId(Long organisationId);
+
+    // ---- LLM review: targeted updates only. Never save a whole MatchResult from the
+    // ---- review job -- see @DynamicUpdate on the entity for why.
+
+    @Modifying
+    @Transactional
+    @Query("update MatchResult m set m.llmStatus = :status where m.id in :ids")
+    int markLlmStatus(@Param("ids") Collection<Long> ids, @Param("status") LlmReviewStatus status);
+
+    @Modifying
+    @Transactional
+    @Query("update MatchResult m set m.llmScore = :score, m.llmReasoning = :reasoning, "
+            + "m.llmStatus = :status, m.llmModel = :model, m.llmInputHash = :hash, "
+            + "m.llmError = null, m.llmScoredAt = :at, m.llmDurationMs = :ms where m.id = :id")
+    int recordLlmVerdict(@Param("id") Long id, @Param("score") int score,
+                         @Param("reasoning") String reasoning, @Param("status") LlmReviewStatus status,
+                         @Param("model") String model, @Param("hash") String hash,
+                         @Param("at") Instant at, @Param("ms") long ms);
+
+    @Modifying
+    @Transactional
+    @Query("update MatchResult m set m.llmStatus = :status, m.llmError = :error, "
+            + "m.llmModel = :model, m.llmInputHash = :hash, m.llmScoredAt = :at, "
+            + "m.llmDurationMs = :ms where m.id = :id")
+    int recordLlmFailure(@Param("id") Long id, @Param("status") LlmReviewStatus status,
+                         @Param("error") String error, @Param("model") String model,
+                         @Param("hash") String hash, @Param("at") Instant at, @Param("ms") long ms);
+
+    /**
+     * A company's SCORED verdicts with what is needed to recompute their fingerprint:
+     * {@code [matchId, storedHash, tenderId, tenderContentHash]}.
+     */
+    @Query("select m.id, m.llmInputHash, t.id, t.contentHash from MatchResult m join m.tender t "
+            + "where m.organisation.id = :orgId and m.matcherType = :type and m.llmStatus = :status")
+    List<Object[]> findLlmRows(@Param("orgId") Long organisationId,
+                               @Param("type") MatcherType type,
+                               @Param("status") LlmReviewStatus status);
+
+    /** Pending rows that already hold an older verdict go back to STALE. */
+    @Modifying
+    @Transactional
+    @Query("update MatchResult m set m.llmStatus = :stale "
+            + "where m.llmStatus = :pending and m.llmScore is not null")
+    int revertPendingWithVerdict(@Param("pending") LlmReviewStatus pending,
+                                 @Param("stale") LlmReviewStatus stale);
+
+    /** Pending rows that were never scored go back to never-reviewed. */
+    @Modifying
+    @Transactional
+    @Query("update MatchResult m set m.llmStatus = null "
+            + "where m.llmStatus = :pending and m.llmScore is null")
+    int revertPendingWithoutVerdict(@Param("pending") LlmReviewStatus pending);
 }
