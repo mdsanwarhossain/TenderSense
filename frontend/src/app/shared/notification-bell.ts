@@ -52,7 +52,6 @@ import { GradeBadge } from './grade-badge';
                   <ts-grade-badge [grade]="n.grade" />
                   <span class="body">
                     <span class="ttl">{{ n.tenderTitle ?? 'Untitled tender' }}</span>
-                    <span class="meta">{{ n.procuringEntity ?? 'Procuring entity not stated' }}</span>
                     <span class="time">{{ fit(n.score) }} fit · {{ timeAgo(n.createdAt) }}</span>
                   </span>
                   @if (!n.read) {
@@ -132,10 +131,6 @@ import { GradeBadge } from './grade-badge';
     .ttl {
       font-size: 12.5px; font-weight: 700; color: var(--ink);
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .meta {
-      font-size: 11px; color: var(--ink-3);
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .time { font-size: 10.5px; color: var(--ink-4); font-weight: 600; }
 
