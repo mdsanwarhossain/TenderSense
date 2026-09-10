@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import {
   BenchmarkResult, BidDecisionRequest, CapabilityProfile, EligibilityReport,
   MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness,
-  SectorOption, SourcePortal, TenderDetail, TenderSummary,
+  SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary, TrackingFilter, TrackingState,
 } from '../models/tender.models';
 
 /**
@@ -21,7 +21,7 @@ export class ApiService {
 
   listTenders(opts: {
     page?: number; size?: number; grade?: MatchGrade; source?: SourcePortal;
-    includeClosed?: boolean;
+    includeClosed?: boolean; tracked?: TrackingFilter; closingSoon?: boolean;
   } = {}): Observable<PageResponse<TenderSummary>> {
     let params = new HttpParams()
       .set('page', String(opts.page ?? 0))
@@ -29,7 +29,34 @@ export class ApiService {
       .set('includeClosed', String(opts.includeClosed ?? false));
     if (opts.grade) params = params.set('grade', opts.grade);
     if (opts.source) params = params.set('source', opts.source);
+    if (opts.tracked) params = params.set('tracked', opts.tracked);
+    if (opts.closingSoon) params = params.set('closingSoon', 'true');
     return this.http.get<PageResponse<TenderSummary>>(`${this.base}/tenders`, { params });
+  }
+
+  /**
+   * Counts for the summary cards, taken in the database rather than from the page of rows
+   * on screen. Scoped by source and Include closed only -- the cards themselves are the
+   * other filters, and clicking one must not change the others' counts.
+   */
+  getListSummary(opts: {
+    source?: SourcePortal; includeClosed?: boolean;
+  } = {}): Observable<TenderListSummary> {
+    let params = new HttpParams().set('includeClosed', String(opts.includeClosed ?? false));
+    if (opts.source) params = params.set('source', opts.source);
+    return this.http.get<TenderListSummary>(`${this.base}/tenders/summary`, { params });
+  }
+
+  /** Save for later (PUT) or remove from saved (DELETE). Idempotent, never a toggle. */
+  setWishlisted(tenderId: number, on: boolean): Observable<TrackingState> {
+    const url = `${this.base}/tenders/${tenderId}/wishlist`;
+    return on ? this.http.put<TrackingState>(url, null) : this.http.delete<TrackingState>(url);
+  }
+
+  /** Mark (PUT) or unmark (DELETE) a tender as submitted on its portal. */
+  setSubmitted(tenderId: number, on: boolean): Observable<TrackingState> {
+    const url = `${this.base}/tenders/${tenderId}/submission`;
+    return on ? this.http.put<TrackingState>(url, null) : this.http.delete<TrackingState>(url);
   }
 
   getTender(id: number): Observable<TenderDetail> {

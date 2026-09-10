@@ -1,13 +1,17 @@
 import { Component, computed, input } from '@angular/core';
 
-/** Score plus a proportional bar. The width is a percentage of the score, never px. */
+/**
+ * Match score as a whole-number percentage, plus a proportional bar. The score is stored
+ * 0..1; people read "53%" faster than "0.527", and the extra decimals claimed a precision
+ * the ranking does not have.
+ */
 @Component({
   selector: 'ts-score-bar',
   standalone: true,
   template: `
     <div class="wrap">
-      <span class="mono value">{{ score() !== null ? score()!.toFixed(3) : '—' }}</span>
-      <span class="track"><span class="fill" [style.width.%]="pct()" [class.strong]="strong()"></span></span>
+      <span class="mono value">{{ score() !== null ? percent() + '%' : '—' }}</span>
+      <span class="track"><span class="fill" [style.width.%]="percent()" [class.strong]="strong()"></span></span>
     </div>`,
   styles: [`
     .wrap { display: flex; flex-direction: column; gap: 5px; }
@@ -20,6 +24,7 @@ import { Component, computed, input } from '@angular/core';
 export class ScoreBar {
   readonly score = input<number | null>(null);
   readonly strong = input(false);
-  /** Clamped so a score above 1 can never overflow the track. */
-  readonly pct = computed(() => Math.max(0, Math.min(100, (this.score() ?? 0) * 100)));
+  /** Rounded, and clamped so a score above 1 can never overflow the track. */
+  readonly percent = computed(() =>
+    Math.max(0, Math.min(100, Math.round((this.score() ?? 0) * 100))));
 }

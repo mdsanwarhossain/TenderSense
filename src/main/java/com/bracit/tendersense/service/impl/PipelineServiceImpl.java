@@ -106,6 +106,7 @@ public class PipelineServiceImpl implements PipelineService {
     public DigestResponse digest(Organisation organisation) {
         Page<MatchResult> ranked = matchResultRepository.findRanked(
                 MatcherType.EMBEDDING, organisation.getId(), null, null, null, false,
+                false, false, false, TenderMapper.urgentFrom(), TenderMapper.urgentUntil(),
                 LocalDateTime.now(), PageRequest.of(0, DIGEST_SIZE));
 
         List<Long> ids = ranked.getContent().stream().map(m -> m.getTender().getId()).toList();

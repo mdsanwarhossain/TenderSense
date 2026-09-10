@@ -41,7 +41,7 @@ export class App {
     const url = this.url();
     const org = this.company()?.name;
     if (url.startsWith('/tenders/')) {
-      return { title: 'Tender detail', sub: 'Opened from the morning shortlist' };
+      return { title: 'Tender detail', sub: 'Opened from the tender list' };
     }
     if (url.startsWith('/benchmark')) {
       return { title: 'Benchmark', sub: 'Semantic matching against the keyword baseline' };
@@ -52,7 +52,7 @@ export class App {
     if (url.startsWith('/pipeline')) {
       return { title: 'Collection pipeline', sub: 'Asia/Dhaka · one job at a time' };
     }
-    return { title: 'Morning shortlist', sub: `${this.todayLabel} · e-GP BD · World Bank · UNGM · IsDB` };
+    return { title: 'Tender list', sub: `${this.todayLabel} · e-GP BD · World Bank · UNGM · IsDB` };
   });
 
   private readonly todayLabel = new Intl.DateTimeFormat('en-GB', {

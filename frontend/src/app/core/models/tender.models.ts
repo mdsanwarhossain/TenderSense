@@ -41,6 +41,34 @@ export interface TenderSummary {
   blockingGapCount: number;
   recommendation: BidAction | null;
   whyMatched: string | null;
+  /** This company saved it for later. */
+  wishlisted: boolean;
+  /** This company marked it as submitted on the portal. */
+  submitted: boolean;
+  submittedAt: string | null;
+  /** The tender's own page on its portal; null when it cannot be built. */
+  sourceUrl: string | null;
+}
+
+/** Headline counts for the tender list, over the same filters as the list. */
+export interface TenderListSummary {
+  total: number;
+  sGrade: number;
+  closingSoon: number;
+  saved: number;
+  submitted: number;
+}
+
+/** Shortlist filter: only saved, or only submitted, tenders. */
+export type TrackingFilter = 'SAVED' | 'SUBMITTED';
+
+/** A company's saved / submitted state for one tender, as the tracking endpoints return it. */
+export interface TrackingState {
+  tenderId: number;
+  wishlisted: boolean;
+  wishlistedAt: string | null;
+  submitted: boolean;
+  submittedAt: string | null;
 }
 
 export interface TenderDetail {

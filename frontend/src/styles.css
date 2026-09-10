@@ -333,6 +333,20 @@ a.trow:hover { background: var(--surface-3); text-decoration: none; color: inher
 }
 a.trow.urgent:hover { background: color-mix(in srgb, var(--warn-wash) 70%, transparent); }
 
+/* A row that links somewhere AND holds its own buttons. Buttons inside a link are invalid
+   and a link can't nest inside another, so the row is a div: its title is the link, and
+   .row-link::after stretches that link over the whole row. Anything that must stay
+   clickable on its own sits above the overlay with position: relative + z-index. */
+.trow.linked { position: relative; }
+.trow.linked:hover { background: var(--surface-3); }
+.trow.linked.urgent:hover { background: color-mix(in srgb, var(--warn-wash) 70%, transparent); }
+.row-link { color: inherit; text-decoration: none; }
+.row-link:hover { text-decoration: none; color: inherit; }
+.row-link::after { content: ''; position: absolute; inset: 0; }
+.row-link:focus-visible { outline: none; }
+.trow.linked:has(.row-link:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.trow.linked .above-link { position: relative; z-index: 1; }
+
 /* Grid children stretch by default; a status pill must stay the width of its
    own label so the column reads as a set of tags, not a set of blocks. */
 .trow > .pill,

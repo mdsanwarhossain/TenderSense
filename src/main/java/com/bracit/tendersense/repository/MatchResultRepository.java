@@ -44,6 +44,18 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
              and (:includeClosed = true
                   or m.tender.closingAt is null
                   or m.tender.closingAt >= :now)
+             and (:savedOnly = false or exists (
+                    select tt.id from TenderTracking tt
+                    where tt.tender.id = m.tender.id
+                      and tt.organisation.id = :organisationId
+                      and tt.wishlistedAt is not null))
+             and (:submittedOnly = false or exists (
+                    select tt.id from TenderTracking tt
+                    where tt.tender.id = m.tender.id
+                      and tt.organisation.id = :organisationId
+                      and tt.submittedAt is not null))
+             and (:closingSoon = false or (m.tender.closingAt >= :soonFrom
+                                           and m.tender.closingAt < :soonUntil))
            order by m.score desc
            """)
     Page<MatchResult> findRanked(@Param("matcherType") MatcherType matcherType,
@@ -52,6 +64,11 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
                                  @Param("source") SourcePortal source,
                                  @Param("sector") Sector sector,
                                  @Param("includeClosed") boolean includeClosed,
+                                 @Param("savedOnly") boolean savedOnly,
+                                 @Param("submittedOnly") boolean submittedOnly,
+                                 @Param("closingSoon") boolean closingSoon,
+                                 @Param("soonFrom") LocalDateTime soonFrom,
+                                 @Param("soonUntil") LocalDateTime soonUntil,
                                  @Param("now") LocalDateTime now,
                                  Pageable pageable);
 

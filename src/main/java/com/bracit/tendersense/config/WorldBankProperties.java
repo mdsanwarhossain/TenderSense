@@ -20,4 +20,11 @@ public class WorldBankProperties {
     private int pageSize = 100;
 
     private int maxPages = 20;
+
+    /**
+     * Public page for one notice; {@code {id}} is the notice id ({@code OP00409684}).
+     * Verified: the page's canonical URL is exactly this, with the notice rendered in it.
+     */
+    private String noticeUrl =
+            "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}";
 }

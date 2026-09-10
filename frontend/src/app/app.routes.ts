@@ -21,7 +21,7 @@ export const routes: Routes = [
     path: 'shortlist',
     canActivate: [authGuard],
     loadComponent: () => import('./features/shortlist/shortlist').then((m) => m.Shortlist),
-    title: 'Morning shortlist · TenderSense',
+    title: 'Tender list · TenderSense',
   },
   {
     path: 'tenders/:id',
