@@ -40,6 +40,7 @@ public class ScoringServiceImpl implements ScoringService {
     private final GradeCalibrationService calibration;
     private final EligibilityService eligibilityService;
     private final SummaryService summaryService;
+    private final NotificationService notificationService;
     private final MatchResultRepository matchResultRepository;
     private final TenderRepository tenderRepository;
     private final OrganisationRepository organisationRepository;
@@ -122,6 +123,11 @@ public class ScoringServiceImpl implements ScoringService {
         }
         log.info("{}: grades rewritten across {} scored results using {}",
                 organisation.getSlug(), distribution.size(), t.basis());
+
+        // Grades are only final once every score has been rewritten above, so this is
+        // the one place -- reached by scheduled discovery, reconcile, and a manual
+        // rescore alike -- where "newly S/A-graded" can be answered correctly.
+        notificationService.syncNewMatches(organisation);
     }
 
     /** True when the tender's sector is one this organisation subscribes to. */

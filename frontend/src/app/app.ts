@@ -4,11 +4,12 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { AccountMenu } from './shared/account-menu';
+import { NotificationBell } from './shared/notification-bell';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AccountMenu],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AccountMenu, NotificationBell],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

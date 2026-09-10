@@ -98,4 +98,28 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
     long countByOrganisationIdAndMatcherType(Long organisationId, MatcherType matcherType);
 
     void deleteByOrganisationId(Long organisationId);
+
+    /**
+     * Grade S/A matches this company has not yet been notified about, open tenders only.
+     *
+     * <p>"Not yet notified" is expressed as an anti-join against {@code Notification}
+     * rather than a computed-at cutoff, so it stays correct regardless of which pipeline
+     * path produced the grade -- scheduled discovery, reconcile, or a manual rescore --
+     * without any of them having to remember or pass a run timestamp.
+     */
+    @Query("""
+           select m from MatchResult m
+           where m.matcherType = :matcherType
+             and m.organisation.id = :organisationId
+             and m.grade in :grades
+             and (m.tender.closingAt is null or m.tender.closingAt >= :now)
+             and not exists (
+                 select 1 from Notification n
+                 where n.organisation.id = m.organisation.id and n.tender.id = m.tender.id
+             )
+           """)
+    List<MatchResult> findUnnotified(@Param("matcherType") MatcherType matcherType,
+                                     @Param("organisationId") Long organisationId,
+                                     @Param("grades") Collection<MatchGrade> grades,
+                                     @Param("now") LocalDateTime now);
 }

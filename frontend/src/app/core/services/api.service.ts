@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   BenchmarkResult, BidDecisionRequest, CapabilityProfile, EligibilityReport,
-  MatchEvidence, MatchGrade, PageResponse, PipelineRun, ProfileStaleness,
+  MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness,
   SectorOption, SourcePortal, TenderDetail, TenderSummary,
 } from '../models/tender.models';
 
@@ -85,5 +85,27 @@ export class ApiService {
 
   getRuns(): Observable<PipelineRun[]> {
     return this.http.get<PipelineRun[]>(`${this.base}/pipeline/runs`);
+  }
+
+  listNotifications(opts: { unreadOnly?: boolean; page?: number; size?: number } = {}):
+      Observable<PageResponse<NotificationItem>> {
+    const params = new HttpParams()
+      .set('page', String(opts.page ?? 0))
+      .set('size', String(opts.size ?? 8))
+      .set('unreadOnly', String(opts.unreadOnly ?? false));
+    return this.http.get<PageResponse<NotificationItem>>(`${this.base}/notifications`, { params });
+  }
+
+  /** Polled by the bell: the red count, without pulling the notifications themselves. */
+  getUnreadNotificationCount(): Observable<number> {
+    return this.http.get<number>(`${this.base}/notifications/unread-count`);
+  }
+
+  markNotificationRead(id: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/notifications/${id}/read`, null);
+  }
+
+  markAllNotificationsRead(): Observable<void> {
+    return this.http.post<void>(`${this.base}/notifications/read-all`, null);
   }
 }

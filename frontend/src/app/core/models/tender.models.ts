@@ -179,3 +179,16 @@ export interface SectorOption {
   value: string;
   label: string;
 }
+
+/** One row of the notification bell: a tender that newly matched this company's profile. */
+export interface NotificationItem {
+  id: number;
+  tenderId: number;
+  tenderTitle: string | null;
+  procuringEntity: string | null;
+  grade: MatchGrade | null;
+  score: number;
+  closingAt: string | null;
+  read: boolean;
+  createdAt: string;
+}
