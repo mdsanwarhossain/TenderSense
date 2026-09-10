@@ -6,7 +6,7 @@ import { GradeBadge } from '../../shared/grade-badge';
 import { ScoreBar } from '../../shared/score-bar';
 import { EligibilityChip } from '../../shared/eligibility-chip';
 import { Deadline } from '../../shared/deadline';
-import { MatchGrade, SourcePortal, TenderSummary } from '../../core/models/tender.models';
+import { MatchGrade, SOURCE_LABELS, SOURCE_OPTIONS, SourcePortal, TenderSummary } from '../../core/models/tender.models';
 
 /** The morning shortlist: the screen the BD team opens first. */
 @Component({
@@ -30,9 +30,14 @@ export class Shortlist {
   readonly running = signal(false);
 
   readonly grades: MatchGrade[] = ['S', 'A', 'B', 'C'];
+  readonly sources = SOURCE_OPTIONS;
   readonly activeGrade = signal<MatchGrade | null>(null);
   readonly activeSource = signal<SourcePortal | null>(null);
   readonly includeClosed = signal(false);
+
+  sourceLabel(source: SourcePortal): string {
+    return SOURCE_LABELS[source];
+  }
 
   readonly size = 25;
 

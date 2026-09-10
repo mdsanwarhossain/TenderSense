@@ -64,5 +64,7 @@
 }
 .source .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
 .source .dot.wb { background: #2f8fbe; }
+.source .dot.ungm { background: #c9781f; }
+.source .dot.isdb { background: #1a9e6b; }
 
 .state-wrap { padding: 20px 22px; }

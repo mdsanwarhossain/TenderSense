@@ -1,7 +1,16 @@
 // Mirrors the Java DTOs in com.bracit.tendersense.dto.
 // The contract is frozen: change both sides together.
 
-export type SourcePortal = 'EGP_BANGLADESH' | 'WORLD_BANK';
+export type SourcePortal = 'EGP_BANGLADESH' | 'WORLD_BANK' | 'UNGM' | 'ISDB';
+
+export const SOURCE_LABELS: Record<SourcePortal, string> = {
+  EGP_BANGLADESH: 'e-GP Bangladesh',
+  WORLD_BANK: 'World Bank',
+  UNGM: 'UN Global Marketplace',
+  ISDB: 'Islamic Development Bank',
+};
+
+export const SOURCE_OPTIONS: SourcePortal[] = ['EGP_BANGLADESH', 'WORLD_BANK', 'UNGM', 'ISDB'];
 export type MatchGrade = 'S' | 'A' | 'B' | 'C';
 export type BidAction = 'BID' | 'HOLD' | 'SKIP';
 export type EligibilityStatus = 'ELIGIBLE' | 'INELIGIBLE' | 'NEEDS_VERIFICATION';

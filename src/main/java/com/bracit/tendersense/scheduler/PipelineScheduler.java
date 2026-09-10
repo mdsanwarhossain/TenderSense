@@ -64,11 +64,17 @@ public class PipelineScheduler {
     private String egpReconcileCron;
     @Value("${tendersense.schedule.world-bank-sync}")
     private String worldBankCron;
+    @Value("${tendersense.schedule.ungm-sync}")
+    private String ungmCron;
+    @Value("${tendersense.schedule.isdb-sync}")
+    private String isdbCron;
     @Value("${tendersense.schedule.morning-digest}")
     private String digestCron;
 
     private final AtomicInteger egpFailures = new AtomicInteger();
     private final AtomicInteger worldBankFailures = new AtomicInteger();
+    private final AtomicInteger ungmFailures = new AtomicInteger();
+    private final AtomicInteger isdbFailures = new AtomicInteger();
 
     /**
      * States what is armed, so "is the scheduler on?" is answerable from the log
@@ -77,8 +83,9 @@ public class PipelineScheduler {
     @PostConstruct
     void announce() {
         log.info("scheduler ARMED ({}): egpDiscovery [{}] · worldBankSync [{}] · "
-                        + "egpReconcile [{}] · morningDigest [{}]",
-                zone, egpDiscoveryCron, worldBankCron, egpReconcileCron, digestCron);
+                        + "ungmSync [{}] · isdbSync [{}] · egpReconcile [{}] · morningDigest [{}]",
+                zone, egpDiscoveryCron, worldBankCron, ungmCron, isdbCron,
+                egpReconcileCron, digestCron);
     }
 
     /**
@@ -107,6 +114,28 @@ public class PipelineScheduler {
         }
         run("worldBankSync", worldBankFailures,
                 () -> pipelineService.runSource(SourcePortal.WORLD_BANK, false));
+    }
+
+    /** UNGM listing filtered server-side, so like World Bank this is cheap enough to run often. */
+    @Scheduled(cron = "${tendersense.schedule.ungm-sync}",
+            zone = "${tendersense.schedule.zone}")
+    public void ungmSync() {
+        if (tripped(ungmFailures, "ungmSync")) {
+            return;
+        }
+        run("ungmSync", ungmFailures,
+                () -> pipelineService.runSource(SourcePortal.UNGM, false));
+    }
+
+    /** Same shape as {@link #ungmSync}: a plain filtered listing, no per-tender detail fetch. */
+    @Scheduled(cron = "${tendersense.schedule.isdb-sync}",
+            zone = "${tendersense.schedule.zone}")
+    public void isdbSync() {
+        if (tripped(isdbFailures, "isdbSync")) {
+            return;
+        }
+        run("isdbSync", isdbFailures,
+                () -> pipelineService.runSource(SourcePortal.ISDB, false));
     }
 
     /**

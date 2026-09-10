@@ -9,6 +9,8 @@ import {
   BidAction,
   EligibilityReport,
   MatchEvidence,
+  SOURCE_LABELS,
+  SourcePortal,
   TenderDetail as TenderDetailModel,
 } from '../../core/models/tender.models';
 
@@ -99,7 +101,7 @@ export class TenderDetail {
   }
 
   sourceLabel(source: string | undefined): string {
-    return source === 'EGP_BANGLADESH' ? 'e-GP Bangladesh' : 'World Bank';
+    return source ? (SOURCE_LABELS[source as SourcePortal] ?? source) : 'Unknown source';
   }
 
   private describe(err: unknown): string {

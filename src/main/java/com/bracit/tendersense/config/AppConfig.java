@@ -6,7 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties({EgpProperties.class, WorldBankProperties.class, ScheduleProperties.class})
+@EnableConfigurationProperties({EgpProperties.class, WorldBankProperties.class, ScheduleProperties.class,
+        UngmProperties.class, IsdbProperties.class})
 public class AppConfig {
 
     @Bean

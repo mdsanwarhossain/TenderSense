@@ -125,10 +125,10 @@
     <span class="divider"></span>
     <div class="group">
       <span class="glabel">Source</span>
-      <button class="chip" [class.on]="activeSource() === 'EGP_BANGLADESH'"
-              (click)="toggleSource('EGP_BANGLADESH')">e-GP Bangladesh</button>
-      <button class="chip" [class.on]="activeSource() === 'WORLD_BANK'"
-              (click)="toggleSource('WORLD_BANK')">World Bank</button>
+      @for (s of sources; track s) {
+        <button class="chip" [class.on]="activeSource() === s"
+                (click)="toggleSource(s)">{{ sourceLabel(s) }}</button>
+      }
     </div>
     <span class="divider"></span>
     <button class="chip" [class.on]="includeClosed()" (click)="toggleClosed()">Include closed</button>
@@ -168,8 +168,9 @@
             </span>
 
             <span class="source">
-              <span class="dot" [class.wb]="row.source === 'WORLD_BANK'"></span>
-              {{ row.source === 'EGP_BANGLADESH' ? 'e-GP Bangladesh' : 'World Bank' }}
+              <span class="dot" [class.wb]="row.source === 'WORLD_BANK'"
+                    [class.ungm]="row.source === 'UNGM'" [class.isdb]="row.source === 'ISDB'"></span>
+              {{ sourceLabel(row.source) }}
             </span>
 
             <ts-deadline [closingAt]="row.closingAt" [days]="row.daysToDeadline" />

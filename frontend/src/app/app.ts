@@ -52,7 +52,7 @@ export class App {
     if (url.startsWith('/pipeline')) {
       return { title: 'Collection pipeline', sub: 'Asia/Dhaka · one job at a time' };
     }
-    return { title: 'Morning shortlist', sub: `${this.todayLabel} · e-GP Bangladesh + World Bank` };
+    return { title: 'Morning shortlist', sub: `${this.todayLabel} · e-GP BD · World Bank · UNGM · IsDB` };
   });
 
   private readonly todayLabel = new Intl.DateTimeFormat('en-GB', {
