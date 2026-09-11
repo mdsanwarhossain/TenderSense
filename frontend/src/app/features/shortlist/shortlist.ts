@@ -6,10 +6,22 @@ import { GradeBadge } from '../../shared/grade-badge';
 import { ScoreBar } from '../../shared/score-bar';
 import { Deadline } from '../../shared/deadline';
 import { TenderActions } from '../../shared/tender-actions';
+import { Select, SelectOption } from '../../shared/select';
+import { GRADE_TINT } from '../../shared/grade-badge';
 import {
   MatchGrade, SOURCE_LABELS, SOURCE_OPTIONS, SourcePortal, TenderListSummary, TenderSummary,
   TrackingFilter, TrackingState,
 } from '../../core/models/tender.models';
+
+/** The match bands behind each grade -- see GradeCalibrationServiceImpl. */
+const GRADE_BANDS: Record<MatchGrade, string> = {
+  S: '80–100% match', A: '60–79% match', B: '30–59% match', C: 'Below 30% match',
+};
+
+/** Same colours as the source dots on each row (shortlist.css). */
+const SOURCE_DOTS: Record<SourcePortal, string> = {
+  EGP_BANGLADESH: '#5b3df5', WORLD_BANK: '#2f8fbe', UNGM: '#c9781f', ISDB: '#1a9e6b',
+};
 
 /**
  * The tender list: the screen the BD team opens first.
@@ -22,7 +34,7 @@ import {
 @Component({
   selector: 'ts-shortlist',
   standalone: true,
-  imports: [RouterLink, GradeBadge, ScoreBar, Deadline, TenderActions],
+  imports: [RouterLink, GradeBadge, ScoreBar, Deadline, TenderActions, Select],
   templateUrl: './shortlist.html',
   styleUrl: './shortlist.css',
 })
@@ -43,8 +55,22 @@ export class Shortlist {
   readonly actionError = signal<string | null>(null);
   readonly running = signal(false);
 
-  readonly grades: MatchGrade[] = ['S', 'A', 'B', 'C'];
-  readonly sources = SOURCE_OPTIONS;
+  /** Grade filter: each option in its table colours, with the band it stands for. */
+  readonly gradeOptions: SelectOption[] = [
+    { value: '', label: 'All grades' },
+    ...(['S', 'A', 'B', 'C'] as MatchGrade[]).map((g) => ({
+      value: g,
+      label: `${g} grade`,
+      hint: GRADE_BANDS[g],
+      tile: { text: g, ...GRADE_TINT[g] },
+    })),
+  ];
+
+  /** Source filter: each portal with the same dot as its rows. */
+  readonly sourceOptions: SelectOption[] = [
+    { value: '', label: 'All sources' },
+    ...SOURCE_OPTIONS.map((s) => ({ value: s, label: SOURCE_LABELS[s], dot: SOURCE_DOTS[s] })),
+  ];
   readonly activeGrade = signal<MatchGrade | null>(null);
   readonly activeSource = signal<SourcePortal | null>(null);
   readonly includeClosed = signal(false);
@@ -56,7 +82,10 @@ export class Shortlist {
     return SOURCE_LABELS[source];
   }
 
-  readonly size = 25;
+  /** Rows per page. The backend caps it at 100 (TenderController.MAX_PAGE_SIZE). */
+  readonly size = signal(25);
+  readonly sizeOptions: SelectOption[] =
+    [10, 25, 50, 100].map((n) => ({ value: String(n), label: `${n} per page` }));
 
   /**
    * Free-text narrowing of the page already fetched. The API ranks and filters
@@ -70,11 +99,36 @@ export class Shortlist {
     const rows = this.rows();
     if (!q) return rows;
     return rows.filter((r) =>
-      `${r.title ?? ''} ${r.procuringEntity ?? ''}`.toLowerCase().includes(q),
+      `${r.shortTitle ?? ''} ${r.title ?? ''} ${r.procuringEntity ?? ''}`.toLowerCase().includes(q),
     );
   });
 
-  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.size)));
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.size())));
+
+  /** "26–50 of 316": which rows of the whole list this page holds. */
+  readonly rangeStart = computed(() => (this.total() === 0 ? 0 : this.page() * this.size() + 1));
+  readonly rangeEnd = computed(() => Math.min(this.total(), (this.page() + 1) * this.size()));
+
+  /**
+   * Page buttons, 0-based, with null for a "…" gap. Always the first and last page and
+   * the ones either side of the current page, so 13 pages read 1 2 3 4 5 … 13 at the
+   * start and 1 … 6 7 8 … 13 in the middle.
+   */
+  readonly pages = computed<(number | null)[]>(() => {
+    const n = this.pageCount();
+    const c = this.page();
+    if (n <= 7) return Array.from({ length: n }, (_, i) => i);
+    const shown = new Set([0, n - 1, c - 1, c, c + 1]);
+    if (c <= 3) [1, 2, 3, 4].forEach((i) => shown.add(i));
+    if (c >= n - 4) [n - 5, n - 4, n - 3, n - 2].forEach((i) => shown.add(i));
+    const sorted = [...shown].filter((i) => i >= 0 && i < n).sort((a, b) => a - b);
+    const out: (number | null)[] = [];
+    sorted.forEach((p, i) => {
+      if (i > 0 && p - sorted[i - 1] > 1) out.push(null);
+      out.push(p);
+    });
+    return out;
+  });
 
   constructor() {
     this.load();
@@ -87,7 +141,7 @@ export class Shortlist {
     this.api
       .listTenders({
         page: this.page(),
-        size: this.size,
+        size: this.size(),
         grade: this.activeGrade() ?? undefined,
         source: this.activeSource() ?? undefined,
         includeClosed: this.includeClosed(),
@@ -180,14 +234,16 @@ export class Shortlist {
       : r));
   }
 
-  nextPage(): void {
-    this.page.update((p) => p + 1);
+  goTo(p: number): void {
+    if (p < 0 || p >= this.pageCount() || p === this.page()) return;
+    this.page.set(p);
     this.load();
   }
 
-  prevPage(): void {
-    if (this.page() === 0) return;
-    this.page.update((p) => p - 1);
+  /** A new page size starts again from the first page. */
+  setSize(value: string): void {
+    this.size.set(Number(value));
+    this.page.set(0);
     this.load();
   }
 

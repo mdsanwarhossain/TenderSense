@@ -41,6 +41,15 @@
   --shadow-pop: 0 18px 44px -16px rgba(23, 20, 60, 0.28);
   --shadow-pill: 0 6px 16px -6px rgba(91, 61, 245, 0.55);
 
+  /* Buttons: matt -- no glow, no gloss -- but still pressable. A thin darker lip on the
+     bottom edge and a small neutral shadow give them depth; a press sinks them. */
+  --btn-edge: 0 1px 2px rgba(23, 20, 60, 0.06), inset 0 -1px 0 rgba(23, 20, 60, 0.08);
+  --btn-edge-hover: 0 3px 8px -3px rgba(23, 20, 60, 0.18), inset 0 -1px 0 rgba(23, 20, 60, 0.08);
+  --btn-lift: 0 1px 2px rgba(23, 20, 60, 0.14), inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+  --btn-lift-hover: 0 4px 10px -3px rgba(23, 20, 60, 0.28), inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+  --btn-press: inset 0 2px 4px rgba(0, 0, 0, 0.22);
+  --btn-press-soft: inset 0 1px 3px rgba(23, 20, 60, 0.14);
+
   --r-lg: 18px;
   --r: 12px;
   --r-sm: 8px;
@@ -181,18 +190,23 @@ button { font: inherit; color: inherit; }
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  box-shadow: var(--btn-edge);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
-.btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--ink-4); }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.btn:disabled { opacity: 0.5; cursor: default; }
+.btn:hover:not(:disabled) {
+  background: var(--surface-3); border-color: var(--ink-4);
+  box-shadow: var(--btn-edge-hover); transform: translateY(-1px);
+}
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--btn-press-soft); }
+.btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
-  box-shadow: var(--shadow-pill);
+  box-shadow: var(--btn-lift);
 }
-.btn-primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); box-shadow: var(--btn-lift-hover); }
+.btn-primary:active:not(:disabled) { box-shadow: var(--btn-press); }
 .btn-sm { height: 34px; padding: 0 14px; font-size: 12.5px; }
 
 .chip {
@@ -211,6 +225,11 @@ button { font: inherit; color: inherit; }
 }
 .chip:hover { border-color: var(--accent); color: var(--ink); }
 .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip { box-shadow: var(--btn-edge); transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease; }
+.chip:hover { box-shadow: var(--btn-edge-hover); }
+.chip:active { transform: translateY(1px); }
+/* A toggle that is on sits pressed in. */
+.chip.on { box-shadow: var(--btn-press); }
 
 .select {
   display: inline-flex;
@@ -418,4 +437,9 @@ a.trow.urgent:hover { background: color-mix(in srgb, var(--warn-wash) 70%, trans
 /* ---- shared narrow-window rules ---- */
 @media (max-width: 1180px) {
   .split, .split.even, .split.rail-left { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .chip { transition: none; }
+  .btn:hover, .btn:active, .chip:active { transform: none; }
 }

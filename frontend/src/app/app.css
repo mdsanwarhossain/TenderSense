@@ -72,7 +72,7 @@
 .rail-link.on {
   background: var(--accent);
   color: #fff;
-  box-shadow: var(--shadow-pill);
+  box-shadow: var(--btn-lift);
 }
 .rail-link.on:hover { background: var(--accent); color: #fff; }
 

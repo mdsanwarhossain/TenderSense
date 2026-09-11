@@ -6,11 +6,10 @@ import com.bracit.tendersense.entity.enums.MatchGrade;
 import java.util.List;
 
 /**
- * Turns raw similarity into the S/A/B/C grades the BRD asks for.
+ * Turns the match score into the S/A/B/C grades the BRD asks for.
  *
- * <p>Thresholds are derived, never hand-picked. "We set the cut points where the
- * score distribution separates" is a defensible answer to a judge; "0.8 felt about
- * right" is not.
+ * <p>The bands are fixed percentages chosen by the product owner, so a grade means the
+ * same thing for every company and on every screen -- see GradeCalibrationServiceImpl.
  */
 public interface GradeCalibrationService {
 

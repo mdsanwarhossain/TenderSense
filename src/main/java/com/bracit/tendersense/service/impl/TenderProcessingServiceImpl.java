@@ -197,6 +197,10 @@ public class TenderProcessingServiceImpl implements TenderProcessingService {
                 applyAi(incoming, checked.kept(), AiStatus.DONE, inputHash);
                 row.setAiUsed(true);
                 row.setAiDurationMs(System.currentTimeMillis() - started);
+                // The model just answered, so whatever went wrong before is over: the
+                // Pipeline screen shows current problems, not ones already recovered from.
+                lastError = null;
+                lastErrorAt = null;
                 requirementsChanged = existing.map(e -> !Objects.equals(e.getAiMinTurnoverBdt(),
                         incoming.getAiMinTurnoverBdt())).orElse(false);
             } catch (LlmCallException e) {

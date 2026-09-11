@@ -114,6 +114,24 @@ class TenderProcessingServiceImplTest {
     }
 
     @Test
+    @DisplayName("once the model answers again, the old 'not reachable' problem is no longer reported")
+    void recoveryClearsTheProblem() {
+        TenderStaging r = row(tender(LocalDateTime.now().plusDays(5)));
+        when(staging.lockOpen(any(), anyInt())).thenReturn(List.of(r));
+        when(model.enrich(any(), anyInt()))
+                .thenThrow(new LlmUnavailableException("Ollama is not reachable", null))
+                .thenReturn(new TenderEnrichment(null, "The buyer wants the road bank protected with palisading.",
+                        List.of(), null, null, null, List.of()));
+
+        worker.processBatch(true);
+        assertEquals("Ollama is not reachable", worker.status().lastError());
+
+        worker.processBatch(true);
+        assertNull(worker.status().lastError());
+        assertNull(worker.status().lastErrorAt());
+    }
+
+    @Test
     @DisplayName("two unusable answers: the tender goes live without AI rather than block the queue")
     void badAnswerTwice() {
         TenderStaging r = row(tender(LocalDateTime.now().plusDays(5)));
