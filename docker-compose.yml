@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -8,9 +6,9 @@ services:
       POSTGRES_DB: tendersense
       POSTGRES_USER: tendersense
       POSTGRES_PASSWORD: tendersense
-    # 5433 on the host: the developer machine already runs a local Postgres on 5432.
+    # 5434 on the host: the developer machine already runs local Postgres instances on 5432 and 5433.
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - tendersense-pgdata:/var/lib/postgresql/data
       - ./docker/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init-pgvector.sql:ro
@@ -19,6 +17,42 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    networks:
+      - tendersense-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: tendersense-backend
+    environment:
+      # Container-network hostname, not the 5433 host-mapped port above.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tendersense
+      SPRING_DATASOURCE_USERNAME: tendersense
+      SPRING_DATASOURCE_PASSWORD: tendersense
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tendersense-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    container_name: tendersense-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - tendersense-net
 
 volumes:
   tendersense-pgdata:
+
+networks:
+  tendersense-net:
+    driver: bridge

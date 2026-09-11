@@ -1,0 +1,14 @@
+.git
+build
+.gradle
+.idea
+*.iml
+out
+
+frontend/node_modules
+frontend/dist
+frontend/.angular
+
+data/snapshots
+docs
+design
