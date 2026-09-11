@@ -35,7 +35,7 @@ public class EgpHtmlParser {
     private static final int MAX_LABEL_LENGTH = 130;
 
     /** Bump whenever field extraction changes, to force a re-parse on ingest. */
-    public static final String PARSER_VERSION = "egp-3";
+    public static final String PARSER_VERSION = "egp-4";
 
     public Map<String, String> extractLabelValues(String html) {
         Document doc = Jsoup.parse(html);
@@ -66,8 +66,12 @@ public class EgpHtmlParser {
         Map<String, String> f = extractLabelValues(html);
         Instant now = Instant.now();
 
+        // Expression-of-interest pages label the title "Package No. and Description"
+        // (no "Tender/Proposal" prefix). Without it the chain fell through to the
+        // assignment description -- the whole scope of work, 1,800 characters of it.
         String title = firstNonBlank(
                 f.get("Tender/Proposal Package No. and Description"),
+                f.get("Package No. and Description"),
                 f.get("Brief Description of Goods and Related Service"),
                 f.get("Brief Description of assignment"),
                 f.get("Project Name"));
@@ -76,7 +80,9 @@ public class EgpHtmlParser {
                 .sourcePortal(SourcePortal.EGP_BANGLADESH)
                 .externalId(externalId)
                 .referenceNo(truncate(firstNonBlank(f.get("Invitation Reference No."),
+                        f.get("REOI No."),
                         f.get("Tender/Proposal Package No. and Description")), 512))
+                .noticeTypeRaw(truncate(f.get("Event Type"), 64))
                 .title(truncate(title, 2000))
                 .description(buildDescription(f, title))
                 .procurementNature(truncate(f.get("Procurement Nature"), 128))

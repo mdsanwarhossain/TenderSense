@@ -4,8 +4,7 @@ import { Observable } from 'rxjs';
 import {
   BenchmarkResult, BidDecisionRequest, CapabilityProfile, EligibilityReport,
   MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness,
-  SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary, TrackingFilter, TrackingState,
-} from '../models/tender.models';
+  SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary, TrackingFilter, TrackingState, ProcessingStatus } from '../models/tender.models';
 
 /**
  * Single place the frontend talks to the backend.
@@ -112,6 +111,10 @@ export class ApiService {
 
   getRuns(): Observable<PipelineRun[]> {
     return this.http.get<PipelineRun[]>(`${this.base}/pipeline/runs`);
+  }
+
+  getProcessingStatus(): Observable<ProcessingStatus> {
+    return this.http.get<ProcessingStatus>(`${this.base}/pipeline/processing`);
   }
 
   listNotifications(opts: { unreadOnly?: boolean; page?: number; size?: number } = {}):

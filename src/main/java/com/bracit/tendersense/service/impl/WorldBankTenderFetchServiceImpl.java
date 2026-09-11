@@ -178,6 +178,7 @@ public class WorldBankTenderFetchServiceImpl implements TenderFetchService {
                 .publishedAt(parseNoticeDate(text(n, "noticedate")))
                 .closingAt(parseSubmissionDate(text(n, "submission_date")))
                 .contentHash(HashUtil.sha256(n.toString()))
+                .rawPayload(n.toString())
                 .firstSeenAt(now)
                 .lastSeenAt(now)
                 .build();

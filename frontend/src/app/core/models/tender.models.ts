@@ -48,6 +48,8 @@ export interface TenderSummary {
   submittedAt: string | null;
   /** The tender's own page on its portal; null when it cannot be built. */
   sourceUrl: string | null;
+  /** The local model's shorter title, when the portal's is too long to scan. */
+  shortTitle: string | null;
 }
 
 /** Headline counts for the tender list, over the same filters as the list. */
@@ -107,6 +109,25 @@ export interface TenderDetail {
   submittedAt: string | null;
   /** The tender's own page on its portal; null when there is no verified link. */
   sourceUrl: string | null;
+  // Standard form: the same meaning for every portal.
+  buyer: string | null;
+  partOf: string | null;
+  location: string | null;
+  category: 'GOODS' | 'WORKS' | 'CONSULTING' | 'OTHER_SERVICES' | null;
+  noticeType: 'TENDER' | 'EXPRESSION_OF_INTEREST' | 'PREQUALIFICATION' | 'CONTRACT_AWARD' | 'GENERAL_NOTICE' | null;
+  openTo: 'NATIONAL' | 'INTERNATIONAL' | null;
+  methodLabel: string | null;
+  fundedBy: string | null;
+  amendments: number | null;
+  // Read by the local model; null until read, or where a field failed its check.
+  aiShortTitle: string | null;
+  aiSummary: string | null;
+  aiDeliverables: string[];
+  aiLocation: string | null;
+  aiMinTurnoverBdt: number | null;
+  aiMinExperienceYears: number | null;
+  aiCertifications: string[];
+  aiStatus: 'DONE' | 'FAILED' | 'SKIPPED' | null;
 }
 
 export interface EvidencePair {
@@ -164,6 +185,24 @@ export interface BenchmarkResult {
   }[];
   /** Shown verbatim in the UI: the metric's honest limitations. */
   caveat: string | null;
+}
+
+/** The staging queue between the scrapers and the tender list. */
+export interface ProcessingStatus {
+  modelEnabled: boolean;
+  workerEnabled: boolean;
+  model: string;
+  waiting: number;
+  waitingOpen: number;
+  inProgress: number;
+  awaitingScore: number;
+  done: number;
+  failed: number;
+  readLastHour: number;
+  secondsPerRead: number | null;
+  etaMinutes: number | null;
+  lastError: string | null;
+  lastErrorAt: string | null;
 }
 
 export interface PipelineRun {

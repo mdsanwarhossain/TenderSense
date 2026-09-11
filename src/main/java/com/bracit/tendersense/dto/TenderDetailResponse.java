@@ -1,11 +1,16 @@
 package com.bracit.tendersense.dto;
 
+import com.bracit.tendersense.entity.enums.AiStatus;
+import com.bracit.tendersense.entity.enums.NoticeType;
+import com.bracit.tendersense.entity.enums.OpenTo;
 import com.bracit.tendersense.entity.enums.Sector;
+import com.bracit.tendersense.entity.enums.TenderCategory;
 import com.bracit.tendersense.entity.enums.SourcePortal;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record TenderDetailResponse(
         Long id,
@@ -43,5 +48,24 @@ public record TenderDetailResponse(
         boolean submitted,
         Instant submittedAt,
         /** The tender's own page on its portal; null when no verified link exists. */
-        String sourceUrl) {
+        String sourceUrl,
+        // ---- Standard form: the same labels for every portal (TenderStandardiser) ----
+        String buyer,
+        String partOf,
+        String location,
+        TenderCategory category,
+        NoticeType noticeType,
+        OpenTo openTo,
+        String methodLabel,
+        String fundedBy,
+        Integer amendments,
+        // ---- Read by the local model; null until read, or where a field failed its check ----
+        String aiShortTitle,
+        String aiSummary,
+        List<String> aiDeliverables,
+        String aiLocation,
+        BigDecimal aiMinTurnoverBdt,
+        Integer aiMinExperienceYears,
+        List<String> aiCertifications,
+        AiStatus aiStatus) {
 }

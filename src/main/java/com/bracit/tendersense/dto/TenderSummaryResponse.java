@@ -31,5 +31,7 @@ public record TenderSummaryResponse(
         boolean submitted,
         Instant submittedAt,
         /** The tender's own page on its portal; null when it cannot be built. */
-        String sourceUrl) {
+        String sourceUrl,
+        /** The local model's shorter title, when the portal's is too long to scan; else null. */
+        String shortTitle) {
 }

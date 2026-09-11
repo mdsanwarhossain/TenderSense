@@ -1,7 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { interval } from 'rxjs';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
-import { PipelineRun } from '../../core/models/tender.models';
+import { PipelineRun, ProcessingStatus } from '../../core/models/tender.models';
 
 /** Collection triggers, schedule and run telemetry. */
 @Component({
@@ -18,6 +20,8 @@ export class Pipeline {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly running = signal<'discovery' | 'reconcile' | null>(null);
+  /** The staging queue; refreshed every 20 s while the page is open. */
+  readonly queue = signal<ProcessingStatus | null>(null);
 
   /** Mirrors tendersense.schedule.* — all Asia/Dhaka. */
   readonly schedule = [
@@ -39,6 +43,22 @@ export class Pipeline {
 
   constructor() {
     this.load();
+    this.loadQueue();
+    interval(20_000).pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.loadQueue());
+  }
+
+  loadQueue(): void {
+    this.api.getProcessingStatus().subscribe({
+      next: (q) => this.queue.set(q),
+      error: () => this.queue.set(null),
+    });
+  }
+
+  eta(minutes: number | null): string {
+    if (minutes === null) return '—';
+    if (minutes < 60) return `${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    return h < 48 ? `${h} h ${minutes % 60} min` : `${Math.round(h / 24 * 10) / 10} days`;
   }
 
   load(): void {

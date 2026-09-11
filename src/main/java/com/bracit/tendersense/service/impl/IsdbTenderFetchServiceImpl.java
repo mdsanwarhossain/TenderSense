@@ -166,6 +166,7 @@ public class IsdbTenderFetchServiceImpl implements TenderFetchService {
                 .status(truncate(status, 64))
                 .closingAt(parseCloseDate(closeDateRaw))
                 .contentHash(contentHash)
+                .rawPayload(row.outerHtml())
                 .firstSeenAt(now)
                 .lastSeenAt(now)
                 .build();

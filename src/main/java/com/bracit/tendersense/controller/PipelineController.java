@@ -25,6 +25,24 @@ public class PipelineController {
 
     private final PipelineService pipelineService;
     private final PipelineRunRepository runRepository;
+    private final com.bracit.tendersense.service.TenderStagingService stagingService;
+    private final com.bracit.tendersense.service.TenderProcessingService processingService;
+
+    /**
+     * Queues every stored tender that has not been through the current pipeline, for the
+     * worker to process -- the one-off backlog run. e-GP pages are re-parsed from their
+     * saved snapshots on the way, so parser fixes reach old tenders too.
+     */
+    @PostMapping("/processing/backfill")
+    public java.util.Map<String, Integer> backfill() {
+        return java.util.Map.of("queued", stagingService.backfill());
+    }
+
+    /** The staging queue: how much is waiting, how fast the model is going, the last error. */
+    @GetMapping("/processing")
+    public com.bracit.tendersense.dto.ProcessingStatusResponse processing() {
+        return processingService.status();
+    }
 
     /**
      * @param full when true, runs the full reconcile crawl instead of an incremental

@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -61,7 +62,8 @@ public class TenderMapper {
                 tracking != null && tracking.wishlisted(),
                 tracking != null && tracking.submitted(),
                 tracking == null ? null : tracking.submittedAt(),
-                sourceUrl(t));
+                sourceUrl(t),
+                t.getAiShortTitle());
     }
 
     public TenderDetailResponse toDetail(Tender t) {
@@ -82,7 +84,16 @@ public class TenderMapper {
                 tracking != null && tracking.wishlisted(),
                 tracking != null && tracking.submitted(),
                 tracking == null ? null : tracking.submittedAt(),
-                sourceUrl(t));
+                sourceUrl(t),
+                t.getBuyer(), t.getPartOf(), t.getLocation(), t.getCategory(), t.getNoticeType(),
+                t.getOpenTo(), t.getMethodLabel(), t.getFundedBy(), t.getAmendments(),
+                t.getAiShortTitle(), t.getAiSummary(), list(t.getAiDeliverables()), t.getAiLocation(),
+                t.getAiMinTurnoverBdt(), t.getAiMinExperienceYears(), list(t.getAiCertifications()),
+                t.getAiStatus());
+    }
+
+    private static List<String> list(String[] values) {
+        return values == null ? List.of() : List.of(values);
     }
 
     /**

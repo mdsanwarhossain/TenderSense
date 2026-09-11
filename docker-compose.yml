@@ -20,5 +20,19 @@ services:
       timeout: 5s
       retries: 20
 
+  # The local model that reads tenders between the staging table and the tender table.
+  # CPU is enough (~50 s per tender); a GPU makes it seconds. After the first
+  # `docker compose up -d`, download the model once:
+  #   docker exec tendersense-ollama ollama pull qwen2.5:7b
+  ollama:
+    image: ollama/ollama:0.34.0
+    container_name: tendersense-ollama
+    # Bound to this machine only: the model API has no authentication.
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - tendersense-ollama:/root/.ollama
+
 volumes:
   tendersense-pgdata:
+  tendersense-ollama:

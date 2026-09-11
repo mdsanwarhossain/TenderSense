@@ -1,7 +1,11 @@
 package com.bracit.tendersense.entity;
 
+import com.bracit.tendersense.entity.enums.AiStatus;
+import com.bracit.tendersense.entity.enums.NoticeType;
+import com.bracit.tendersense.entity.enums.OpenTo;
 import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.entity.enums.SourcePortal;
+import com.bracit.tendersense.entity.enums.TenderCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -126,6 +130,99 @@ public class Tender {
     @Column(name = "eligibility_text", columnDefinition = "text")
     private String eligibilityText;
 
+    /** The portal's own notice kind, as stated -- e-GP's "Event Type" (TENDER, REOI, …). */
+    @Column(name = "notice_type_raw", length = 64)
+    private String noticeTypeRaw;
+
+    // ---- Standard form -------------------------------------------------------------
+    // The same meaning for every portal, filled by rules (TenderStandardiser). These are
+    // what the screens label generically; the portal-specific columns above stay as
+    // stated, for provenance and for the rules that read them.
+
+    /** Who runs the tender. */
+    @Column(length = 512)
+    private String buyer;
+
+    /** The larger body or programme it belongs to: e-GP ministry › division, a World Bank project. */
+    @Column(name = "part_of", length = 512)
+    private String partOf;
+
+    @Column(length = 256)
+    private String location;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private TenderCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "notice_type", length = 32)
+    private NoticeType noticeType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "open_to", length = 16)
+    private OpenTo openTo;
+
+    /** How the winner is chosen, in one wording across portals. */
+    @Column(name = "method_label", length = 128)
+    private String methodLabel;
+
+    @Column(name = "funded_by", length = 256)
+    private String fundedBy;
+
+    /** Amendments (corrigenda) the portal reports. */
+    private Integer amendments;
+
+    // ---- Read by the local model ---------------------------------------------------
+    // Additions only: never a replacement for a field the portal states, and never
+    // part of the matching text. Null when not processed, or when the validator
+    // rejected that field.
+
+    @Column(name = "ai_short_title", length = 256)
+    private String aiShortTitle;
+
+    @Column(name = "ai_summary", columnDefinition = "text")
+    private String aiSummary;
+
+    @Column(name = "ai_deliverables", columnDefinition = "text[]")
+    private String[] aiDeliverables;
+
+    @Column(name = "ai_location", length = 128)
+    private String aiLocation;
+
+    @Column(name = "ai_min_turnover_bdt", precision = 18, scale = 2)
+    private BigDecimal aiMinTurnoverBdt;
+
+    @Column(name = "ai_min_experience_years")
+    private Integer aiMinExperienceYears;
+
+    @Column(name = "ai_certifications", columnDefinition = "text[]")
+    private String[] aiCertifications;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_status", length = 16)
+    private AiStatus aiStatus;
+
+    @Column(name = "ai_model", length = 64)
+    private String aiModel;
+
+    @Column(name = "ai_prompt_version", length = 32)
+    private String aiPromptVersion;
+
+    /** Content hash + model + prompt version the stored reading was made from. */
+    @Column(name = "ai_input_hash", length = 64)
+    private String aiInputHash;
+
+    @Column(name = "ai_processed_at")
+    private Instant aiProcessedAt;
+
+    /**
+     * The payload as fetched, for sources that have no snapshot file (World Bank JSON,
+     * UNGM / IsDB listing rows). Carried to the staging table, never stored here.
+     */
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String rawPayload;
+
     /**
      * The tender's embedding — computed ONCE and reused by every organisation.
      *
@@ -138,6 +235,7 @@ public class Tender {
      * upgrade path if the organisation count ever outgrows a handful.
      */
     @Column(name = "embedding", columnDefinition = "real[]")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private float[] embedding;
 
     /** Model that produced {@link #embedding}; a change here invalidates the vector. */

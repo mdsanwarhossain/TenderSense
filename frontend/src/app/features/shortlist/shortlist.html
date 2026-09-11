@@ -164,7 +164,12 @@
 
             <!-- The title is the row's link; .row-link stretches it over the whole row. -->
             <a class="cell-title row-link" [routerLink]="['/tenders', row.id]">
-              <span class="t">{{ row.title ?? '(untitled)' }}</span>
+              <span class="t" [title]="row.shortTitle ? 'Full title: ' + row.title : (row.title ?? '')">
+                @if (row.shortTitle) {
+                  <span class="ai-mark">AI</span>
+                }
+                {{ row.shortTitle ?? row.title ?? '(untitled)' }}
+              </span>
               @if (row.procuringEntity) { <span class="e">{{ row.procuringEntity }}</span> }
             </a>
 

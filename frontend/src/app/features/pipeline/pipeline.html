@@ -85,6 +85,55 @@
     </div>
   </div>
 
+  <!-- The queue between the scrapers and the tender list: the local model reads open
+       tenders here, a few at a time, before they reach the list. -->
+  @if (queue(); as q) {
+    <section class="card queue">
+      <div class="card-head">
+        <div>
+          <h2>AI processing queue</h2>
+          <span class="sub">New tenders wait here while the local model reads them, a few at a time.</span>
+        </div>
+        <span class="pill" [class.accent]="q.modelEnabled" [class.ghost]="!q.modelEnabled">
+          {{ q.modelEnabled ? 'Model on · ' + q.model : 'Model off' }}
+        </span>
+      </div>
+      <div class="queue-grid">
+        <div class="qcell">
+          <span class="label">Waiting</span>
+          <span class="qnum">{{ q.waitingOpen | number }}</span>
+          <span class="hint">open tenders{{ q.waiting > q.waitingOpen ? ' · ' + (q.waiting - q.waitingOpen) + ' closed' : '' }}</span>
+        </div>
+        <div class="qcell">
+          <span class="label">Being read</span>
+          <span class="qnum">{{ q.inProgress }}</span>
+          <span class="hint">{{ q.awaitingScore }} waiting to be scored</span>
+        </div>
+        <div class="qcell">
+          <span class="label">Read in the last hour</span>
+          <span class="qnum">{{ q.readLastHour }}</span>
+          <span class="hint">{{ q.done | number }} processed in total</span>
+        </div>
+        <div class="qcell">
+          <span class="label">Time per tender</span>
+          <span class="qnum">{{ q.secondsPerRead !== null ? q.secondsPerRead + 's' : '—' }}</span>
+          <span class="hint">measured on this machine</span>
+        </div>
+        <div class="qcell">
+          <span class="label">Time left</span>
+          <span class="qnum">{{ eta(q.etaMinutes) }}</span>
+          <span class="hint">for the open tenders waiting</span>
+        </div>
+      </div>
+      @if (q.failed > 0) {
+        <p class="card-note">{{ q.failed }} could not be processed and need a developer.</p>
+      }
+      @if (q.lastError) {
+        <p class="card-note qerr">Last problem{{ q.lastErrorAt ? ' at ' + (q.lastErrorAt | date: 'dd MMM HH:mm') : '' }}: {{ q.lastError }}</p>
+      }
+    </section>
+  }
+
   <div class="split rail-left">
     <div class="stack">
       <section class="card">

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { formatDate } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
@@ -30,6 +30,14 @@ const ADVICE: Record<BidAction, { label: string; hint: string }> = {
   SKIP: { label: 'Skip', hint: 'A weak match, or a requirement you do not meet.' },
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  GOODS: 'Goods', WORKS: 'Works', CONSULTING: 'Consulting services', OTHER_SERVICES: 'Other services',
+};
+const NOTICE_LABELS: Record<string, string> = {
+  TENDER: 'Tender', EXPRESSION_OF_INTEREST: 'Expression of interest', PREQUALIFICATION: 'Prequalification',
+  CONTRACT_AWARD: 'Contract award (already awarded)', GENERAL_NOTICE: 'General notice',
+};
+
 /** Evidence below this similarity is too weak to present as a reason. */
 const EVIDENCE_FLOOR = 0.2;
 
@@ -40,7 +48,7 @@ const EVIDENCE_FLOOR = 0.2;
 @Component({
   selector: 'ts-tender-detail',
   standalone: true,
-  imports: [DatePipe, RouterLink, GradeBadge, EligibilityChip, TenderActions],
+  imports: [RouterLink, GradeBadge, EligibilityChip, TenderActions],
   templateUrl: './tender-detail.html',
   styleUrl: './tender-detail.css',
 })
@@ -64,6 +72,47 @@ export class TenderDetail {
   readonly checkGaps = computed(
     () => this.eligibility()?.gaps.filter((g) => !g.blocking) ?? [],
   );
+
+  /**
+   * The information table, in labels that fit every portal. A field the portal does not
+   * give is left out rather than shown as a dash.
+   */
+  readonly facts = computed(() => {
+    const t = this.tender();
+    if (!t) return [];
+    const when = (v: string | null) => (v ? formatDate(v, 'd MMM y, h:mm a', 'en-US') : null);
+    // A country alone says little; the model's reading of the notice may name the district.
+    const place = t.location && t.location !== t.country ? t.location : (t.aiLocation ?? t.location);
+    const rows: { label: string; value: string | null; warn?: boolean }[] = [
+      { label: 'Issued by', value: t.buyer },
+      { label: 'Part of', value: t.partOf },
+      { label: 'Location', value: place },
+      { label: 'Category', value: t.category ? CATEGORY_LABELS[t.category] : null },
+      { label: 'Notice type', value: t.noticeType ? NOTICE_LABELS[t.noticeType] : null },
+      { label: "How it's awarded", value: t.methodLabel },
+      { label: 'Open to', value: t.openTo === 'NATIONAL' ? 'Bidders in Bangladesh'
+          : t.openTo === 'INTERNATIONAL' ? 'Bidders from any country' : null },
+      { label: 'Funded by', value: t.fundedBy },
+      // e-GP falls back to the package description for the reference; that is the title again.
+      { label: 'Reference no.', value: t.referenceNo && t.referenceNo !== t.title ? t.referenceNo : null },
+      { label: 'Document price', value: t.documentPriceBdt ? 'BDT ' + t.documentPriceBdt.toLocaleString('en-US') : null },
+      { label: 'Published', value: when(t.publishedAt) },
+      { label: 'Closing', value: when(t.closingAt) ?? 'Not stated', warn: this.urgent() },
+      { label: 'Changes', value: t.amendments ? `Amended ${t.amendments} time${t.amendments === 1 ? '' : 's'}` : null },
+    ];
+    return rows.filter((r) => r.value);
+  });
+
+  /** What the model read out of the eligibility text, each already checked against it. */
+  readonly aiRequirements = computed(() => {
+    const t = this.tender();
+    if (!t) return [];
+    const out: string[] = [];
+    if (t.aiMinTurnoverBdt) out.push(`Minimum annual turnover: BDT ${t.aiMinTurnoverBdt.toLocaleString('en-US')}`);
+    if (t.aiMinExperienceYears) out.push(`At least ${t.aiMinExperienceYears} years of experience`);
+    if (t.aiCertifications?.length) out.push(`Licences and certificates: ${t.aiCertifications.join(', ')}`);
+    return out;
+  });
 
   /** Same rounding as the list's Match column, so the two screens agree. */
   readonly percent = computed(() => {

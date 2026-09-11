@@ -15,16 +15,16 @@
     <div class="detail-identity">
       <ts-grade-badge [grade]="evidence()?.grade ?? null" class="big" />
       <div>
-        <h1>{{ t.title ?? '(untitled tender)' }}</h1>
+        <h1>{{ t.aiShortTitle ?? t.title ?? '(untitled tender)' }}</h1>
         <div class="detail-meta">
           <span>{{ sourceLabel(t.source) }}</span>
-          @if (t.procuringEntity) {
-            <span class="sep">•</span><span>{{ t.procuringEntity }}</span>
-          }
-          @if (t.referenceNo) {
-            <span class="sep">•</span><span>{{ t.referenceNo }}</span>
+          @if (t.buyer) {
+            <span class="sep">•</span><span>{{ t.buyer }}</span>
           }
         </div>
+        @if (t.aiShortTitle) {
+          <p class="full-title"><span class="ai-tag">Short title by AI</span> {{ t.title }}</p>
+        }
       </div>
     </div>
 
@@ -58,29 +58,38 @@
 
   <div class="split">
     <div class="stack">
+      @if (t.aiSummary || t.aiDeliverables.length) {
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h2>What they want</h2>
+              <span class="sub">Summarised from the notice. Check the notice itself before you bid.</span>
+            </div>
+            <span class="ai-tag">AI summary</span>
+          </div>
+          @if (t.aiSummary) {
+            <p class="prose">{{ t.aiSummary }}</p>
+          }
+          @if (t.aiDeliverables.length) {
+            <ul class="deliverables">
+              @for (d of t.aiDeliverables; track $index) {
+                <li>{{ d }}</li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      <!-- The same labels for every portal; a field the portal does not give is left out. -->
       <section class="card">
         <div class="card-head"><h2>Tender details</h2></div>
         <div class="facts">
-          <div class="fact"><span class="label">Ministry</span><span class="val">{{ t.ministry ?? '—' }}</span></div>
-          <div class="fact"><span class="label">Division</span><span class="val">{{ t.division ?? '—' }}</span></div>
-          <div class="fact"><span class="label">Organization</span><span class="val">{{ t.organization ?? '—' }}</span></div>
-          <div class="fact"><span class="label">Procuring entity</span><span class="val">{{ t.procuringEntity ?? '—' }}</span></div>
-          <div class="fact"><span class="label">Procurement method</span><span class="val">{{ t.procurementMethod ?? '—' }}</span></div>
-          <div class="fact">
-            <span class="label">Category</span>
-            <span class="val">{{ t.procurementNature ?? '—' }}@if (t.procurementType) { · {{ t.procurementType }} }</span>
-          </div>
-          <div class="fact"><span class="label">Source of funds</span><span class="val">{{ t.sourceOfFunds ?? '—' }}</span></div>
-          <div class="fact">
-            <span class="label">Published</span>
-            <span class="val">{{ t.publishedAt ? (t.publishedAt | date: 'd MMM y, h:mm a') : '—' }}</span>
-          </div>
-          <div class="fact">
-            <span class="label">Closing</span>
-            <span class="val" [class.warn]="urgent()">
-              {{ t.closingAt ? (t.closingAt | date: 'd MMM y, h:mm a') : 'Not stated' }}
-            </span>
-          </div>
+          @for (f of facts(); track f.label) {
+            <div class="fact">
+              <span class="label">{{ f.label }}</span>
+              <span class="val" [class.warn]="f.warn">{{ f.value }}</span>
+            </div>
+          }
         </div>
       </section>
 
@@ -188,6 +197,17 @@
               @if (g.actual) { <span class="hint">{{ g.actual }}</span> }
               @if (g.message) { <span class="gap-msg bad">{{ g.message }}</span> }
             </span>
+          </div>
+        }
+
+        @if (aiRequirements().length) {
+          <div class="ai-reqs">
+            <span class="label">Requirements found by AI in the notice</span>
+            <ul>
+              @for (r of aiRequirements(); track r) {
+                <li>{{ r }}</li>
+              }
+            </ul>
           </div>
         }
 
