@@ -23,25 +23,12 @@
 
 .brand { display: flex; align-items: center; gap: 11px; padding: 0 6px; }
 .brand:hover { text-decoration: none; }
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  background: linear-gradient(150deg, var(--accent) 0%, #8a6bff 100%);
-  color: #fff;
-  box-shadow: var(--shadow-pill);
-  flex: none;
-}
-.brand-text { display: flex; flex-direction: column; line-height: 1.2; }
-.brand-name { font-size: 16px; font-weight: 800; letter-spacing: -0.4px; color: var(--ink); }
-.brand-sub {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--ink-4);
+.brand-logo {
+  display: block;
+  width: 100%;
+  max-width: 190px;
+  height: auto;
+  border-radius: 8px;
 }
 
 .rail-nav { display: flex; flex-direction: column; gap: 4px; }
