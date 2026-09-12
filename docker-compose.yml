@@ -59,7 +59,7 @@ services:
       dockerfile: docker/frontend.Dockerfile
     container_name: tendersense-frontend
     ports:
-      - "4200:80"
+      - "80:80"
     depends_on:
       - backend
     networks:
