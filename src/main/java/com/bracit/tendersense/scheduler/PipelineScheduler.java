@@ -2,41 +2,36 @@ package com.bracit.tendersense.scheduler;
 
 import com.bracit.tendersense.dto.DigestResponse;
 import com.bracit.tendersense.dto.PipelineRunResponse;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.enums.RunStatus;
 import com.bracit.tendersense.entity.enums.SourcePortal;
-import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.service.PipelineService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
- * The scheduled pipeline.
+ * What each scheduled job does when it fires. When it fires is not decided here: the
+ * schedules are in the database, armed by JobScheduleServiceImpl, so an admin can switch a
+ * job off or move it from the Scheduler page without a restart.
  *
  * <p>Disabled wholesale by {@code tendersense.schedule.enabled=false}, which the
  * {@code demo} profile sets — a reconcile starting mid-presentation and holding the
  * database is an avoidable way to lose.
  *
- * <p>Every cron is pinned to {@code Asia/Dhaka} rather than server-local time. Without
- * that the 08:00 digest drifts to whatever timezone the host happens to run in, which
- * is the sort of bug nobody notices until the shortlist arrives at 2am.
- *
- * <h2>Why four jobs and not the six originally planned</h2>
+ * <h2>Why no detail-drain or urgency-refresh job</h2>
  * <ul>
  *   <li><b>No separate detail-drain.</b> {@code EgpTenderFetchServiceImpl} already
  *       fetches detail pages inline for exactly the ids discovery found, rate limited
  *       to 1/sec. A queue plus a drain job would add moving parts for the same result.</li>
  *   <li><b>No urgency-refresh.</b> Days-to-deadline is derived on read in
- *       {@code TenderMapper}, not stored, so there is nothing to refresh. A job that
- *       recomputes a derived value is a no-op dressed as diligence.</li>
+ *       {@code TenderMapper}, not stored, so there is nothing to refresh.</li>
  * </ul>
  */
 @Component
@@ -44,117 +39,70 @@ import java.util.concurrent.atomic.AtomicInteger;
         matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
-public class PipelineScheduler {
+public class PipelineScheduler implements ScheduledJobRunner {
 
     /**
-     * After this many consecutive failures a job stops trying until one succeeds or
-     * the application restarts. Hammering a government portal that is already failing
-     * helps nobody and risks the access the whole system depends on.
+     * After this many consecutive failures a job stops trying until one succeeds, an
+     * admin changes it, or the application restarts. Hammering a government portal that
+     * is already failing helps nobody and risks the access the whole system depends on.
      */
-    private static final int FAILURE_LIMIT = 3;
+    static final int FAILURE_LIMIT = 3;
 
     private final PipelineService pipelineService;
     private final OrganisationRepository organisationRepository;
 
-    @Value("${tendersense.schedule.zone}")
-    private String zone;
-    @Value("${tendersense.schedule.egp-discovery}")
-    private String egpDiscoveryCron;
-    @Value("${tendersense.schedule.egp-reconcile}")
-    private String egpReconcileCron;
-    @Value("${tendersense.schedule.world-bank-sync}")
-    private String worldBankCron;
-    @Value("${tendersense.schedule.ungm-sync}")
-    private String ungmCron;
-    @Value("${tendersense.schedule.isdb-sync}")
-    private String isdbCron;
-    @Value("${tendersense.schedule.morning-digest}")
-    private String digestCron;
-
+    // e-GP discovery and reconcile share one counter: a successful nightly reconcile is
+    // what lets a paused discovery resume.
     private final AtomicInteger egpFailures = new AtomicInteger();
     private final AtomicInteger worldBankFailures = new AtomicInteger();
     private final AtomicInteger ungmFailures = new AtomicInteger();
     private final AtomicInteger isdbFailures = new AtomicInteger();
+    private final AtomicInteger bracFailures = new AtomicInteger();
 
-    /**
-     * States what is armed, so "is the scheduler on?" is answerable from the log
-     * rather than by waiting to see whether something fires.
-     */
-    @PostConstruct
-    void announce() {
-        log.info("scheduler ARMED ({}): egpDiscovery [{}] · worldBankSync [{}] · "
-                        + "ungmSync [{}] · isdbSync [{}] · egpReconcile [{}] · morningDigest [{}]",
-                zone, egpDiscoveryCron, worldBankCron, ungmCron, isdbCron,
-                egpReconcileCron, digestCron);
-    }
-
-    /**
-     * Cheap incremental sweep during Bangladesh business hours. Reads 1-3 listing pages
-     * and stops once it has seen 20 consecutive known ids.
-     *
-     * <p>Bangladesh's government weekend is Friday-Saturday, so yield those days is near
-     * zero. The job still runs: the cost is trivial and it catches off-cycle publications.
-     */
-    @Scheduled(cron = "${tendersense.schedule.egp-discovery}",
-            zone = "${tendersense.schedule.zone}")
-    public void egpDiscovery() {
-        if (tripped(egpFailures, "egpDiscovery")) {
-            return;
+    @Override
+    public void run(ScheduledJob job) {
+        switch (job) {
+            // Cheap incremental sweep during Bangladesh business hours: 1-3 listing pages,
+            // stopping once it has seen 20 consecutive known ids.
+            case EGP_DISCOVERY -> guarded(job, egpFailures, () -> pipelineService.runSource(SourcePortal.EGP_BANGLADESH, false));
+            case WORLD_BANK_SYNC -> guarded(job, worldBankFailures, () -> pipelineService.runSource(SourcePortal.WORLD_BANK, false));
+            case UNGM_SYNC -> guarded(job, ungmFailures, () -> pipelineService.runSource(SourcePortal.UNGM, false));
+            case ISDB_SYNC -> guarded(job, isdbFailures, () -> pipelineService.runSource(SourcePortal.ISDB, false));
+            case BRAC_SYNC -> guarded(job, bracFailures, () -> pipelineService.runSource(SourcePortal.BRAC, false));
+            // Nightly full crawl: the only thing that sees corrigenda on stored tenders,
+            // status transitions and anything missed during an outage. Never paused.
+            case EGP_RECONCILE -> run(job, egpFailures, () -> pipelineService.runSource(SourcePortal.EGP_BANGLADESH, true));
+            case MORNING_DIGEST -> morningDigest();
         }
-        run("egpDiscovery", egpFailures,
-                () -> pipelineService.runSource(SourcePortal.EGP_BANGLADESH, false));
     }
 
-    /** World Bank is a JSON API, so this costs seconds and can run around the clock. */
-    @Scheduled(cron = "${tendersense.schedule.world-bank-sync}",
-            zone = "${tendersense.schedule.zone}")
-    public void worldBankSync() {
-        if (tripped(worldBankFailures, "worldBankSync")) {
-            return;
+    @Override
+    public boolean paused(ScheduledJob job) {
+        AtomicInteger failures = counter(job);
+        return job != ScheduledJob.EGP_RECONCILE && failures != null && failures.get() >= FAILURE_LIMIT;
+    }
+
+    @Override
+    public void clearFailures(ScheduledJob job) {
+        AtomicInteger failures = counter(job);
+        if (failures != null) {
+            failures.set(0);
         }
-        run("worldBankSync", worldBankFailures,
-                () -> pipelineService.runSource(SourcePortal.WORLD_BANK, false));
     }
 
-    /** UNGM listing filtered server-side, so like World Bank this is cheap enough to run often. */
-    @Scheduled(cron = "${tendersense.schedule.ungm-sync}",
-            zone = "${tendersense.schedule.zone}")
-    public void ungmSync() {
-        if (tripped(ungmFailures, "ungmSync")) {
-            return;
-        }
-        run("ungmSync", ungmFailures,
-                () -> pipelineService.runSource(SourcePortal.UNGM, false));
-    }
-
-    /** Same shape as {@link #ungmSync}: a plain filtered listing, no per-tender detail fetch. */
-    @Scheduled(cron = "${tendersense.schedule.isdb-sync}",
-            zone = "${tendersense.schedule.zone}")
-    public void isdbSync() {
-        if (tripped(isdbFailures, "isdbSync")) {
-            return;
-        }
-        run("isdbSync", isdbFailures,
-                () -> pipelineService.runSource(SourcePortal.ISDB, false));
-    }
-
-    /**
-     * Nightly full crawl. Discovery only ever sees <em>new</em> tenders, so this is the
-     * only thing that picks up corrigenda on tenders already stored, status transitions,
-     * anything missed during an outage, and re-parses after a parser-version bump.
-     * Roughly an hour at the 1 req/sec politeness limit.
-     */
-    @Scheduled(cron = "${tendersense.schedule.egp-reconcile}",
-            zone = "${tendersense.schedule.zone}")
-    public void egpReconcile() {
-        run("egpReconcile", egpFailures,
-                () -> pipelineService.runSource(SourcePortal.EGP_BANGLADESH, true));
+    private AtomicInteger counter(ScheduledJob job) {
+        return switch (job) {
+            case EGP_DISCOVERY, EGP_RECONCILE -> egpFailures;
+            case WORLD_BANK_SYNC -> worldBankFailures;
+            case UNGM_SYNC -> ungmFailures;
+            case ISDB_SYNC -> isdbFailures;
+            case BRAC_SYNC -> bracFailures;
+            case MORNING_DIGEST -> null;
+        };
     }
 
     /** The BRD deliverable: the shortlist the BD team opens at the start of the day. */
-    @Scheduled(cron = "${tendersense.schedule.morning-digest}",
-            zone = "${tendersense.schedule.zone}")
-    public void morningDigest() {
+    private void morningDigest() {
         try {
             // One digest per subscribing company — the corpus is shared, the shortlist is not.
             for (Organisation org : organisationRepository.findByActiveTrueOrderByIdAsc()) {
@@ -173,39 +121,38 @@ public class PipelineScheduler {
 
     // ---------------------------------------------------------------- internals
 
-    private void run(String job, AtomicInteger failures,
-                     java.util.function.Supplier<PipelineRunResponse> work) {
+    private void guarded(ScheduledJob job, AtomicInteger failures, Supplier<PipelineRunResponse> work) {
+        if (failures.get() >= FAILURE_LIMIT) {
+            log.warn("{} paused after {} consecutive failures — will resume once a reconcile or "
+                    + "manual run succeeds, or an admin changes the job", job.key(), failures.get());
+            return;
+        }
+        run(job, failures, work);
+    }
+
+    private void run(ScheduledJob job, AtomicInteger failures, Supplier<PipelineRunResponse> work) {
         Instant started = Instant.now();
         try {
             PipelineRunResponse result = work.get();
 
             if (result.status() == RunStatus.FAILED) {
                 int n = failures.incrementAndGet();
-                log.warn("{} failed ({} consecutive): {}", job, n, result.errorMessage());
+                log.warn("{} failed ({} consecutive): {}", job.key(), n, result.errorMessage());
                 return;
             }
             if (result.status() == RunStatus.SKIPPED) {
                 // Not a failure: another job held the lock. Leave the counter alone.
-                log.info("{} skipped — another pipeline job was running", job);
+                log.info("{} skipped — another pipeline job was running", job.key());
                 return;
             }
 
             failures.set(0);
-            log.info("{} ok in {}ms — discovered {}, scored {}", job,
+            log.info("{} ok in {}ms — discovered {}, scored {}", job.key(),
                     java.time.Duration.between(started, Instant.now()).toMillis(),
                     result.tendersDiscovered(), result.tendersScored());
         } catch (Exception e) {
             int n = failures.incrementAndGet();
-            log.error("{} threw ({} consecutive)", job, n, e);
+            log.error("{} threw ({} consecutive)", job.key(), n, e);
         }
-    }
-
-    private boolean tripped(AtomicInteger failures, String job) {
-        if (failures.get() >= FAILURE_LIMIT) {
-            log.warn("{} paused after {} consecutive failures — will resume once a "
-                    + "reconcile or manual run succeeds", job, failures.get());
-            return true;
-        }
-        return false;
     }
 }

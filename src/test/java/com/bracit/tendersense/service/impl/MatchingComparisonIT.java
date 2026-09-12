@@ -36,10 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * whichever real tenders held those ids, and the fakes then ranked #1-#3 on the live
  * shortlist. Fixtures now get fresh ids and vanish when each test ends.
  */
-@SpringBootTest(properties = {"tendersense.source.mode=cached",
-        // Lets these tests name a company by header instead of signing in.
-        // Off everywhere else -- it is an authentication bypass.
-        "tendersense.auth.allow-header=true"})
+@SpringBootTest(properties = "tendersense.source.mode=cached")
 @Transactional
 class MatchingComparisonIT {
 

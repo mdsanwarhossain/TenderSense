@@ -1,16 +1,17 @@
 // Mirrors the Java DTOs in com.bracit.tendersense.dto.
 // The contract is frozen: change both sides together.
 
-export type SourcePortal = 'EGP_BANGLADESH' | 'WORLD_BANK' | 'UNGM' | 'ISDB';
+export type SourcePortal = 'EGP_BANGLADESH' | 'WORLD_BANK' | 'UNGM' | 'ISDB' | 'BRAC';
 
 export const SOURCE_LABELS: Record<SourcePortal, string> = {
   EGP_BANGLADESH: 'e-GP Bangladesh',
   WORLD_BANK: 'World Bank',
   UNGM: 'UN Global Marketplace',
   ISDB: 'Islamic Development Bank',
+  BRAC: 'BRAC e-Tender',
 };
 
-export const SOURCE_OPTIONS: SourcePortal[] = ['EGP_BANGLADESH', 'WORLD_BANK', 'UNGM', 'ISDB'];
+export const SOURCE_OPTIONS: SourcePortal[] = ['EGP_BANGLADESH', 'WORLD_BANK', 'UNGM', 'ISDB', 'BRAC'];
 export type MatchGrade = 'S' | 'A' | 'B' | 'C';
 export type BidAction = 'BID' | 'HOLD' | 'SKIP';
 export type EligibilityStatus = 'ELIGIBLE' | 'INELIGIBLE' | 'NEEDS_VERIFICATION';
@@ -275,4 +276,156 @@ export interface NotificationItem {
   closingAt: string | null;
   read: boolean;
   createdAt: string;
+}
+
+// ---- accounts and roles -------------------------------------------------------
+
+export type Role = 'USER' | 'ADMIN';
+
+/** Who is signed in. A platform admin has no company (organisation is null). */
+export interface SessionUser {
+  accountId: number;
+  email: string;
+  role: Role;
+  organisation: Organisation | null;
+}
+
+// ---- pipeline (admin) ---------------------------------------------------------
+
+/** Totals over every collection run, computed in the database. */
+export interface RunSummary {
+  runsTotal: number;
+  failedTotal: number;
+  failedLast24h: number;
+  lastSuccessAt: string | null;
+  tendersScored: number;
+}
+
+export interface ScheduleJob {
+  key: string;
+  label: string;
+  description: string;
+  cron: string;
+  /** What "Back to default" restores. */
+  defaultCron: string;
+  /** The admin's on/off switch. */
+  enabled: boolean;
+  /** Sitting out its runs after repeated failures. */
+  paused: boolean;
+  nextRunAt: string | null;
+  /** When the scheduler last fired it (or, before firings were recorded, its last run). */
+  lastFiredAt: string | null;
+  lastRunAt: string | null;
+  lastStatus: RunStatus | null;
+  avgDurationMs: number | null;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+/** A schedule checked before saving: its next runs, or why it would be refused. */
+export interface CronPreview {
+  cron: string;
+  valid: boolean;
+  message: string | null;
+  nextRuns: string[];
+}
+
+export interface Schedule {
+  enabled: boolean;
+  zone: string;
+  jobs: ScheduleJob[];
+}
+
+// ---- company dashboard --------------------------------------------------------
+
+export interface TrackingChange {
+  tenderId: number;
+  title: string | null;
+  source: SourcePortal;
+  saved: boolean;
+  submitted: boolean;
+  updatedAt: string;
+}
+
+export interface Dashboard {
+  numbers: {
+    open: number; sGrade: number; aGrade: number;
+    closingSoon: number; saved: number; submitted: number;
+  };
+  bestMatches: TenderSummary[];
+  closingSoon: TenderSummary[];
+  activity: {
+    unread: number;
+    newMatches: NotificationItem[];
+    tracking: TrackingChange[];
+    scoring: ProfileStaleness;
+  };
+}
+
+// ---- admin panel --------------------------------------------------------------
+
+export interface PortalCorpus {
+  portal: SourcePortal;
+  total: number; open: number; closed: number;
+  newToday: number; newThisWeek: number;
+  aiRead: number; aiSkipped: number; aiFailed: number; aiNone: number;
+}
+
+export interface CompanyGrades {
+  organisationId: number;
+  name: string;
+  active: boolean;
+  s: number; a: number; b: number; c: number;
+}
+
+export interface AdminDashboard {
+  companies: {
+    total: number; active: number; demonstration: number;
+    newest: { id: number; name: string; slug: string; active: boolean; createdAt: string | null }[];
+  };
+  users: {
+    total: number; enabled: number; admins: number;
+    recentSignIns: { id: number; email: string; company: string | null; role: Role; lastLoginAt: string }[];
+  };
+  corpus: PortalCorpus[];
+  grades: CompanyGrades[];
+  runs: RunSummary;
+  schedule: Schedule;
+  processing: ProcessingStatus;
+}
+
+export interface AdminCompany {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  sectors: string[];
+  active: boolean;
+  demonstration: boolean;
+  createdAt: string | null;
+  accountId: number | null;
+  accountEmail: string | null;
+  lastLoginAt: string | null;
+  sOpen: number;
+  aOpen: number;
+}
+
+export interface AdminCompanyDetail {
+  company: AdminCompany;
+  profile: CapabilityProfile | null;
+  scoring: ProfileStaleness;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  role: Role;
+  enabled: boolean;
+  organisationId: number | null;
+  organisationName: string | null;
+  organisationActive: boolean;
+  createdAt: string | null;
+  lastLoginAt: string | null;
+  /** The signed-in admin's own row: its role and switch are locked. */
+  you: boolean;
 }

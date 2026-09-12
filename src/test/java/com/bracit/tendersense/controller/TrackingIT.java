@@ -1,7 +1,10 @@
 package com.bracit.tendersense.controller;
 
 import com.bracit.tendersense.entity.Organisation;
+import com.bracit.tendersense.repository.AccountRepository;
 import com.bracit.tendersense.repository.OrganisationRepository;
+import com.bracit.tendersense.support.TestAuth;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,16 +29,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>Same property set as ApiEndpointsIT, so Spring reuses that cached context instead of
  * starting (and downloading the embedding model for) a new one.
  */
-@SpringBootTest(properties = {"tendersense.source.mode=cached",
-        // Lets these tests name a company by header instead of signing in.
-        // Off everywhere else -- it is an authentication bypass.
-        "tendersense.auth.allow-header=true"})
+@SpringBootTest(properties = "tendersense.source.mode=cached")
 @AutoConfigureMockMvc
 class TrackingIT {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private OrganisationRepository organisationRepository;
+    @Autowired private AccountRepository accountRepository;
 
     private Organisation bracit;
     private Organisation padma;
@@ -87,19 +88,20 @@ class TrackingIT {
         return ids.isEmpty() ? null : ids.get(0);
     }
 
-    private String as(Organisation org) {
-        return String.valueOf(org.getId());
+    /** Signs the request in as the company's own account, with a CSRF token. */
+    private RequestPostProcessor as(Organisation org) {
+        return TestAuth.company(accountRepository, org);
     }
 
     @Test
     @DisplayName("saving twice leaves it saved, with the first save's time")
     void saveIsIdempotent() throws Exception {
-        String first = mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        String first = mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.wishlisted").value(true))
                 .andReturn().getResponse().getContentAsString();
 
-        String second = mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        String second = mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.wishlisted").value(true))
                 .andReturn().getResponse().getContentAsString();
@@ -111,13 +113,13 @@ class TrackingIT {
     @Test
     @DisplayName("DELETE clears it, and clearing twice is still fine")
     void unsave() throws Exception {
-        mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk());
-        mockMvc.perform(delete("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(delete("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.wishlisted").value(false))
                 .andExpect(jsonPath("$.wishlistedAt").doesNotExist());
-        mockMvc.perform(delete("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(delete("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.wishlisted").value(false));
     }
@@ -125,7 +127,7 @@ class TrackingIT {
     @Test
     @DisplayName("submitted and saved are independent")
     void submittedIsIndependent() throws Exception {
-        mockMvc.perform(put("/api/tenders/{id}/submission", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/submission", openTender).with(as(bracit)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.submitted").value(true))
                 .andExpect(jsonPath("$.submittedAt").exists())
@@ -135,15 +137,15 @@ class TrackingIT {
     @Test
     @DisplayName("tracking is per company: BracIT's save is invisible to Padma")
     void perCompany() throws Exception {
-        mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk());
 
         String mine = mockMvc.perform(get("/api/tenders").param("tracked", "SAVED").param("size", "100")
-                        .header("X-Org-Id", as(bracit)))
+                        .with(as(bracit)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         String theirs = mockMvc.perform(get("/api/tenders").param("tracked", "SAVED").param("size", "100")
-                        .header("X-Org-Id", as(padma)))
+                        .with(as(padma)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
@@ -160,11 +162,11 @@ class TrackingIT {
         Assumptions.assumeTrue(closed != null, "needs a scored tender that has closed");
         remember(closed);
 
-        mockMvc.perform(put("/api/tenders/{id}/submission", closed).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/submission", closed).with(as(bracit)))
                 .andExpect(status().isOk());
 
         String body = mockMvc.perform(get("/api/tenders").param("tracked", "SUBMITTED").param("size", "100")
-                        .header("X-Org-Id", as(bracit)))
+                        .with(as(bracit)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertTrue(body.contains("\"id\":" + closed + ","),
@@ -174,7 +176,7 @@ class TrackingIT {
     @Test
     @DisplayName("an unknown tender is a 404, not a tracking row pointing at nothing")
     void unknownTender() throws Exception {
-        mockMvc.perform(put("/api/tenders/{id}/wishlist", 987654321L).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/wishlist", 987654321L).with(as(bracit)))
                 .andExpect(status().isNotFound());
     }
 
@@ -196,7 +198,7 @@ class TrackingIT {
     @DisplayName("the closing-soon filter and the row's amber flag are the same set")
     void closingSoonMatchesTheUrgentFlag() throws Exception {
         String soon = mockMvc.perform(get("/api/tenders").param("closingSoon", "true").param("size", "100")
-                        .header("X-Org-Id", as(bracit)))
+                        .with(as(bracit)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertFalse(soon.contains("\"urgent\":false"),
@@ -207,9 +209,9 @@ class TrackingIT {
     @DisplayName("the Saved and Submitted cards count this company's tracking, and move with it")
     void savedAndSubmittedCounts() throws Exception {
         String before = summaryJson();
-        mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/wishlist", openTender).with(as(bracit)))
                 .andExpect(status().isOk());
-        mockMvc.perform(put("/api/tenders/{id}/submission", openTender).header("X-Org-Id", as(bracit)))
+        mockMvc.perform(put("/api/tenders/{id}/submission", openTender).with(as(bracit)))
                 .andExpect(status().isOk());
         String after = summaryJson();
 
@@ -221,14 +223,14 @@ class TrackingIT {
     }
 
     private String summaryJson() throws Exception {
-        return mockMvc.perform(get("/api/tenders/summary").header("X-Org-Id", as(bracit)))
+        return mockMvc.perform(get("/api/tenders/summary").with(as(bracit)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
     }
 
     /** The list's total for BracIT, with optional name/value filter pairs. */
     private long listCount(String... filter) throws Exception {
-        var request = get("/api/tenders").param("size", "1").header("X-Org-Id", as(bracit));
+        var request = get("/api/tenders").param("size", "1").with(as(bracit));
         for (int i = 0; i + 1 < filter.length; i += 2) {
             request = request.param(filter[i], filter[i + 1]);
         }
@@ -246,7 +248,7 @@ class TrackingIT {
     @Test
     @DisplayName("every shortlist row carries a link to the tender's own portal page")
     void rowsCarrySourceUrl() throws Exception {
-        mockMvc.perform(get("/api/tenders").param("size", "5").header("X-Org-Id", as(bracit)))
+        mockMvc.perform(get("/api/tenders").param("size", "5").with(as(bracit)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].sourceUrl").value(org.hamcrest.Matchers.startsWith("https://")));
     }

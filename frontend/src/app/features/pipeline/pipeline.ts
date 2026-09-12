@@ -1,15 +1,24 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-import { PipelineRun, ProcessingStatus } from '../../core/models/tender.models';
+import { PipelineRun, ProcessingStatus, RunSummary, Schedule } from '../../core/models/tender.models';
+import { AiQueueCard } from '../../shared/ai-queue-card';
+import { Pager } from '../../shared/pager';
+import { apiError, duration } from '../../shared/format';
 
-/** Collection triggers, schedule and run telemetry. */
+/**
+ * Collection triggers, schedule and run telemetry. Admin only.
+ *
+ * The run table is read a page at a time, so the cards above it come from the server's
+ * totals rather than from the rows on screen.
+ */
 @Component({
   selector: 'ts-pipeline',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TitleCasePipe],
+  imports: [DatePipe, DecimalPipe, TitleCasePipe, RouterLink, AiQueueCard, Pager],
   templateUrl: './pipeline.html',
   styleUrl: './pipeline.css',
 })
@@ -17,34 +26,46 @@ export class Pipeline {
   private readonly api = inject(ApiService);
 
   readonly runs = signal<PipelineRun[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(0);
+  /** One of the pager's sizes (10 / 25 / 50 / 100), or its dropdown would show a different one. */
+  readonly size = signal(25);
+  readonly summary = signal<RunSummary | null>(null);
+  readonly schedule = signal<Schedule | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly running = signal<'discovery' | 'reconcile' | null>(null);
   /** The staging queue; refreshed every 20 s while the page is open. */
   readonly queue = signal<ProcessingStatus | null>(null);
 
-  /** Mirrors tendersense.schedule.* — all Asia/Dhaka. */
-  readonly schedule = [
-    { job: 'egpDiscovery', cadence: 'Every 30 min, 08:00–20:30', cost: '1–3 pages' },
-    { job: 'egpDetailDrain', cadence: 'Continuous, rate limited', cost: '1 req/sec' },
-    { job: 'egpReconcile', cadence: 'Nightly 02:00 — catches corrigenda', cost: '~1 hour' },
-    { job: 'worldBankSync', cadence: 'Every 6 hours', cost: 'seconds' },
-    { job: 'urgencyRefresh', cadence: 'Daily 05:30', cost: 'seconds' },
-    { job: 'morningDigest', cadence: 'Daily 08:00 — the shortlist lands', cost: 'seconds' },
-  ];
-
-  readonly lastSuccess = computed(() => this.runs().find((r) => r.status === 'SUCCESS') ?? null);
-
-  readonly failures = computed(() => this.runs().filter((r) => r.status === 'FAILED').length);
-
-  readonly totalScored = computed(() =>
-    this.runs().filter((r) => r.status === 'SUCCESS').reduce((n, r) => n + (r.tendersScored ?? 0), 0),
-  );
+  readonly duration = duration;
 
   constructor() {
     this.load();
+    this.loadOverview();
     this.loadQueue();
     interval(20_000).pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.loadQueue());
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.api.getRuns(this.page(), this.size()).subscribe({
+      next: (res) => {
+        this.runs.set(res.content);
+        this.total.set(res.totalElements);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set(apiError(err, 'Could not load pipeline runs.'));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  /** The totals and the schedule: both change only when a run finishes. */
+  loadOverview(): void {
+    this.api.getRunSummary().subscribe({ next: (s) => this.summary.set(s), error: () => this.summary.set(null) });
+    this.api.getSchedule().subscribe({ next: (s) => this.schedule.set(s), error: () => this.schedule.set(null) });
   }
 
   loadQueue(): void {
@@ -54,25 +75,15 @@ export class Pipeline {
     });
   }
 
-  eta(minutes: number | null): string {
-    if (minutes === null) return '—';
-    if (minutes < 60) return `${minutes} min`;
-    const h = Math.floor(minutes / 60);
-    return h < 48 ? `${h} h ${minutes % 60} min` : `${Math.round(h / 24 * 10) / 10} days`;
+  goTo(p: number): void {
+    this.page.set(p);
+    this.load();
   }
 
-  load(): void {
-    this.loading.set(true);
-    this.api.getRuns().subscribe({
-      next: (r) => {
-        this.runs.set(r);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.error.set(this.describe(err));
-        this.loading.set(false);
-      },
-    });
+  setSize(size: number): void {
+    this.size.set(size);
+    this.page.set(0);
+    this.load();
   }
 
   run(mode: 'discovery' | 'reconcile'): void {
@@ -80,27 +91,14 @@ export class Pipeline {
     this.api.runPipeline(mode === 'reconcile').subscribe({
       next: () => {
         this.running.set(null);
+        this.page.set(0);
         this.load();
+        this.loadOverview();
       },
       error: (err) => {
-        this.error.set(this.describe(err));
+        this.error.set(apiError(err, 'The run could not be started.'));
         this.running.set(null);
       },
     });
-  }
-
-  duration(ms: number | null): string {
-    if (ms === null) return '—';
-    if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    const m = Math.floor(ms / 60000);
-    return `${m}m ${Math.round((ms % 60000) / 1000)}s`;
-  }
-
-  private describe(err: unknown): string {
-    const e = err as { error?: { detail?: string }; status?: number; message?: string };
-    if (e?.error?.detail) return e.error.detail;
-    if (e?.status === 0) return 'Cannot reach the API. Is the backend running on :8080?';
-    return e?.message ?? 'Could not load pipeline runs.';
   }
 }

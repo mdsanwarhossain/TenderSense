@@ -86,6 +86,10 @@ public final class TenderStandardiser {
                 t.setBuyer("Islamic Development Bank (IsDB)");
                 t.setFundedBy("Islamic Development Bank (IsDB)");
             }
+            case BRAC -> {
+                t.setBuyer("BRAC");
+                t.setFundedBy("BRAC");
+            }
         }
         if (t.getLocation() == null) {
             t.setLocation(blankToNull(t.getCountry()));

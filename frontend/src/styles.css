@@ -55,6 +55,14 @@
   --r-sm: 8px;
   --r-pill: 999px;
 
+  /* Motion: one set of speeds and curves, so everything that moves feels like one app.
+     Fast for a button answering a press, slow enough to follow for anything that resizes. */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --t-fast: 120ms;
+  --t: 200ms;
+  --t-slow: 280ms;
+
   --rail-w: 250px;
   --font: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -88,6 +96,29 @@ button { font: inherit; color: inherit; }
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  /* Also covers the page-to-page transition, which is not a CSS animation on an element. */
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* ---- the shared movements ----
+   Used by name across the app; anything entering rises or fades, nothing slides far. */
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-6px) scale(0.985); } }
+@keyframes pop-out { to { opacity: 0; transform: translateY(-6px) scale(0.985); } }
+@keyframes pop-in-up { from { opacity: 0; transform: translateY(6px) scale(0.985); } }
+@keyframes pop-out-up { to { opacity: 0; transform: translateY(6px) scale(0.985); } }
+/* For a block that has to make room for itself as it arrives. */
+@keyframes open-down { from { grid-template-rows: 0fr; opacity: 0; } to { grid-template-rows: 1fr; opacity: 1; } }
+@keyframes close-up { from { grid-template-rows: 1fr; opacity: 1; } to { grid-template-rows: 0fr; opacity: 0; } }
+
+/* Page to page: the content changes, the rail and top bar stay put. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(page) { animation: fade-out 90ms var(--ease-in) both; }
+  ::view-transition-new(page) { animation: page-in var(--t-slow) var(--ease-out) both; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
 
 .mono {
@@ -127,6 +158,7 @@ button { font: inherit; color: inherit; }
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
   overflow: hidden;
+  transition: border-color var(--t) ease, box-shadow var(--t) ease;
 }
 .card-head {
   display: flex;
@@ -247,6 +279,54 @@ button { font: inherit; color: inherit; }
 }
 .select b { color: var(--ink); font-weight: 700; }
 
+.input {
+  height: 40px;
+  min-width: 0;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
+.input::placeholder { color: var(--ink-4); }
+
+/* On / off switch for a company or an account. Green when on; the word beside it says it too. */
+.switch {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.switch .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 20, 60, 0.3);
+  transition: transform 0.15s ease;
+}
+.switch.on { background: var(--ok); border-color: var(--ok); }
+.switch.on .knob { transform: translateX(18px); }
+.switch:disabled { opacity: 0.45; cursor: not-allowed; }
+.switch:active:not(:disabled) .knob { width: 20px; }
+.switch.on:active:not(:disabled) .knob { transform: translateX(14px); }
+.switch .knob { transition: transform var(--t) var(--ease-out), width var(--t-fast) ease; }
+.switch-row { display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 700; color: var(--ink-3); }
+
 /* ---- pills: state as shape and colour, never colour alone ---- */
 .pill {
   display: inline-flex;
@@ -259,6 +339,7 @@ button { font: inherit; color: inherit; }
   font-weight: 700;
   white-space: nowrap;
 }
+.pill { transition: background var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease; }
 .pill.ok { background: var(--ok-wash); color: var(--ok); }
 .pill.bad { background: var(--bad-wash); color: var(--bad); }
 .pill.warn { background: var(--warn-wash); color: var(--warn); }
@@ -342,8 +423,17 @@ button { font: inherit; color: inherit; }
   background: var(--surface);
   color: inherit;
   text-decoration: none;
-  transition: background 0.12s ease;
+  transition: background var(--t-fast) ease, border-color var(--t-fast) ease;
+  /* Rows arrive rather than appear; the first few stagger, the rest follow at once so a
+     hundred-row page never feels like it is being dealt out. */
+  animation: fade-in 240ms var(--ease-out) both;
 }
+.trow:nth-child(2) { animation-delay: 25ms; }
+.trow:nth-child(3) { animation-delay: 50ms; }
+.trow:nth-child(4) { animation-delay: 75ms; }
+.trow:nth-child(5) { animation-delay: 100ms; }
+.trow:nth-child(6) { animation-delay: 125ms; }
+.trow:nth-child(n + 7) { animation-delay: 150ms; }
 .trow:last-of-type { border-bottom: 0; }
 a.trow:hover { background: var(--surface-3); text-decoration: none; color: inherit; }
 .trow.urgent {
@@ -389,6 +479,7 @@ a.trow.urgent:hover { background: color-mix(in srgb, var(--warn-wash) 70%, trans
 .pager .buttons { display: flex; gap: 8px; }
 
 /* ---- states ---- */
+.state, .empty { animation: fade-in var(--t) var(--ease-out) both; }
 .state {
   display: flex;
   align-items: center;
@@ -419,6 +510,8 @@ a.trow.urgent:hover { background: color-mix(in srgb, var(--warn-wash) 70%, trans
   border: 1px solid var(--warn-edge);
   color: var(--warn);
   line-height: 1.6;
+  /* A message that appears while you are reading has to announce itself; it rises in. */
+  animation: rise-in var(--t) var(--ease-out) both;
 }
 .banner .icon { flex: none; margin-top: 2px; }
 .banner-body { display: flex; flex-direction: column; gap: 2px; }

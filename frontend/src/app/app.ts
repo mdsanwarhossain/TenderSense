@@ -18,10 +18,14 @@ export class App {
   private readonly router = inject(Router);
 
   /**
-   * The signed-in company, or null on /login and /signup. The shell — rail, top bar —
+   * The signed-in account, or null on /login and /signup. The shell — rail, top bar —
    * renders only when this is set, so the auth pages get the full window.
    */
+  readonly user = this.auth.user;
+  /** Company screens show only for an account with a company; admin ones only for staff. */
   readonly company = this.auth.company;
+  readonly isAdmin = this.auth.isAdmin;
+  readonly home = computed(() => this.auth.home(this.user()));
 
   /** Tracks the active URL so the rail and the top bar agree on where we are. */
   private readonly url = toSignal(
@@ -40,6 +44,24 @@ export class App {
   readonly section = computed<{ title: string; sub: string }>(() => {
     const url = this.url();
     const org = this.company()?.name;
+    if (url.startsWith('/admin/companies')) {
+      return { title: 'Companies', sub: 'Every company on TenderSense' };
+    }
+    if (url.startsWith('/admin/users')) {
+      return { title: 'Users', sub: 'Accounts and who can do what' };
+    }
+    if (url.startsWith('/admin/scheduler')) {
+      return { title: 'Scheduler', sub: 'When each collection job runs · Asia/Dhaka' };
+    }
+    if (url.startsWith('/admin/pipeline')) {
+      return { title: 'Collection pipeline', sub: 'Asia/Dhaka · one job at a time' };
+    }
+    if (url.startsWith('/admin')) {
+      return { title: 'Admin dashboard', sub: `${this.todayLabel} · the whole platform at a glance` };
+    }
+    if (url.startsWith('/dashboard')) {
+      return { title: 'Dashboard', sub: `${this.todayLabel}${org ? ' · ' + org : ''}` };
+    }
     if (url.startsWith('/tenders/')) {
       return { title: 'Tender detail', sub: 'Opened from the tender list' };
     }
@@ -49,10 +71,7 @@ export class App {
     if (url.startsWith('/profile')) {
       return { title: 'Profile', sub: org ?? 'What every tender is compared against' };
     }
-    if (url.startsWith('/pipeline')) {
-      return { title: 'Collection pipeline', sub: 'Asia/Dhaka · one job at a time' };
-    }
-    return { title: 'Tender list', sub: `${this.todayLabel} · e-GP BD · World Bank · UNGM · IsDB` };
+    return { title: 'Tender list', sub: `${this.todayLabel} · e-GP BD · World Bank · UNGM · IsDB · BRAC` };
   });
 
   private readonly todayLabel = new Intl.DateTimeFormat('en-GB', {

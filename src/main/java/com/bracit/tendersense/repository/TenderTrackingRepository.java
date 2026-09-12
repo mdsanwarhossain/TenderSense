@@ -1,6 +1,7 @@
 package com.bracit.tendersense.repository;
 
 import com.bracit.tendersense.entity.TenderTracking;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +24,13 @@ public interface TenderTrackingRepository extends JpaRepository<TenderTracking, 
            """)
     List<Object[]> findStates(@Param("organisationId") Long organisationId,
                               @Param("tenderIds") Collection<Long> tenderIds);
+
+    /** This company's latest save / submit changes, tender loaded, newest first. */
+    @Query("""
+           select t from TenderTracking t join fetch t.tender
+           where t.organisation.id = :organisationId
+             and (t.wishlistedAt is not null or t.submittedAt is not null)
+           order by t.updatedAt desc
+           """)
+    List<TenderTracking> findRecent(@Param("organisationId") Long organisationId, Pageable pageable);
 }

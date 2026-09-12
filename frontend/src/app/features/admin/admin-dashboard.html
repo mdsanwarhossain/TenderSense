@@ -1,0 +1,219 @@
+<div class="page-intro">
+  <div>
+    <h1>TenderSense at a glance</h1>
+    <p class="lede">Companies and their accounts, the tenders collected for them, and the jobs that keep it fresh.</p>
+  </div>
+  <div class="intro-actions">
+    <button class="btn btn-sm" (click)="load()" [disabled]="loading()">
+      @if (loading()) { <span class="spinner"></span> } Refresh
+    </button>
+  </div>
+</div>
+
+@if (error(); as message) {
+  <div class="banner error">{{ message }}</div>
+} @else if (!data()) {
+  <div class="state"><span class="spinner"></span> Loading…</div>
+} @else {
+  @let d = data()!;
+  @let ct = corpusTotal();
+
+  <!-- 1. Companies and users -->
+  <nav class="stat-strip four" aria-label="Headline numbers">
+    <a class="stat" routerLink="/admin/companies">
+      <span class="stat-icon i-accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6l7-3v18" /><path d="M11 9h9v12" /></svg>
+      </span>
+      <span class="stat-body">
+        <span class="stat-label">Companies active</span>
+        <span class="stat-value">{{ d.companies.active }}<small> / {{ d.companies.total }}</small></span>
+        <span class="stat-foot">{{ d.companies.demonstration }} demo</span>
+      </span>
+    </a>
+    <a class="stat" routerLink="/admin/users">
+      <span class="stat-icon i-accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /></svg>
+      </span>
+      <span class="stat-body">
+        <span class="stat-label">Accounts on</span>
+        <span class="stat-value">{{ d.users.enabled }}<small> / {{ d.users.total }}</small></span>
+        <span class="stat-foot">{{ d.users.admins }} admin{{ d.users.admins === 1 ? '' : 's' }}</span>
+      </span>
+    </a>
+    <div class="stat">
+      <span class="stat-icon i-ok">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h12" /></svg>
+      </span>
+      <span class="stat-body">
+        <span class="stat-label">Open tenders</span>
+        <span class="stat-value">{{ ct.open | number }}</span>
+        <span class="stat-foot">{{ ct.newToday | number }} new today · {{ ct.total | number }} stored</span>
+      </span>
+    </div>
+    <a class="stat" routerLink="/admin/pipeline">
+      <span class="stat-icon" [class.i-warn]="d.runs.failedLast24h > 0" [class.i-ok]="d.runs.failedLast24h === 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z" /><path d="M12 10v4" /><path d="M12 17.4v.01" /></svg>
+      </span>
+      <span class="stat-body">
+        <span class="stat-label">Failed runs, 24 h</span>
+        <span class="stat-value" [class.warn]="d.runs.failedLast24h > 0">{{ d.runs.failedLast24h }}</span>
+        <span class="stat-foot">last success {{ d.runs.lastSuccessAt ? timeAgo(d.runs.lastSuccessAt) : 'never' }}</span>
+      </span>
+    </a>
+  </nav>
+
+  <div class="split even">
+    <section class="card">
+      <div class="card-head">
+        <h2>Newest companies</h2>
+        <a class="head-link" routerLink="/admin/companies">All companies →</a>
+      </div>
+      @for (c of d.companies.newest; track c.id) {
+        <div class="line">
+          <span class="body"><span class="t">{{ c.name }}</span><span class="e mono">{{ c.slug }}</span></span>
+          @if (!c.active) { <span class="pill warn">off</span> }
+          <span class="hint">{{ c.createdAt ? (c.createdAt | date: 'd MMM yyyy') : '—' }}</span>
+        </div>
+      } @empty {
+        <p class="empty">No companies yet.</p>
+      }
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <h2>Recent sign-ins</h2>
+        <a class="head-link" routerLink="/admin/users">All users →</a>
+      </div>
+      @for (u of d.users.recentSignIns; track u.id) {
+        <div class="line">
+          <span class="body">
+            <span class="t">{{ u.email }}</span>
+            <span class="e">{{ u.company ?? 'TenderSense staff' }}</span>
+          </span>
+          @if (u.role === 'ADMIN') { <span class="pill accent">admin</span> }
+          <span class="hint">{{ timeAgo(u.lastLoginAt) }}</span>
+        </div>
+      } @empty {
+        <p class="empty">Nobody has signed in yet.</p>
+      }
+    </section>
+  </div>
+
+  <!-- 2. The tender corpus, per portal -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Tender corpus</h2>
+        <span class="sub">Everything collected, per portal. "Read by AI" is the local model's standard reading of an open tender.</span>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <div class="table corpus">
+        <div class="thead cols-corpus">
+          <span>Portal</span><span>Stored</span><span>Open</span><span>Closed</span><span>New today</span>
+          <span>New, 7 days</span><span>Read by AI</span><span>Skipped</span><span>Not read</span>
+        </div>
+        @for (p of d.corpus; track p.portal) {
+          <div class="trow compact cols-corpus">
+            <span class="strong">{{ sourceLabel(p.portal) }}</span>
+            <span class="mono">{{ p.total | number }}</span>
+            <span class="mono">{{ p.open | number }}</span>
+            <span class="mono muted">{{ p.closed | number }}</span>
+            <span class="mono">{{ p.newToday | number }}</span>
+            <span class="mono">{{ p.newThisWeek | number }}</span>
+            <span class="mono ok">{{ p.aiRead | number }}</span>
+            <span class="mono muted">{{ p.aiSkipped | number }}</span>
+            <span class="mono" [class.warn]="p.aiNone > 0">{{ p.aiNone | number }}</span>
+          </div>
+        }
+        <div class="trow compact cols-corpus total-row">
+          <span class="strong">All portals</span>
+          <span class="mono">{{ ct.total | number }}</span>
+          <span class="mono">{{ ct.open | number }}</span>
+          <span class="mono">{{ ct.closed | number }}</span>
+          <span class="mono">{{ ct.newToday | number }}</span>
+          <span class="mono">{{ ct.newThisWeek | number }}</span>
+          <span class="mono">{{ ct.aiRead | number }}</span>
+          <span class="mono">{{ ct.aiSkipped | number }}</span>
+          <span class="mono">{{ ct.aiNone | number }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. How each company's open tenders grade out -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Matches per company</h2>
+        <span class="sub">Open tenders by grade. A company with no S or A matches usually has a thin profile.</span>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols-grades">
+          <span>Company</span>
+          @for (g of grades; track g) { <span>{{ g }} grade</span> }
+          <span>Status</span>
+        </div>
+        @for (c of d.grades; track c.organisationId) {
+          <div class="trow compact cols-grades">
+            <span class="strong">{{ c.name }}</span>
+            @for (g of grades; track g) {
+              <span><span class="gcount" [style.background]="tint[g].bg" [style.color]="tint[g].fg">{{ count(c, g) | number }}</span></span>
+            }
+            <span>
+              @if (c.active) { <span class="pill ok">active</span> } @else { <span class="pill warn">off</span> }
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Collection health -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Collection jobs</h2>
+        <span class="sub">
+          {{ d.schedule.enabled ? 'Scheduled on ' + d.schedule.zone + '.' : 'The schedule is paused on this server.' }}
+          {{ d.runs.runsTotal | number }} runs recorded, {{ d.runs.failedTotal | number }} failed.
+        </span>
+      </div>
+      <a class="head-link" routerLink="/admin/scheduler">Manage schedules →</a>
+    </div>
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols-jobs">
+          <span>Job</span><span>Last run</span><span>Result</span><span>Usually takes</span><span>Next run</span>
+        </div>
+        @for (j of d.schedule.jobs; track j.key) {
+          <div class="trow compact cols-jobs">
+            <span class="body"><span class="strong">{{ j.label }}</span><span class="e">{{ j.description }}</span></span>
+            <span class="muted">{{ j.lastRunAt ? timeAgo(j.lastRunAt) : '—' }}</span>
+            <span>
+              @if (j.lastStatus; as st) {
+                <span class="status" [class]="st.toLowerCase()"><span class="dot"></span>{{ st | titlecase }}</span>
+              } @else {
+                <span class="hint">{{ j.key === 'morningDigest' ? 'no run log' : 'not run yet' }}</span>
+              }
+            </span>
+            <span class="mono">{{ duration(j.avgDurationMs) }}</span>
+            @if (!j.enabled) {
+              <span><span class="pill warn">off</span></span>
+            } @else {
+              <span class="mono muted">{{ j.nextRunAt ? (j.nextRunAt | date: 'EEE d MMM, HH:mm') : '—' }}</span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. The local model's queue -->
+  <ts-ai-queue-card [queue]="d.processing" />
+}

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminGuard, companyGuard, guestGuard, homeGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -15,37 +15,76 @@ export const routes: Routes = [
     title: 'Create an account · TenderSense',
   },
 
-  // Everything below needs a signed-in company.
-  { path: '', pathMatch: 'full', redirectTo: 'shortlist' },
+  // `/` goes to the account's own home: the company dashboard, or the admin panel.
+  { path: '', pathMatch: 'full', canActivate: [homeGuard], children: [] },
+
+  // ---- company screens ----
+  {
+    path: 'dashboard',
+    canActivate: [companyGuard],
+    loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+    title: 'Dashboard · TenderSense',
+  },
   {
     path: 'shortlist',
-    canActivate: [authGuard],
+    canActivate: [companyGuard],
     loadComponent: () => import('./features/shortlist/shortlist').then((m) => m.Shortlist),
     title: 'Tender list · TenderSense',
   },
   {
     path: 'tenders/:id',
-    canActivate: [authGuard],
+    canActivate: [companyGuard],
     loadComponent: () => import('./features/tender-detail/tender-detail').then((m) => m.TenderDetail),
     title: 'Tender · TenderSense',
   },
   {
     path: 'benchmark',
-    canActivate: [authGuard],
+    canActivate: [companyGuard],
     loadComponent: () => import('./features/benchmark/benchmark').then((m) => m.Benchmark),
     title: 'Benchmark · TenderSense',
   },
   {
     path: 'profile',
-    canActivate: [authGuard],
+    canActivate: [companyGuard],
     loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
     title: 'Profile · TenderSense',
   },
+
+  // ---- admin panel: TenderSense staff ----
   {
-    path: 'pipeline',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/pipeline/pipeline').then((m) => m.Pipeline),
-    title: 'Pipeline · TenderSense',
+    path: 'admin',
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./features/admin/admin-dashboard').then((m) => m.AdminDashboardPage),
+        title: 'Admin · TenderSense',
+      },
+      {
+        path: 'companies',
+        loadComponent: () => import('./features/admin/companies').then((m) => m.AdminCompanies),
+        title: 'Companies · TenderSense',
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./features/admin/users').then((m) => m.AdminUsers),
+        title: 'Users · TenderSense',
+      },
+      {
+        path: 'pipeline',
+        loadComponent: () => import('./features/pipeline/pipeline').then((m) => m.Pipeline),
+        title: 'Pipeline · TenderSense',
+      },
+      {
+        path: 'scheduler',
+        loadComponent: () => import('./features/admin/scheduler').then((m) => m.AdminScheduler),
+        title: 'Scheduler · TenderSense',
+      },
+    ],
   },
-  { path: '**', redirectTo: 'shortlist' },
+  // The old address, for bookmarks.
+  { path: 'pipeline', redirectTo: 'admin/pipeline' },
+
+  { path: '**', canActivate: [homeGuard], children: [] },
 ];

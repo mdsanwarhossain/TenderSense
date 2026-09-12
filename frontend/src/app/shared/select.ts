@@ -47,7 +47,8 @@ let nextId = 0;
     </button>
 
     @if (open()) {
-      <ul class="menu" [class.up]="up()" role="listbox" [id]="id + '-list'" [attr.aria-label]="label()">
+      <ul class="menu" [class.up]="up()" role="listbox" [id]="id + '-list'" [attr.aria-label]="label()"
+          animate.enter="opening" animate.leave="closing">
         @for (o of options(); track o.value; let i = $index) {
           <li role="option" [id]="id + '-opt-' + i" [attr.aria-selected]="o.value === value()"
               [class.active]="i === active()" [class.selected]="o.value === value()"
@@ -106,12 +107,15 @@ let nextId = 0;
       margin: 0; padding: 6px; list-style: none;
       background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
       box-shadow: var(--shadow-pop);
-      animation: pop 0.14s ease-out;
+      transform-origin: top center;
     }
-    @keyframes pop { from { opacity: 0; transform: translateY(-4px); } }
+    /* The list opens and shuts; Angular keeps it in the page until the closing run ends. */
+    .menu.opening { animation: pop-in var(--t-fast) var(--ease-out) both; }
+    .menu.closing { animation: pop-out var(--t-fast) var(--ease-in) both; }
     /* Opens upwards: for a dropdown at the bottom of a card that clips its overflow. */
-    .menu.up { top: auto; bottom: calc(100% + 8px); animation-name: pop-up; }
-    @keyframes pop-up { from { opacity: 0; transform: translateY(4px); } }
+    .menu.up { top: auto; bottom: calc(100% + 8px); transform-origin: bottom center; }
+    .menu.up.opening { animation-name: pop-in-up; }
+    .menu.up.closing { animation-name: pop-out-up; }
     li {
       display: flex; align-items: center; gap: 10px;
       padding: 8px 10px; border-radius: var(--r-sm);
@@ -133,8 +137,10 @@ let nextId = 0;
     .cur .tile { width: 22px; height: 20px; font-size: 11px; }
     .blank { width: 24px; flex: none; }
 
+    li { transition: background var(--t-fast) ease; }
+
     @media (prefers-reduced-motion: reduce) {
-      .menu { animation: none; }
+      .menu.opening, .menu.closing { animation: none; }
       .chev, .trigger { transition: none; }
     }
   `],

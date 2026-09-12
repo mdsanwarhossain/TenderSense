@@ -1,0 +1,237 @@
+@if (data() && !data()!.enabled) {
+  <div class="banner">
+    <div class="banner-body">
+      <span class="banner-title">Scheduling is off on this server</span>
+      <span>Nothing runs on a timer here (tendersense.schedule.enabled=false). You can still change the
+        settings below; they apply wherever scheduling is on.</span>
+    </div>
+  </div>
+}
+@if (error(); as message) {
+  <div class="banner error" role="alert">{{ message }}</div>
+}
+@if (notice(); as message) {
+  <div class="banner ok-banner" role="status">{{ message }}</div>
+}
+
+<section class="card">
+  @if (!data()) {
+    <div class="state"><span class="spinner"></span> Loading the schedule…</div>
+  } @else {
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols">
+          <span>Job</span><span>Schedule</span><span>Last fire</span><span>Next fire</span>
+          <span>Last result</span><span>Active</span><span></span>
+        </div>
+        @for (j of data()!.jobs; track j.key) {
+          <div class="trow cols" [class.off]="!j.enabled">
+            <span class="body">
+              <span class="t">
+                {{ j.label }}
+                @if (j.paused) {
+                  <span class="pill warn mini" title="It failed several times in a row. Rescheduling it lets it try again.">paused after failures</span>
+                }
+              </span>
+              <span class="e">{{ j.description }}</span>
+            </span>
+
+            <span class="cell">
+              <span class="v">{{ describe(j.cron) }}</span>
+              <span class="mono cron">{{ j.cron }}</span>
+            </span>
+
+            <span class="cell">
+              @if (j.lastFiredAt) {
+                <span class="v">{{ j.lastFiredAt | date: 'd MMM, HH:mm' : '+0600' }}</span>
+                <span class="hint">{{ timeAgo(j.lastFiredAt) }}</span>
+              } @else {
+                <span class="v muted">—</span>
+                <span class="hint">not fired yet</span>
+              }
+            </span>
+
+            <span class="cell">
+              @if (!j.enabled) {
+                <span class="v muted">Off</span>
+                <span class="hint">switched off</span>
+              } @else if (j.nextRunAt) {
+                <span class="v">{{ j.nextRunAt | date: 'EEE d MMM, HH:mm' : '+0600' }}</span>
+                <span class="hint">{{ timeUntil(j.nextRunAt) }}</span>
+              } @else {
+                <span class="v muted">—</span>
+                <span class="hint">not running on this server</span>
+              }
+            </span>
+
+            <span class="cell">
+              @if (j.lastStatus; as st) {
+                <span class="status" [class]="st.toLowerCase()"><span class="dot"></span>{{ st | titlecase }}</span>
+              } @else {
+                <span class="v muted">—</span>
+              }
+              <span class="hint">{{ j.avgDurationMs !== null ? 'usually ' + duration(j.avgDurationMs) : (j.key === 'morningDigest' ? 'keeps no run log' : '') }}</span>
+            </span>
+
+            <span class="switch-row">
+              <button type="button" role="switch" class="switch" [class.on]="j.enabled" [attr.aria-checked]="j.enabled"
+                      [attr.aria-label]="(j.enabled ? 'Switch off ' : 'Switch on ') + j.label"
+                      [disabled]="busy() === j.key" (click)="toggle(j)"><span class="knob"></span></button>
+              {{ j.enabled ? 'On' : 'Off' }}
+            </span>
+
+            <span class="actions">
+              <button type="button" class="btn btn-sm" (click)="open(j)">Reschedule</button>
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<!-- Reschedule: the native dialog gives the backdrop, Esc to close and focus handling.
+     Its height follows the form as the type changes (scheduler.ts watches the content). -->
+<dialog #dialog class="modal" aria-labelledby="reschedule-title" (close)="closed()" (click)="backdrop($event)">
+  @if (job(); as j) {
+    <div class="modal-head">
+      <div>
+        <h2 id="reschedule-title">Reschedule {{ j.label }}</h2>
+        <span class="sub">{{ j.description }}</span>
+      </div>
+      <button type="button" class="x" aria-label="Close" (click)="close()">×</button>
+    </div>
+
+    <div class="modal-body" #modalBody>
+      <div class="body-inner" #modalBodyInner>
+        @if (unreadable()) {
+          <div class="note">The current schedule <span class="mono">{{ j.cron }}</span> cannot be shown in this form.
+            Saving replaces it.</div>
+        }
+
+        <div class="field">
+          <span class="label">Schedule type</span>
+          <div class="seg" role="radiogroup" aria-label="Schedule type">
+            @for (t of types; track t.value) {
+              <button type="button" role="radio" [class.on]="form().type === t.value" [attr.aria-checked]="form().type === t.value"
+                      (click)="patch({ type: t.value })">{{ t.label }}</button>
+            }
+          </div>
+        </div>
+
+        @switch (form().type) {
+          @case ('HOURLY') {
+            <div class="row">
+              <label class="field">
+                <span class="label">Repeat every</span>
+                <select class="input" (change)="patch({ every: num($event) })">
+                  @for (o of everyOptions; track o.value) {
+                    <option [value]="o.value" [selected]="o.value === form().every">{{ o.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="field">
+                <span class="label">{{ form().every === 30 ? 'At minutes' : 'At minute' }}</span>
+                <select class="input" (change)="patch({ minute: num($event) })">
+                  @for (m of minutes(); track m) {
+                    <option [value]="m" [selected]="m === form().minute">
+                      :{{ pad(m) }}{{ form().every === 30 ? ' and :' + pad(m + 30) : '' }}
+                    </option>
+                  }
+                </select>
+              </label>
+            </div>
+            <div class="field">
+              <span class="label">Hours</span>
+              <div class="row">
+                <div class="seg" role="radiogroup" aria-label="Hours">
+                  <button type="button" role="radio" [class.on]="form().allDay" [attr.aria-checked]="form().allDay"
+                          (click)="patch({ allDay: true })">All day</button>
+                  <button type="button" role="radio" [class.on]="!form().allDay" [attr.aria-checked]="!form().allDay"
+                          (click)="patch({ allDay: false })">Only between</button>
+                </div>
+                @if (!form().allDay) {
+                  <select class="input" aria-label="From" (change)="patch({ fromHour: num($event) })">
+                    @for (h of hours; track h) {
+                      <option [value]="h" [selected]="h === form().fromHour">{{ pad(h) }}:00</option>
+                    }
+                  </select>
+                  <span class="and">and</span>
+                  <select class="input" aria-label="To" (change)="patch({ toHour: num($event) })">
+                    @for (h of hours; track h) {
+                      <option [value]="h" [selected]="h === form().toHour">{{ pad(h) }}:59</option>
+                    }
+                  </select>
+                }
+              </div>
+            </div>
+          }
+          @case ('DAILY') {
+            <label class="field">
+              <span class="label">Time</span>
+              <input class="input time" type="time" [value]="form().time" (input)="patch({ time: text($event) })" />
+            </label>
+          }
+          @case ('WEEKLY') {
+            <div class="field">
+              <span class="label">On</span>
+              <div class="days">
+                @for (d of days; track d.value) {
+                  <button type="button" class="chip" [class.on]="form().days.includes(d.value)"
+                          [attr.aria-pressed]="form().days.includes(d.value)" [attr.aria-label]="d.long"
+                          (click)="toggleDay(d.value)">{{ d.label }}</button>
+                }
+              </div>
+            </div>
+            <label class="field">
+              <span class="label">Time</span>
+              <input class="input time" type="time" [value]="form().time" (input)="patch({ time: text($event) })" />
+            </label>
+          }
+          @case ('MONTHLY') {
+            <div class="row">
+              <label class="field">
+                <span class="label">Day of the month</span>
+                <select class="input" (change)="patch({ dayOfMonth: text($event) })">
+                  @for (d of monthDays; track d.value) {
+                    <option [value]="d.value" [selected]="d.value === form().dayOfMonth">{{ d.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="field">
+                <span class="label">Time</span>
+                <input class="input time" type="time" [value]="form().time" (input)="patch({ time: text($event) })" />
+              </label>
+            </div>
+          }
+        }
+
+        <div class="summary" aria-live="polite">
+          @if (problem(); as p) {
+            <div class="refused">{{ p }}</div>
+          } @else {
+            <div class="sum-line"><span class="label">Runs</span><b>{{ describe(cron()!) }}</b><span class="hint">Asia/Dhaka time</span></div>
+            <div class="sum-line"><span class="label">Standard form</span><code class="mono cron">{{ cron() }}</code></div>
+            @if (preview(); as pv) {
+              @if (!pv.valid) {
+                <div class="refused">{{ pv.message }}</div>
+              }
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      @if (j.cron !== j.defaultCron || !j.enabled) {
+        <button type="button" class="btn btn-sm" (click)="reset(j)" [disabled]="busy() === j.key"
+                [title]="'Default: ' + describe(j.defaultCron)">Back to default</button>
+      }
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-sm" (click)="close()">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" (click)="save(j)" [disabled]="busy() === j.key || !canSave()">
+        Save schedule
+      </button>
+    </div>
+  }
+</dialog>

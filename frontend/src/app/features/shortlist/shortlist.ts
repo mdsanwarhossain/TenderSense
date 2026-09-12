@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GradeBadge } from '../../shared/grade-badge';
@@ -7,6 +7,7 @@ import { ScoreBar } from '../../shared/score-bar';
 import { Deadline } from '../../shared/deadline';
 import { TenderActions } from '../../shared/tender-actions';
 import { Select, SelectOption } from '../../shared/select';
+import { Pager } from '../../shared/pager';
 import { GRADE_TINT } from '../../shared/grade-badge';
 import {
   MatchGrade, SOURCE_LABELS, SOURCE_OPTIONS, SourcePortal, TenderListSummary, TenderSummary,
@@ -20,7 +21,7 @@ const GRADE_BANDS: Record<MatchGrade, string> = {
 
 /** Same colours as the source dots on each row (shortlist.css). */
 const SOURCE_DOTS: Record<SourcePortal, string> = {
-  EGP_BANGLADESH: '#5b3df5', WORLD_BANK: '#2f8fbe', UNGM: '#c9781f', ISDB: '#1a9e6b',
+  EGP_BANGLADESH: '#5b3df5', WORLD_BANK: '#2f8fbe', UNGM: '#c9781f', ISDB: '#1a9e6b', BRAC: '#d81b7a',
 };
 
 /**
@@ -34,15 +35,19 @@ const SOURCE_DOTS: Record<SourcePortal, string> = {
 @Component({
   selector: 'ts-shortlist',
   standalone: true,
-  imports: [RouterLink, GradeBadge, ScoreBar, Deadline, TenderActions, Select],
+  imports: [RouterLink, GradeBadge, ScoreBar, Deadline, TenderActions, Select, Pager],
   templateUrl: './shortlist.html',
   styleUrl: './shortlist.css',
 })
 export class Shortlist {
   private readonly api = inject(ApiService);
 
+  private readonly auth = inject(AuthService);
+
   /** Named on the page so a company switch is visible here, not just in the ranking. */
-  readonly org = inject(AuthService).company;
+  readonly org = this.auth.company;
+  /** Sync runs the collection pipeline for every company: TenderSense staff only. */
+  readonly isAdmin = this.auth.isAdmin;
 
   readonly rows = signal<TenderSummary[]>([]);
   readonly total = signal(0);
@@ -84,8 +89,6 @@ export class Shortlist {
 
   /** Rows per page. The backend caps it at 100 (TenderController.MAX_PAGE_SIZE). */
   readonly size = signal(25);
-  readonly sizeOptions: SelectOption[] =
-    [10, 25, 50, 100].map((n) => ({ value: String(n), label: `${n} per page` }));
 
   /**
    * Free-text narrowing of the page already fetched. The API ranks and filters
@@ -103,34 +106,26 @@ export class Shortlist {
     );
   });
 
-  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.size())));
-
-  /** "26–50 of 316": which rows of the whole list this page holds. */
-  readonly rangeStart = computed(() => (this.total() === 0 ? 0 : this.page() * this.size() + 1));
-  readonly rangeEnd = computed(() => Math.min(this.total(), (this.page() + 1) * this.size()));
-
-  /**
-   * Page buttons, 0-based, with null for a "…" gap. Always the first and last page and
-   * the ones either side of the current page, so 13 pages read 1 2 3 4 5 … 13 at the
-   * start and 1 … 6 7 8 … 13 in the middle.
-   */
-  readonly pages = computed<(number | null)[]>(() => {
-    const n = this.pageCount();
-    const c = this.page();
-    if (n <= 7) return Array.from({ length: n }, (_, i) => i);
-    const shown = new Set([0, n - 1, c - 1, c, c + 1]);
-    if (c <= 3) [1, 2, 3, 4].forEach((i) => shown.add(i));
-    if (c >= n - 4) [n - 5, n - 4, n - 3, n - 2].forEach((i) => shown.add(i));
-    const sorted = [...shown].filter((i) => i >= 0 && i < n).sort((a, b) => a - b);
-    const out: (number | null)[] = [];
-    sorted.forEach((p, i) => {
-      if (i > 0 && p - sorted[i - 1] > 1) out.push(null);
-      out.push(p);
-    });
-    return out;
-  });
-
   constructor() {
+    // The dashboard's cards link here with their filter in the address
+    // (?grade=S, ?closingSoon=1, ?tracked=SAVED), so the list opens already narrowed.
+    const params = inject(ActivatedRoute).snapshot.queryParamMap;
+    const grade = params.get('grade');
+    if (grade && (['S', 'A', 'B', 'C'] as string[]).includes(grade)) {
+      this.activeGrade.set(grade as MatchGrade);
+    }
+    const source = params.get('source');
+    if (source && (SOURCE_OPTIONS as string[]).includes(source)) {
+      this.activeSource.set(source as SourcePortal);
+    }
+    const tracked = params.get('tracked');
+    if (tracked === 'SAVED' || tracked === 'SUBMITTED') {
+      this.activeTracked.set(tracked);
+    }
+    const soon = params.get('closingSoon');
+    if (soon === '1' || soon === 'true') {
+      this.closingSoon.set(true);
+    }
     this.load();
   }
 
@@ -235,14 +230,13 @@ export class Shortlist {
   }
 
   goTo(p: number): void {
-    if (p < 0 || p >= this.pageCount() || p === this.page()) return;
     this.page.set(p);
     this.load();
   }
 
   /** A new page size starts again from the first page. */
-  setSize(value: string): void {
-    this.size.set(Number(value));
+  setSize(size: number): void {
+    this.size.set(size);
     this.page.set(0);
     this.load();
   }

@@ -1,9 +1,9 @@
 <div class="page-intro">
   <div>
-    <h1>{{ schedule.length }} scheduled jobs, one at a time</h1>
+    <h1>{{ schedule()?.jobs?.length ?? 6 }} scheduled jobs, one at a time</h1>
     <p class="lede">
-      All schedules run on Asia/Dhaka. One job at a time — a reconcile never overlaps a sweep,
-      so a slow night cannot produce a half-updated shortlist.
+      All schedules run on {{ schedule()?.zone ?? 'Asia/Dhaka' }}. One job at a time — a reconcile never
+      overlaps a sweep, so a slow night cannot produce a half-updated shortlist.
     </p>
   </div>
   <div class="intro-actions">
@@ -22,179 +22,147 @@
 
 @if (error(); as message) {
   <div class="banner error">{{ message }}</div>
-} @else {
-
-  <div class="stat-strip">
-    <div class="stat">
-      <span class="stat-icon i-ok">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9" /><path d="M12 7v5.3l3.2 2" />
-        </svg>
-      </span>
-      <span class="stat-body">
-        <span class="stat-label">Last successful run</span>
-        <span class="stat-value">{{ duration(lastSuccess()?.durationMs ?? null) }}</span>
-        <span class="stat-foot">
-          @if (lastSuccess(); as last) {
-            {{ last.jobName }} · {{ last.startedAt | date: 'dd MMM HH:mm' }}
-          } @else {
-            nothing has completed yet
-          }
-        </span>
-      </span>
-    </div>
-    <div class="stat">
-      <span class="stat-icon i-accent">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" />
-        </svg>
-      </span>
-      <span class="stat-body">
-        <span class="stat-label">Results written</span>
-        <span class="stat-value">{{ totalScored() | number }}</span>
-        <span class="stat-foot">scores stored by successful runs</span>
-      </span>
-    </div>
-    <div class="stat">
-      <span class="stat-icon i-accent">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
-        </svg>
-      </span>
-      <span class="stat-body">
-        <span class="stat-label">Runs recorded</span>
-        <span class="stat-value">{{ runs().length }}</span>
-        <span class="stat-foot">skips included, not dropped</span>
-      </span>
-    </div>
-    <div class="stat">
-      <span class="stat-icon i-warn">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 4l9 16H3z" /><path d="M12 10v4" /><path d="M12 17.4v.01" />
-        </svg>
-      </span>
-      <span class="stat-body">
-        <span class="stat-label">Failed runs</span>
-        <span class="stat-value" [class.warn]="failures() > 0">{{ failures() }}</span>
-        <span class="stat-foot">a failure leaves the corpus untouched</span>
-      </span>
-    </div>
-  </div>
-
-  <!-- The queue between the scrapers and the tender list: the local model reads open
-       tenders here, a few at a time, before they reach the list. -->
-  @if (queue(); as q) {
-    <section class="card queue">
-      <div class="card-head">
-        <div>
-          <h2>AI processing queue</h2>
-          <span class="sub">New tenders wait here while the local model reads them, a few at a time.</span>
-        </div>
-        <span class="pill" [class.accent]="q.modelEnabled" [class.ghost]="!q.modelEnabled">
-          {{ q.modelEnabled ? 'Model on · ' + q.model : 'Model off' }}
-        </span>
-      </div>
-      <div class="queue-grid">
-        <div class="qcell">
-          <span class="label">Waiting</span>
-          <span class="qnum">{{ q.waitingOpen | number }}</span>
-          <span class="hint">open tenders{{ q.waiting > q.waitingOpen ? ' · ' + (q.waiting - q.waitingOpen) + ' closed' : '' }}</span>
-        </div>
-        <div class="qcell">
-          <span class="label">Being read</span>
-          <span class="qnum">{{ q.inProgress }}</span>
-          <span class="hint">{{ q.awaitingScore }} waiting to be scored</span>
-        </div>
-        <div class="qcell">
-          <span class="label">Read in the last hour</span>
-          <span class="qnum">{{ q.readLastHour }}</span>
-          <span class="hint">{{ q.done | number }} processed in total</span>
-        </div>
-        <div class="qcell">
-          <span class="label">Time per tender</span>
-          <span class="qnum">{{ q.secondsPerRead !== null ? q.secondsPerRead + 's' : '—' }}</span>
-          <span class="hint">measured on this machine</span>
-        </div>
-        <div class="qcell">
-          <span class="label">Time left</span>
-          <span class="qnum">{{ eta(q.etaMinutes) }}</span>
-          <span class="hint">for the open tenders waiting</span>
-        </div>
-      </div>
-      @if (q.failed > 0) {
-        <p class="card-note">{{ q.failed }} could not be processed and need a developer.</p>
-      }
-      @if (q.lastError) {
-        <p class="card-note qerr">Last problem{{ q.lastErrorAt ? ' at ' + (q.lastErrorAt | date: 'dd MMM HH:mm') : '' }}: {{ q.lastError }}</p>
-      }
-    </section>
-  }
-
-  <div class="split rail-left">
-    <div class="stack">
-      <section class="card">
-        <div class="card-head">
-          <h2>Schedule</h2>
-          <span class="pill neutral">Asia/Dhaka</span>
-        </div>
-        @for (s of schedule; track s.job) {
-          <div class="sched">
-            <span class="sched-body">
-              <span class="mono job">{{ s.job }}</span>
-              <span class="hint">{{ s.cadence }}</span>
-            </span>
-            <span class="pill ghost">{{ s.cost }}</span>
-          </div>
-        }
-        <p class="card-note">
-          Discovery stays cheap because it stops after 20 consecutive already-known ids. The
-          expensive per-tender fetch never runs on a schedule — it is driven by what discovery finds.
-        </p>
-      </section>
-    </div>
-
-    <section class="card">
-      <div class="card-head">
-        <div>
-          <h2>Recent runs</h2>
-          <span class="sub">Skipped runs are recorded too, not silently dropped.</span>
-        </div>
-      </div>
-
-      @if (loading()) {
-        <div class="state"><span class="spinner"></span> Loading runs…</div>
-      } @else if (runs().length === 0) {
-        <div class="state">No runs recorded yet. Trigger one above.</div>
-      } @else {
-        <div class="table-scroll">
-          <div class="table">
-            <div class="thead cols-run">
-              <span>Job</span><span>Status</span><span>Duration</span>
-              <span>Found</span><span>Scored</span><span>Started</span>
-            </div>
-            @for (r of runs(); track r.id) {
-              <div class="trow cols-run" [class.failed]="r.status === 'FAILED'">
-                <span class="mono job">{{ r.jobName }}</span>
-                <span class="status" [class]="r.status.toLowerCase()">
-                  <span class="dot"></span>{{ r.status | titlecase }}
-                </span>
-                <span class="mono">{{ duration(r.durationMs) }}</span>
-                <span class="mono">{{ r.tendersDiscovered ?? '—' }}</span>
-                <span class="mono">{{ r.tendersScored ?? '—' }}</span>
-                @if (r.errorMessage) {
-                  <span class="err" [title]="r.errorMessage">{{ r.errorMessage }}</span>
-                } @else {
-                  <span class="mono muted">{{ r.startedAt | date: 'dd MMM HH:mm' }}</span>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </section>
-  </div>
 }
+
+<div class="stat-strip">
+  <div class="stat">
+    <span class="stat-icon i-ok">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" /><path d="M12 7v5.3l3.2 2" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Last successful run</span>
+      <span class="stat-value small">{{ summary()?.lastSuccessAt ? (summary()!.lastSuccessAt | date: 'dd MMM HH:mm') : '—' }}</span>
+      <span class="stat-foot">
+        {{ summary()?.lastSuccessAt ? 'Asia/Dhaka time' : 'nothing has completed yet' }}
+      </span>
+    </span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Results written</span>
+      <span class="stat-value">{{ (summary()?.tendersScored ?? 0) | number }}</span>
+      <span class="stat-foot">scores stored by all runs</span>
+    </span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Runs recorded</span>
+      <span class="stat-value">{{ (summary()?.runsTotal ?? 0) | number }}</span>
+      <span class="stat-foot">skips included, not dropped</span>
+    </span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon i-warn">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 4l9 16H3z" /><path d="M12 10v4" /><path d="M12 17.4v.01" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Failed runs</span>
+      <span class="stat-value" [class.warn]="(summary()?.failedTotal ?? 0) > 0">{{ summary()?.failedTotal ?? 0 }}</span>
+      <span class="stat-foot">{{ summary()?.failedLast24h ?? 0 }} in the last 24 hours</span>
+    </span>
+  </div>
+</div>
+
+@if (queue(); as q) {
+  <ts-ai-queue-card [queue]="q" />
+}
+
+<div class="split rail-left">
+  <section class="card">
+    <div class="card-head">
+      <h2>Schedule</h2>
+      <a class="head-link" routerLink="/admin/scheduler">Manage →</a>
+    </div>
+    @if (schedule(); as s) {
+      @for (j of s.jobs; track j.key) {
+        <div class="sched">
+          <span class="sched-body">
+            <span class="job">{{ j.label }}</span>
+            <span class="hint">{{ j.description }}</span>
+            <span class="when">
+              <span class="mono cron" [title]="'Cron expression, ' + s.zone">{{ j.cron }}</span>
+              @if (j.nextRunAt) { <span>next {{ j.nextRunAt | date: 'EEE HH:mm' }}</span> }
+              @if (j.avgDurationMs !== null) { <span>usually {{ duration(j.avgDurationMs) }}</span> }
+            </span>
+          </span>
+          @if (!j.enabled) {
+            <span class="pill warn">Off</span>
+          } @else if (j.lastStatus; as st) {
+            <span class="status" [class]="st.toLowerCase()"
+                  [title]="'Last run ' + (j.lastRunAt | date: 'dd MMM HH:mm')">
+              <span class="dot"></span>{{ st | titlecase }}
+            </span>
+          } @else {
+            <span class="pill ghost">{{ j.key === 'morningDigest' ? 'no run log' : 'not run yet' }}</span>
+          }
+        </div>
+      }
+    } @else {
+      <div class="state"><span class="spinner"></span></div>
+    }
+    <p class="card-note">
+      Discovery stays cheap because it stops after 20 consecutive already-known ids. The
+      expensive per-tender fetch never runs on a schedule — it is driven by what discovery finds.
+    </p>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Runs</h2>
+        <span class="sub">Newest first. Skipped runs are recorded too, not silently dropped.</span>
+      </div>
+    </div>
+
+    @if (loading() && runs().length === 0) {
+      <div class="state"><span class="spinner"></span> Loading runs…</div>
+    } @else if (runs().length === 0) {
+      <div class="state">No runs recorded yet. Trigger one above.</div>
+    } @else {
+      <div class="table-scroll">
+        <div class="table">
+          <div class="thead cols-run">
+            <span>Job</span><span>Status</span><span>Duration</span>
+            <span>Found</span><span>Scored</span><span>Started</span>
+          </div>
+          @for (r of runs(); track r.id) {
+            <div class="trow cols-run" [class.failed]="r.status === 'FAILED'">
+              <span class="mono job">{{ r.jobName }}</span>
+              <span class="status" [class]="r.status.toLowerCase()">
+                <span class="dot"></span>{{ r.status | titlecase }}
+              </span>
+              <span class="mono">{{ duration(r.durationMs) }}</span>
+              <span class="mono">{{ r.tendersDiscovered ?? '—' }}</span>
+              <span class="mono">{{ r.tendersScored ?? '—' }}</span>
+              @if (r.errorMessage) {
+                <span class="err" [title]="r.errorMessage">{{ r.errorMessage }}</span>
+              } @else {
+                <span class="mono muted">{{ r.startedAt | date: 'dd MMM HH:mm' }}</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <ts-pager [page]="page()" [size]="size()" [total]="total()"
+                (pageChange)="goTo($event)" (sizeChange)="setSize($event)" />
+    }
+  </section>
+</div>

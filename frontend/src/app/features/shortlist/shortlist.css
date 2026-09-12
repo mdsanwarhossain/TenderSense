@@ -43,6 +43,7 @@
 .source .dot.wb { background: #2f8fbe; }
 .source .dot.ungm { background: #c9781f; }
 .source .dot.isdb { background: #1a9e6b; }
+.source .dot.brac { background: #d81b7a; }
 
 .state-wrap { padding: 20px 22px; }
 
@@ -149,43 +150,10 @@
   .search-box { flex: 1 1 100%; margin-left: 0; }
 }
 
-/* ---- Pager: rows per page on the left, page numbers on the right ---- */
-.pager-size { display: flex; align-items: center; gap: 14px; }
-.pager-size .range { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.pages { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-.pg {
-  display: inline-grid;
-  place-items: center;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: var(--r-pill);
-  background: none;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-}
-.pg:hover:not(:disabled):not(.on):not(.gap) { background: var(--surface); border-color: var(--line); }
-.pg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.pg.on { background: var(--accent); color: #fff; cursor: default; }
-.pg:disabled { color: var(--ink-4); opacity: 0.45; cursor: not-allowed; }
-.pg.gap { min-width: 22px; padding: 0; color: var(--ink-4); cursor: default; }
+/* The pager is shared/pager.ts. */
 
 /* Sync: collect new tenders now. Green, the same hue as an S grade; flat like every button. */
 .btn-sync { background: hsl(142 64% 34%); border-color: hsl(142 64% 34%); color: #fff; box-shadow: var(--btn-lift); }
 .btn-sync:hover:not(:disabled) { background: hsl(142 66% 28%); border-color: hsl(142 66% 28%); box-shadow: var(--btn-lift-hover); }
 .btn-sync:active:not(:disabled) { box-shadow: var(--btn-press); }
 
-/* Page buttons read as buttons: outlined with a bottom edge, lifting on hover. */
-.pg:not(.gap) { background: var(--surface); border-color: var(--line); box-shadow: var(--btn-edge); transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.1s ease; }
-.pg:hover:not(:disabled):not(.on):not(.gap) { border-color: var(--accent); color: var(--ink); box-shadow: var(--btn-edge-hover); transform: translateY(-1px); }
-.pg:active:not(:disabled):not(.on):not(.gap) { transform: translateY(1px); box-shadow: var(--btn-press-soft); }
-/* After the outlined rule above: the current page stays a filled purple button. */
-.pg.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--btn-lift); }
-.pg:disabled { box-shadow: none; }
-@media (prefers-reduced-motion: reduce) { .pg { transition: none; } .pg:hover, .pg:active { transform: none; } }

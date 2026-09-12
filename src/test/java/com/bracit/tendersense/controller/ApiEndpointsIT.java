@@ -1,14 +1,17 @@
 package com.bracit.tendersense.controller;
 
-import com.bracit.tendersense.entity.Tender;
-import com.bracit.tendersense.repository.TenderRepository;
+import com.bracit.tendersense.entity.Organisation;
+import com.bracit.tendersense.repository.AccountRepository;
+import com.bracit.tendersense.repository.OrganisationRepository;
+import com.bracit.tendersense.support.TestAuth;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +19,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -29,17 +31,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * controller serialises its response after the transaction has closed
  * ({@code open-in-view} is off). Only a request-level test catches that class of bug.
  */
-@SpringBootTest(properties = {"tendersense.source.mode=cached",
-        // Lets these tests name a company by header instead of signing in.
-        // Off everywhere else -- it is an authentication bypass.
-        "tendersense.auth.allow-header=true"})
+@SpringBootTest(properties = "tendersense.source.mode=cached")
 @AutoConfigureMockMvc
 class ApiEndpointsIT {
 
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private TenderRepository tenderRepository;
+    private AccountRepository accountRepository;
+    @Autowired
+    private OrganisationRepository organisationRepository;
+
+    private RequestPostProcessor as(String slug) {
+        Organisation org = organisationRepository.findBySlug(slug)
+                .orElseThrow(() -> new IllegalStateException("seeded company missing: " + slug));
+        return TestAuth.company(accountRepository, org);
+    }
+
+    private RequestPostProcessor bracit() {
+        return as("bracit");
+    }
 
     /**
      * The top-ranked tender, i.e. one that definitely has a match result and an
@@ -47,7 +58,7 @@ class ApiEndpointsIT {
      * lazy-loading paths this class exists to guard are never executed.
      */
     private Long topRankedTenderId() throws Exception {
-        String json = mockMvc.perform(get("/api/tenders").param("size", "1"))
+        String json = mockMvc.perform(get("/api/tenders").param("size", "1").with(bracit()))
                 .andReturn().getResponse().getContentAsString();
         int idx = json.indexOf("\"id\":");
         if (idx < 0) {
@@ -63,7 +74,7 @@ class ApiEndpointsIT {
     @Test
     @DisplayName("GET /api/tenders serialises a full page without lazy-loading failures")
     void listsTenders() throws Exception {
-        mockMvc.perform(get("/api/tenders").param("size", "60").param("page", "0"))
+        mockMvc.perform(get("/api/tenders").param("size", "60").param("page", "0").with(bracit()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").isNumber());
@@ -72,7 +83,7 @@ class ApiEndpointsIT {
     @Test
     @DisplayName("GET /api/profile serialises nested projects and certifications")
     void readsProfile() throws Exception {
-        mockMvc.perform(get("/api/profile"))
+        mockMvc.perform(get("/api/profile").with(bracit()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.services").isArray())
                 .andExpect(jsonPath("$.pastProjects").isArray())
@@ -85,69 +96,61 @@ class ApiEndpointsIT {
         Long id = topRankedTenderId();
         Assumptions.assumeTrue(id != null, "no scored tenders ingested");
 
-        mockMvc.perform(get("/api/tenders/{id}", id))
+        mockMvc.perform(get("/api/tenders/{id}", id).with(bracit()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.externalId").exists());
 
-        mockMvc.perform(get("/api/tenders/{id}/evidence", id))
+        mockMvc.perform(get("/api/tenders/{id}/evidence", id).with(bracit()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.evidence").isArray())
                 .andExpect(jsonPath("$.grade").exists())
                 .andExpect(jsonPath("$.recommendation").exists());
 
         // Reads the gaps collection: the exact path that threw before the fetch join.
-        mockMvc.perform(get("/api/tenders/{id}/eligibility", id))
+        mockMvc.perform(get("/api/tenders/{id}/eligibility", id).with(bracit()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").exists())
                 .andExpect(jsonPath("$.gaps").isArray());
     }
 
     @Test
-    @DisplayName("benchmark and pipeline runs serialise")
+    @DisplayName("benchmark serialises for a company; pipeline runs page for an admin")
     void readsBenchmarkAndRuns() throws Exception {
-        mockMvc.perform(get("/api/benchmark"))
+        mockMvc.perform(get("/api/benchmark").with(bracit()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.semantic.matcher").value("EMBEDDING"))
                 .andExpect(jsonPath("$.keyword.matcher").value("KEYWORD"))
                 .andExpect(jsonPath("$.caveat").isNotEmpty());
 
-        mockMvc.perform(get("/api/pipeline/runs"))
+        mockMvc.perform(get("/api/pipeline/runs").param("size", "5").with(TestAuth.admin(accountRepository)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").isNumber());
     }
 
     @Test
     @DisplayName("unknown tender returns 404, not 500")
     void unknownTenderIsNotFound() throws Exception {
-        mockMvc.perform(get("/api/tenders/{id}", 99_999_999L))
+        mockMvc.perform(get("/api/tenders/{id}", 99_999_999L).with(bracit()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("the same URL with two X-Org-Id headers returns disjoint shortlists")
-    void orgHeaderScopesTheShortlist() throws Exception {
-        List<Long> bracit = topTenIds("1");
-        List<Long> padma = topTenIds("2");
+    @DisplayName("two companies signed in to the same URL get disjoint shortlists")
+    void eachCompanySeesItsOwnShortlist() throws Exception {
+        List<Long> bracit = topTenIds("bracit");
+        List<Long> padma = topTenIds("padma-infra");
         Assumptions.assumeFalse(bracit.isEmpty() || padma.isEmpty(), "a scored corpus is required");
 
         List<Long> overlap = bracit.stream().filter(padma::contains).toList();
         System.out.printf("top-10 overlap between the two organisations: %d%n", overlap.size());
         assertTrue(overlap.isEmpty(),
-                "the two companies' top tenders overlap -- the header is not scoping the query");
+                "the two companies' top tenders overlap -- the sign-in is not scoping the query");
     }
 
-    @Test
-    @DisplayName("an omitted X-Org-Id falls back; an unknown one is a 404, not a silent fallback")
-    void orgHeaderResolution() throws Exception {
-        mockMvc.perform(get("/api/tenders").param("size", "1"))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/tenders").param("size", "1").header("X-Org-Id", "999999"))
-                .andExpect(status().isNotFound());
-    }
-
-    private List<Long> topTenIds(String orgId) throws Exception {
-        String json = mockMvc.perform(get("/api/tenders").param("size", "10")
-                        .header("X-Org-Id", orgId))
+    private List<Long> topTenIds(String slug) throws Exception {
+        String json = mockMvc.perform(get("/api/tenders").param("size", "10").with(as(slug)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         List<Long> ids = new ArrayList<>();

@@ -107,6 +107,9 @@
   line-height: 1.35;
 }
 .mchip svg { flex: none; }
+.mchip { transition: border-color var(--t-fast) ease, background var(--t-fast) ease, transform var(--t-fast) var(--ease-out); }
+.mchip:hover { border-color: var(--ink-4); transform: translateY(-1px); }
+.mchip.top:hover, .mchip.sector:hover, .mchip.warn:hover { border-color: transparent; }
 .mchip.top { background: var(--accent-wash); border-color: transparent; color: var(--accent-ink); }
 .mchip.sector { background: var(--ok-wash); border-color: transparent; color: var(--ok); }
 .mchip.warn { background: var(--warn-wash); border-color: transparent; color: var(--warn); }
@@ -119,7 +122,11 @@
   padding: 15px 22px;
   border-top: 1px solid var(--line-soft);
   border-left: 3px solid transparent;
+  animation: fade-in var(--t-slow) var(--ease-out) both;
 }
+.gap:nth-child(3) { animation-delay: 30ms; }
+.gap:nth-child(4) { animation-delay: 60ms; }
+.gap:nth-child(n + 5) { animation-delay: 90ms; }
 .gap .icon { flex: none; margin-top: 1px; }
 .gap.blocking {
   border-left-color: var(--bad);

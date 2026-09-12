@@ -1,0 +1,144 @@
+/* ---- the jobs table ---- */
+.cols {
+  grid-template-columns: minmax(250px, 1.5fr) minmax(200px, 1.1fr) 140px 170px 130px 92px 124px;
+}
+.table { min-width: 1180px; }
+.trow { min-height: 70px; }
+.trow.off { background: var(--surface-2); }
+.trow.off .t { color: var(--ink-3); }
+
+.body .t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; white-space: normal; }
+.body .e { white-space: normal; }
+.cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cell .v { font-size: 13px; font-weight: 700; }
+.cron {
+  align-self: flex-start;
+  padding: 0 6px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: 11px;
+}
+.actions { justify-self: end; }
+.pill.mini { height: 20px; padding: 0 8px; font-size: 10.5px; }
+
+/* ---- the Reschedule modal ----
+   Fades and lifts in with its backdrop; @starting-style is what gives a dialog something
+   to animate from, and the discrete transitions keep it on screen while it leaves. */
+dialog.modal {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition: opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out),
+              overlay var(--t) allow-discrete, display var(--t) allow-discrete;
+}
+dialog.modal[open] { opacity: 1; transform: none; }
+@starting-style {
+  dialog.modal[open] { opacity: 0; transform: translateY(10px) scale(0.985); }
+}
+dialog.modal::backdrop {
+  background: rgb(22 20 44 / 0);
+  transition: background var(--t) ease, overlay var(--t) allow-discrete, display var(--t) allow-discrete;
+}
+dialog.modal[open]::backdrop { background: rgb(22 20 44 / 0.45); }
+@starting-style {
+  dialog.modal[open]::backdrop { background: rgb(22 20 44 / 0); }
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 4px;
+}
+.modal-head h2 { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+.modal-head .sub { display: block; margin-top: 3px; font-size: 12px; color: var(--ink-3); }
+.x {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--t-fast) ease, border-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out);
+}
+.x:hover { color: var(--ink); border-color: var(--ink-4); }
+.x:active { transform: scale(0.92); }
+
+/* The box is what resizes (scheduler.ts animates its height); the inner block is measured. */
+.modal-body { overflow: auto; }
+.body-inner { display: flex; flex-direction: column; gap: 16px; padding: 14px 24px 20px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.row .and { align-self: center; font-size: 12.5px; color: var(--ink-3); }
+select.input { padding-right: 12px; cursor: pointer; }
+.input.time { max-width: 160px; }
+.note {
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: var(--warn-wash);
+  color: var(--warn);
+  font-size: 12.5px;
+}
+
+/* Two to four choices, one of which is on. */
+.seg {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.seg button {
+  height: 32px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, box-shadow var(--t-fast) ease;
+}
+.seg button:hover:not(.on) { color: var(--ink); }
+.seg button.on { background: var(--surface); color: var(--accent-ink); box-shadow: var(--btn-edge); }
+
+.days { display: flex; flex-wrap: wrap; gap: 6px; }
+.days .chip { min-width: 52px; justify-content: center; }
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+.sum-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+.sum-line .label { min-width: 104px; }
+.refused { color: var(--bad); font-size: 12.5px; font-weight: 600; line-height: 1.5; animation: fade-in var(--t-fast) both; }
+
+.modal-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-2);
+}
+.modal-foot .spacer { flex: 1; }

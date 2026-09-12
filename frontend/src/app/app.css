@@ -64,9 +64,10 @@
   color: var(--ink-3);
   font-size: 13.5px;
   font-weight: 600;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, box-shadow var(--t) ease;
 }
-.rail-link svg { flex: none; }
+.rail-link svg { flex: none; transition: transform var(--t) var(--ease-out); }
+.rail-link:hover svg { transform: translateX(1px); }
 .rail-link .grow { flex: 1; }
 .rail-link:hover { background: var(--surface-3); color: var(--ink); text-decoration: none; }
 .rail-link.on {
@@ -120,6 +121,8 @@
   display: flex;
   flex-direction: column;
   padding: 24px 30px 40px;
+  /* Names this area for the page-to-page transition, so only the content crosses over. */
+  view-transition-name: page;
 }
 
 @media (max-width: 860px) {

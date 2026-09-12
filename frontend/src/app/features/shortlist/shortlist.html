@@ -97,18 +97,21 @@
       <span class="showing">
         Showing <b class="mono">{{ visible().length }}</b> of <b class="mono">{{ total() }}</b>
       </span>
-      <button class="btn btn-sm btn-sync" (click)="runCollection()" [disabled]="running()"
-              title="Collect new tenders from every portal now">
-        @if (running()) {
-          <span class="spinner light"></span> Syncing…
-        } @else {
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
-          </svg>
-          Sync
-        }
-      </button>
+      <!-- Collects for every company at once, so only TenderSense staff get the button. -->
+      @if (isAdmin()) {
+        <button class="btn btn-sm btn-sync" (click)="runCollection()" [disabled]="running()"
+                title="Collect new tenders from every portal now">
+          @if (running()) {
+            <span class="spinner light"></span> Syncing…
+          } @else {
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
+            </svg>
+            Sync
+          }
+        </button>
+      }
     </div>
   </div>
 
@@ -161,7 +164,7 @@
 
             <span class="source">
               <span class="dot" [class.wb]="row.source === 'WORLD_BANK'"
-                    [class.ungm]="row.source === 'UNGM'" [class.isdb]="row.source === 'ISDB'"></span>
+                    [class.ungm]="row.source === 'UNGM'" [class.isdb]="row.source === 'ISDB'" [class.brac]="row.source === 'BRAC'"></span>
               {{ sourceLabel(row.source) }}
             </span>
 
@@ -175,34 +178,7 @@
       </div>
     </div>
 
-    <footer class="pager">
-      <div class="pager-size">
-        <!-- Opens upwards: the card clips anything that hangs below it. -->
-        <ts-select label="Rows" [options]="sizeOptions" [value]="'' + size()" [up]="true" [marksFilter]="false"
-                   (changed)="setSize($event)" />
-        <span class="range">{{ rangeStart() }}–{{ rangeEnd() }} of {{ total() }}</span>
-      </div>
-      <nav class="pages" aria-label="Pages">
-        <button type="button" class="pg arrow" (click)="goTo(page() - 1)" [disabled]="page() === 0"
-                aria-label="Previous page">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-        </button>
-        @for (p of pages(); track $index) {
-          @if (p === null) {
-            <span class="pg gap" aria-hidden="true">…</span>
-          } @else {
-            <button type="button" class="pg" [class.on]="p === page()"
-                    [attr.aria-current]="p === page() ? 'page' : null"
-                    [attr.aria-label]="'Page ' + (p + 1)" (click)="goTo(p)">{{ p + 1 }}</button>
-          }
-        }
-        <button type="button" class="pg arrow" (click)="goTo(page() + 1)"
-                [disabled]="page() >= pageCount() - 1" aria-label="Next page">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
-        </button>
-      </nav>
-    </footer>
+    <ts-pager [page]="page()" [size]="size()" [total]="total()"
+              (pageChange)="goTo($event)" (sizeChange)="setSize($event)" />
   }
 </section>

@@ -2,9 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  BenchmarkResult, BidDecisionRequest, CapabilityProfile, EligibilityReport,
-  MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness,
-  SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary, TrackingFilter, TrackingState, ProcessingStatus } from '../models/tender.models';
+  AdminCompany, AdminCompanyDetail, AdminDashboard, AdminUser,
+  BenchmarkResult, BidDecisionRequest, CapabilityProfile, Dashboard, EligibilityReport,
+  MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness, Role,
+  RunSummary, Schedule, ScheduleJob, CronPreview, SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary,
+  TrackingFilter, TrackingState, ProcessingStatus } from '../models/tender.models';
 
 /**
  * Single place the frontend talks to the backend.
@@ -109,8 +111,79 @@ export class ApiService {
     return this.http.post<PipelineRun[]>(`${this.base}/pipeline/run`, null, { params });
   }
 
-  getRuns(): Observable<PipelineRun[]> {
-    return this.http.get<PipelineRun[]>(`${this.base}/pipeline/runs`);
+  /** Collection runs, newest first, a page at a time. Admin only. */
+  getRuns(page = 0, size = 20): Observable<PageResponse<PipelineRun>> {
+    const params = new HttpParams().set('page', String(page)).set('size', String(size));
+    return this.http.get<PageResponse<PipelineRun>>(`${this.base}/pipeline/runs`, { params });
+  }
+
+  /** Totals over all runs, for the stat cards above the paged table. */
+  getRunSummary(): Observable<RunSummary> {
+    return this.http.get<RunSummary>(`${this.base}/pipeline/runs/summary`);
+  }
+
+  /** The schedule as configured, with each job's next and last run. */
+  getSchedule(): Observable<Schedule> {
+    return this.http.get<Schedule>(`${this.base}/pipeline/schedule`);
+  }
+
+  /** The signed-in company's landing page, in one request. */
+  getDashboard(): Observable<Dashboard> {
+    return this.http.get<Dashboard>(`${this.base}/dashboard`);
+  }
+
+  // ---- admin panel ----
+
+  getAdminDashboard(): Observable<AdminDashboard> {
+    return this.http.get<AdminDashboard>(`${this.base}/admin/dashboard`);
+  }
+
+  listCompanies(): Observable<AdminCompany[]> {
+    return this.http.get<AdminCompany[]>(`${this.base}/admin/companies`);
+  }
+
+  getCompany(id: number): Observable<AdminCompanyDetail> {
+    return this.http.get<AdminCompanyDetail>(`${this.base}/admin/companies/${id}`);
+  }
+
+  setCompanyActive(id: number, active: boolean): Observable<AdminCompany> {
+    return this.http.patch<AdminCompany>(`${this.base}/admin/companies/${id}`, { active });
+  }
+
+  listUsers(): Observable<AdminUser[]> {
+    return this.http.get<AdminUser[]>(`${this.base}/admin/users`);
+  }
+
+  updateUser(id: number, change: { role?: Role; enabled?: boolean }): Observable<AdminUser> {
+    return this.http.patch<AdminUser>(`${this.base}/admin/users/${id}`, change);
+  }
+
+  resetPassword(id: number, password: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/admin/users/${id}/password`, { password });
+  }
+
+  createAdmin(email: string, password: string): Observable<AdminUser> {
+    return this.http.post<AdminUser>(`${this.base}/admin/users`, { email, password });
+  }
+
+  // ---- scheduler ----
+
+  getAdminSchedule(): Observable<Schedule> {
+    return this.http.get<Schedule>(`${this.base}/admin/schedule`);
+  }
+
+  updateScheduleJob(key: string, change: { enabled?: boolean; cron?: string }): Observable<ScheduleJob> {
+    return this.http.patch<ScheduleJob>(`${this.base}/admin/schedule/${key}`, change);
+  }
+
+  resetScheduleJob(key: string): Observable<ScheduleJob> {
+    return this.http.post<ScheduleJob>(`${this.base}/admin/schedule/${key}/reset`, null);
+  }
+
+  /** Checks a schedule without saving it: the next runs, or why it would be refused. */
+  previewCron(key: string, cron: string): Observable<CronPreview> {
+    const params = new HttpParams().set('cron', cron);
+    return this.http.get<CronPreview>(`${this.base}/admin/schedule/${key}/preview`, { params });
   }
 
   getProcessingStatus(): Observable<ProcessingStatus> {

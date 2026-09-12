@@ -3,11 +3,8 @@ package com.bracit.tendersense.config;
 import java.lang.annotation.*;
 
 /**
- * Injects the organisation a request is acting for.
- *
- * <p>Resolved from the {@code X-Org-Id} header, falling back to the first active
- * organisation when the header is absent — so every existing URL keeps working and a
- * single-tenant deployment needs no client changes.
+ * Injects the company the signed-in account belongs to (see OrganisationArgumentResolver).
+ * Only company accounts reach these endpoints; SecurityConfig refuses the rest.
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

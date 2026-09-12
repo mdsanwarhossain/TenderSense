@@ -7,11 +7,13 @@ import com.bracit.tendersense.entity.enums.RunStatus;
 import com.bracit.tendersense.repository.PipelineRunRepository;
 import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.util.SectorClassifier;
+import com.bracit.tendersense.service.AccountService;
 import com.bracit.tendersense.service.CapabilityProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,10 +28,18 @@ public class DataSeeder implements ApplicationRunner {
     private final PipelineRunRepository runRepository;
     private final TenderRepository tenderRepository;
     private final SectorClassifier sectorClassifier;
+    private final AccountService accountService;
+
+    /** The first platform admin, created only when no admin exists yet. */
+    @Value("${tendersense.auth.admin-email:admin@tendersense.local}")
+    private String adminEmail;
+    @Value("${tendersense.auth.admin-password:tendersense-admin}")
+    private String adminPassword;
 
     @Override
     public void run(ApplicationArguments args) {
         profileService.seedMissing();
+        accountService.seedAdmin(adminEmail, adminPassword);
         closeOrphanedRuns();
         backfillSectors();
     }

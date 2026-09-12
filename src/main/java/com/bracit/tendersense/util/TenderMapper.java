@@ -1,5 +1,6 @@
 package com.bracit.tendersense.util;
 
+import com.bracit.tendersense.config.BracProperties;
 import com.bracit.tendersense.config.EgpProperties;
 import com.bracit.tendersense.config.IsdbProperties;
 import com.bracit.tendersense.config.UngmProperties;
@@ -33,6 +34,7 @@ public class TenderMapper {
     private final WorldBankProperties worldBank;
     private final UngmProperties ungm;
     private final IsdbProperties isdb;
+    private final BracProperties brac;
 
     /** For callers with no tracking to show, such as the morning digest. */
     public TenderSummaryResponse toSummary(Tender t, MatchResult match, EligibilityVerdictView elig) {
@@ -117,6 +119,10 @@ public class TenderMapper {
             case WORLD_BANK -> fill(worldBank.getNoticeUrl(), encoded);
             case UNGM -> fill(ungm.getNoticeUrl(), encoded);
             case ISDB -> fill(isdb.getNoticeUrl(), encoded);
+            // No public detail page (a tender opens a supplier login): link its document,
+            // which the site names by tender number, not by id.
+            case BRAC -> t.getReferenceNo() == null || t.getReferenceNo().isBlank() ? null
+                    : fill(brac.getDocumentUrl(), URLEncoder.encode(t.getReferenceNo().strip(), StandardCharsets.UTF_8));
         };
     }
 

@@ -6,5 +6,7 @@ public enum SourcePortal {
     /** UN Global Marketplace — UN agency procurement notices. */
     UNGM,
     /** Islamic Development Bank project procurement. */
-    ISDB
+    ISDB,
+    /** BRAC's own procurement, from BRAC e-Tender (tender.brac.net). */
+    BRAC
 }

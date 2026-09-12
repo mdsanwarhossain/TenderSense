@@ -1,5 +1,6 @@
 package com.bracit.tendersense.util;
 
+import com.bracit.tendersense.config.BracProperties;
 import com.bracit.tendersense.config.EgpProperties;
 import com.bracit.tendersense.config.IsdbProperties;
 import com.bracit.tendersense.config.UngmProperties;
@@ -18,7 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class TenderMapperTest {
 
     private final TenderMapper mapper = new TenderMapper(
-            new EgpProperties(), new WorldBankProperties(), new UngmProperties(), new IsdbProperties());
+            new EgpProperties(), new WorldBankProperties(), new UngmProperties(), new IsdbProperties(),
+            new BracProperties());
 
     private static Tender tender(SourcePortal portal, String externalId) {
         return Tender.builder().id(1L).sourcePortal(portal).externalId(externalId).title("x").build();
@@ -35,6 +37,16 @@ class TenderMapperTest {
                 mapper.sourceUrl(tender(SourcePortal.UNGM, "1001")));
         assertNull(mapper.sourceUrl(tender(SourcePortal.ISDB, "1167")),
                 "no verified ISDB pattern yet: hide the link rather than guess one");
+    }
+
+    @Test
+    @DisplayName("a BRAC tender links its own document, by tender number -- the site has no public detail page")
+    void bracLinksTheDocument() {
+        Tender t = tender(SourcePortal.BRAC, "14998");
+        t.setReferenceNo("BPD/2026/RFQ-2408");
+        assertEquals("https://erp.brac.net/procUtil/viewRFQDocument?tenderNo=BPD%2F2026%2FRFQ-2408",
+                mapper.sourceUrl(t));
+        assertNull(mapper.sourceUrl(tender(SourcePortal.BRAC, "14998")), "no tender number, no link");
     }
 
     @Test

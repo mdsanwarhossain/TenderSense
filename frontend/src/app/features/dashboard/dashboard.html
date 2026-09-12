@@ -1,0 +1,154 @@
+@if (error(); as message) {
+  <div class="banner error">{{ message }}</div>
+} @else if (!data()) {
+  <div class="state"><span class="spinner"></span> Loading your dashboard…</div>
+} @else {
+  @let d = data()!;
+
+  <!-- 1. Headline numbers. Each card opens the tender list with its filter applied. -->
+  <nav class="stat-strip cards" aria-label="Headline numbers">
+    @for (c of cards(); track c.label) {
+      <a class="stat" routerLink="/shortlist" [queryParams]="c.params">
+        <span class="stat-icon" [class.i-accent]="c.tone === 'accent'" [class.i-ok]="c.tone === 'ok'"
+              [class.i-warn]="c.tone === 'warn'">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            @for (p of c.icon; track $index) { <path [attr.d]="p" /> }
+          </svg>
+        </span>
+        <span class="stat-body">
+          <span class="stat-label">{{ c.label }}</span>
+          <span class="stat-value" [class]="c.valueClass">{{ c.value | number }}</span>
+          <span class="stat-foot">{{ c.foot }}</span>
+        </span>
+      </a>
+    }
+  </nav>
+
+  @if (d.activity.scoring.stale) {
+    <div class="banner">
+      <div class="banner-body">
+        <span class="banner-title">Your profile changed after these tenders were scored</span>
+        <span>The rankings below still reflect the old profile. Re-score from the Profile page to update them.
+          <a routerLink="/profile">Open profile</a></span>
+      </div>
+    </div>
+  }
+
+  <div class="split">
+    <!-- 2. Best matches now: the top of the ranked list, same order. -->
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Best matches now</h2>
+          <span class="sub">The top of your tender list, open tenders only.</span>
+        </div>
+      </div>
+      @for (t of d.bestMatches; track t.id) {
+        <a class="item match" [routerLink]="['/tenders', t.id]">
+          <ts-grade-badge [grade]="t.grade" />
+          <ts-score-bar [score]="t.score" />
+          <span class="body">
+            <span class="t" [title]="t.title ?? ''">{{ t.shortTitle ?? t.title ?? '(untitled)' }}</span>
+            <span class="e">{{ sourceLabel(t.source) }}@if (t.procuringEntity) { · {{ t.procuringEntity }} }</span>
+          </span>
+          <ts-deadline [closingAt]="t.closingAt" [days]="t.daysToDeadline" />
+        </a>
+      } @empty {
+        <p class="empty">Nothing scored yet. Once tenders are collected and scored against your profile, the
+          strongest show here.</p>
+      }
+      <a class="card-foot" routerLink="/shortlist">See all {{ d.numbers.open | number }} in the tender list →</a>
+    </section>
+
+    <!-- 3. Closing soon: this week's deadlines worth acting on. -->
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Closing soon</h2>
+          <span class="sub">This week's deadlines on tenders you saved or that grade S or A.</span>
+        </div>
+      </div>
+      @for (t of d.closingSoon; track t.id) {
+        <a class="item soon" [routerLink]="['/tenders', t.id]" [class.urgent]="t.urgent">
+          <span class="body">
+            <span class="t" [title]="t.title ?? ''">{{ t.shortTitle ?? t.title ?? '(untitled)' }}</span>
+            <span class="meta">
+              <ts-grade-badge [grade]="t.grade" />
+              @if (t.wishlisted) { <span class="pill accent">Saved</span> }
+              <span class="e">{{ sourceLabel(t.source) }}</span>
+            </span>
+          </span>
+          <ts-deadline [closingAt]="t.closingAt" [days]="t.daysToDeadline" />
+        </a>
+      } @empty {
+        <p class="empty">Nothing you would bid on closes in the next seven days.</p>
+      }
+      <a class="card-foot" routerLink="/shortlist" [queryParams]="{ closingSoon: '1' }">
+        All {{ d.numbers.closingSoon | number }} closing this week →
+      </a>
+    </section>
+  </div>
+
+  <!-- 4. Activity and alerts. -->
+  <div class="split even">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>New matches</h2>
+          <span class="sub">Tenders that newly matched your profile.</span>
+        </div>
+        @if (d.activity.unread > 0) {
+          <span class="pill accent">{{ d.activity.unread }} unread</span>
+        }
+      </div>
+      @for (n of d.activity.newMatches; track n.id) {
+        <a class="item alert" [routerLink]="['/tenders', n.tenderId]">
+          <span class="unread-dot" [class.read]="n.read" [attr.aria-label]="n.read ? null : 'Unread'"></span>
+          <span class="body">
+            <span class="t">{{ n.tenderTitle ?? '(untitled)' }}</span>
+            <span class="e">{{ n.procuringEntity ?? '' }}</span>
+          </span>
+          <span class="side">
+            <ts-grade-badge [grade]="n.grade" />
+            <span class="hint">{{ timeAgo(n.createdAt) }}</span>
+          </span>
+        </a>
+      } @empty {
+        <p class="empty">No alerts yet. New S- and A-grade matches appear here and on the bell.</p>
+      }
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Your activity</h2>
+          <span class="sub">What your team saved and submitted most recently.</span>
+        </div>
+      </div>
+      @for (a of d.activity.tracking; track a.tenderId) {
+        <a class="item track" [routerLink]="['/tenders', a.tenderId]">
+          <span class="body">
+            <span class="t">{{ a.title ?? '(untitled)' }}</span>
+            <span class="meta">
+              @if (a.submitted) { <span class="pill ok">Submitted</span> }
+              @if (a.saved) { <span class="pill accent">Saved</span> }
+              <span class="e">{{ sourceLabel(a.source) }}</span>
+            </span>
+          </span>
+          <span class="hint">{{ timeAgo(a.updatedAt) }}</span>
+        </a>
+      } @empty {
+        <p class="empty">Nothing saved or submitted yet. Use the heart and the tick on any tender.</p>
+      }
+      <p class="card-note">
+        @if (d.activity.scoring.lastScoredAt) {
+          {{ d.activity.scoring.scoredCount | number }} tenders scored against your profile, last on
+          {{ d.activity.scoring.lastScoredAt | date: 'd MMM, HH:mm' }}.
+        } @else {
+          Your tenders have not been scored yet.
+        }
+      </p>
+    </section>
+  </div>
+}

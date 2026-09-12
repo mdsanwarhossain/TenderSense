@@ -2,6 +2,7 @@ package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.entity.Account;
 import com.bracit.tendersense.entity.Organisation;
+import com.bracit.tendersense.entity.enums.Role;
 import com.bracit.tendersense.exception.UnauthenticatedException;
 import com.bracit.tendersense.repository.AccountRepository;
 import com.bracit.tendersense.service.AccountService;
@@ -13,16 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Locale;
-import java.util.Optional;
+
+import static com.bracit.tendersense.service.AccountService.normaliseEmail;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AccountServiceImpl implements AccountService {
-
-    /** The same message for both failure modes. See {@link AccountService#authenticate}. */
-    private static final String REJECTED = "Email or password is incorrect";
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,28 +35,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public Account authenticate(String email, String rawPassword) {
-        if (email == null || rawPassword == null) {
-            throw new UnauthenticatedException(REJECTED);
-        }
-        Optional<Account> found = accountRepository.findByEmail(normalise(email));
-
-        // Hash the supplied password even when the account is unknown, so that a missing
-        // account and a wrong password take a comparable amount of time. Skipping the work
-        // on the unknown-email branch turns response time into an account-existence oracle.
-        String hash = found.map(Account::getPasswordHash).orElse(null);
-        boolean ok = hash != null && passwordEncoder.matches(rawPassword, hash);
-        if (!ok) {
-            if (hash == null) {
-                passwordEncoder.encode(rawPassword);
-            }
-            throw new UnauthenticatedException(REJECTED);
-        }
-
-        Account account = found.orElseThrow();
-        if (!account.getOrganisation().isActive()) {
-            throw new UnauthenticatedException(REJECTED);
-        }
+    public Account recordLogin(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new UnauthenticatedException("Not signed in"));
         account.setLastLoginAt(Instant.now());
         return accountRepository.save(account);
     }
@@ -66,7 +45,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public Account createFor(Organisation organisation, String email, String rawPassword) {
-        String normalised = normalise(email);
+        String normalised = normaliseEmail(email);
         if (accountRepository.existsByEmail(normalised)) {
             throw new IllegalArgumentException("That email already has an account");
         }
@@ -74,6 +53,8 @@ public class AccountServiceImpl implements AccountService {
                 .organisation(organisation)
                 .email(normalised)
                 .passwordHash(passwordEncoder.encode(rawPassword))
+                .role(Role.USER)
+                .enabled(true)
                 .createdAt(Instant.now())
                 .build());
     }
@@ -86,15 +67,32 @@ public class AccountServiceImpl implements AccountService {
         }
         createFor(organisation, email, demoPassword);
         log.info("seeded account {} for {} -- password from tendersense.auth.demo-password",
-                normalise(email), organisation.getSlug());
+                normaliseEmail(email), organisation.getSlug());
+    }
+
+    @Override
+    @Transactional
+    public void seedAdmin(String email, String rawPassword) {
+        if (accountRepository.existsByRole(Role.ADMIN)) {
+            return;
+        }
+        String normalised = normaliseEmail(email);
+        if (accountRepository.existsByEmail(normalised)) {
+            log.warn("no platform admin seeded: {} already belongs to a company account", normalised);
+            return;
+        }
+        accountRepository.save(Account.builder()
+                .email(normalised)
+                .passwordHash(passwordEncoder.encode(rawPassword))
+                .role(Role.ADMIN)
+                .enabled(true)
+                .createdAt(Instant.now())
+                .build());
+        log.info("seeded platform admin {} -- password from tendersense.auth.admin-password", normalised);
     }
 
     @Override
     public boolean emailTaken(String email) {
-        return email != null && accountRepository.existsByEmail(normalise(email));
-    }
-
-    private static String normalise(String email) {
-        return email.trim().toLowerCase(Locale.ROOT);
+        return email != null && accountRepository.existsByEmail(normaliseEmail(email));
     }
 }
