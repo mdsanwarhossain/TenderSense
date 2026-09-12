@@ -6,9 +6,9 @@ services:
       POSTGRES_DB: tendersense
       POSTGRES_USER: tendersense
       POSTGRES_PASSWORD: tendersense
-    # 5433 on the host: the developer machine already runs a local Postgres on 5432.
+    # 5434 on the host: the developer machine already runs local Postgres instances on 5432 and 5433.
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - tendersense-pgdata:/var/lib/postgresql/data
       - ./docker/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init-pgvector.sql:ro
@@ -17,21 +17,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-    networks:
-      - tendersense-net
-
-  # The local model that reads tenders between the staging table and the tender table.
-  # CPU is enough (~50 s per tender); a GPU makes it seconds. After the first
-  # `docker compose up -d`, download the model once:
-  #   docker exec tendersense-ollama ollama pull qwen2.5:7b
-  ollama:
-    image: ollama/ollama:0.34.0
-    container_name: tendersense-ollama
-    # Bound to this machine only: the model API has no authentication.
-    ports:
-      - "127.0.0.1:11434:11434"
-    volumes:
-      - tendersense-ollama:/root/.ollama
     networks:
       - tendersense-net
 
@@ -65,9 +50,24 @@ services:
     networks:
       - tendersense-net
 
+  # Container/host monitoring UI. Needs the podman API socket on the host:
+  #   sudo systemctl enable --now podman.socket
+  # then browse to http://<host>:9000 to finish setup.
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: tendersense-portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock:Z
+      - tendersense-portainer:/data
+    networks:
+      - tendersense-net
+
 volumes:
   tendersense-pgdata:
-  tendersense-ollama:
+  tendersense-portainer:
 
 networks:
   tendersense-net:
