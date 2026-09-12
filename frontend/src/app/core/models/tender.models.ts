@@ -394,6 +394,28 @@ export interface AdminDashboard {
   processing: ProcessingStatus;
 }
 
+/** One tender in the admin corpus list: no score, no grade, no saved/submitted marks. */
+export interface AdminTender {
+  id: number;
+  source: SourcePortal;
+  externalId: string;
+  referenceNo: string | null;
+  title: string | null;
+  /** The title above came from the local model. */
+  shortened: boolean;
+  buyer: string | null;
+  sector: string | null;
+  category: string | null;
+  noticeType: string | null;
+  publishedAt: string | null;
+  closingAt: string | null;
+  closed: boolean;
+  aiStatus: 'DONE' | 'FAILED' | 'SKIPPED' | null;
+  aiProcessedAt: string | null;
+  firstSeenAt: string | null;
+  sourceUrl: string | null;
+}
+
 export interface AdminCompany {
   id: number;
   name: string;

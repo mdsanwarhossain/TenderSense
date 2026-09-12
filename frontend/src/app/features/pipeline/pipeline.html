@@ -1,10 +1,10 @@
 <div class="page-intro">
   <div>
-    <h1>{{ schedule()?.jobs?.length ?? 6 }} scheduled jobs, one at a time</h1>
-    <p class="lede">
-      All schedules run on {{ schedule()?.zone ?? 'Asia/Dhaka' }}. One job at a time — a reconcile never
-      overlaps a sweep, so a slow night cannot produce a half-updated shortlist.
-    </p>
+<!--    <h1>{{ schedule()?.jobs?.length ?? 6 }} scheduled jobs, one at a time</h1>-->
+<!--    <p class="lede">-->
+<!--      All schedules run on {{ schedule()?.zone ?? 'Asia/Dhaka' }}. One job at a time — a reconcile never-->
+<!--      overlaps a sweep, so a slow night cannot produce a half-updated shortlist.-->
+<!--    </p>-->
   </div>
   <div class="intro-actions">
     <button class="btn" (click)="run('reconcile')" [disabled]="running() !== null">

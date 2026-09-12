@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -41,9 +42,15 @@ public class SchemaUpgrades implements ApplicationRunner {
         String portals = Arrays.stream(SourcePortal.values())
                 .map(p -> "'" + p.name() + "'")
                 .collect(Collectors.joining(", "));
-        apply("tender.source_portal accepts every portal",
-                "ALTER TABLE tender DROP CONSTRAINT IF EXISTS tender_source_portal_check",
-                "ALTER TABLE tender ADD CONSTRAINT tender_source_portal_check CHECK (source_portal IN (" + portals + "))");
+        // Every table holding a portal, not just `tender`: a new portal that the staging
+        // table rejects fails the run at the point of saving, after all the fetching.
+        for (String table : List.of("tender", "tender_staging")) {
+            String constraint = table + "_source_portal_check";
+            apply(table + ".source_portal accepts every portal",
+                    "ALTER TABLE " + table + " DROP CONSTRAINT IF EXISTS " + constraint,
+                    "ALTER TABLE " + table + " ADD CONSTRAINT " + constraint
+                            + " CHECK (source_portal IN (" + portals + "))");
+        }
     }
 
     private void apply(String what, String... statements) {

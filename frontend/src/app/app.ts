@@ -44,6 +44,9 @@ export class App {
   readonly section = computed<{ title: string; sub: string }>(() => {
     const url = this.url();
     const org = this.company()?.name;
+    if (url.startsWith('/admin/tenders')) {
+      return { title: 'Tenders', sub: 'Everything collected, across every company' };
+    }
     if (url.startsWith('/admin/companies')) {
       return { title: 'Companies', sub: 'Every company on TenderSense' };
     }

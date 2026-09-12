@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  AdminCompany, AdminCompanyDetail, AdminDashboard, AdminUser,
+  AdminCompany, AdminCompanyDetail, AdminDashboard, AdminTender, AdminUser,
   BenchmarkResult, BidDecisionRequest, CapabilityProfile, Dashboard, EligibilityReport,
   MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness, Role,
   RunSummary, Schedule, ScheduleJob, CronPreview, SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary,
@@ -136,6 +136,21 @@ export class ApiService {
 
   getAdminDashboard(): Observable<AdminDashboard> {
     return this.http.get<AdminDashboard>(`${this.base}/admin/dashboard`);
+  }
+
+  /** The whole corpus, admin view: every tender collected, no company in the picture. */
+  listAdminTenders(opts: {
+    page?: number; size?: number; source?: SourcePortal; aiStatus?: string;
+    includeClosed?: boolean; search?: string;
+  } = {}): Observable<PageResponse<AdminTender>> {
+    let params = new HttpParams()
+      .set('page', String(opts.page ?? 0))
+      .set('size', String(opts.size ?? 25))
+      .set('includeClosed', String(opts.includeClosed ?? true));
+    if (opts.source) params = params.set('source', opts.source);
+    if (opts.aiStatus) params = params.set('aiStatus', opts.aiStatus);
+    if (opts.search?.trim()) params = params.set('search', opts.search.trim());
+    return this.http.get<PageResponse<AdminTender>>(`${this.base}/admin/tenders`, { params });
   }
 
   listCompanies(): Observable<AdminCompany[]> {

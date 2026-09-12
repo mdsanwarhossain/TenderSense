@@ -62,6 +62,11 @@ export const routes: Routes = [
         title: 'Admin · TenderSense',
       },
       {
+        path: 'tenders',
+        loadComponent: () => import('./features/admin/tenders').then((m) => m.AdminTenders),
+        title: 'Tenders · TenderSense',
+      },
+      {
         path: 'companies',
         loadComponent: () => import('./features/admin/companies').then((m) => m.AdminCompanies),
         title: 'Companies · TenderSense',

@@ -1,6 +1,7 @@
 package com.bracit.tendersense.repository;
 
 import com.bracit.tendersense.entity.Tender;
+import com.bracit.tendersense.entity.enums.AiStatus;
 import com.bracit.tendersense.entity.enums.Sector;
 import com.bracit.tendersense.entity.enums.SourcePortal;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -53,4 +54,30 @@ public interface TenderRepository extends JpaRepository<Tender, Long> {
             + "or t.sector = com.bracit.tendersense.entity.enums.Sector.OTHER "
             + "or t.sector in :sectors")
     long countInSectors(@Param("sectors") Collection<Sector> sectors);
+
+    /**
+     * The whole corpus for the admin list, newest first -- every tender collected, with no
+     * company in the picture. Each filter is skipped when its parameter is null.
+     *
+     * @param search lower-case, already wrapped in % by the caller
+     */
+    @Query("""
+           select t from Tender t
+           where (:portal is null or t.sourcePortal = :portal)
+             and (:aiStatus is null or t.aiStatus = :aiStatus)
+             and (:includeClosed = true or t.closingAt is null or t.closingAt >= :now)
+             and (:search is null
+                  or lower(coalesce(t.aiShortTitle, '')) like :search
+                  or lower(coalesce(t.title, '')) like :search
+                  or lower(coalesce(t.buyer, '')) like :search
+                  or lower(coalesce(t.referenceNo, '')) like :search
+                  or lower(t.externalId) like :search)
+           order by coalesce(t.publishedAt, t.closingAt) desc nulls last, t.id desc
+           """)
+    org.springframework.data.domain.Page<Tender> findForAdmin(@Param("portal") SourcePortal portal,
+                                                              @Param("aiStatus") AiStatus aiStatus,
+                                                              @Param("includeClosed") boolean includeClosed,
+                                                              @Param("search") String search,
+                                                              @Param("now") LocalDateTime now,
+                                                              org.springframework.data.domain.Pageable pageable);
 }

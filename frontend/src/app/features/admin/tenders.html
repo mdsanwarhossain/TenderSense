@@ -1,0 +1,98 @@
+<div class="page-intro">
+  <div>
+    <h1>{{ total() | number }} tenders collected</h1>
+  </div>
+</div>
+
+@if (error(); as message) {
+  <div class="banner error" role="alert">{{ message }}</div>
+}
+
+<section class="toolbar" aria-label="Filters">
+  <ts-select label="Source" [options]="sourceOptions" [value]="source() ?? ''" (changed)="setSource($event)" />
+  <button class="chip" [class.on]="!includeClosed()" [attr.aria-pressed]="!includeClosed()"
+          (click)="toggleClosed()">Open only</button>
+  <label class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
+    </svg>
+    <input type="search" placeholder="Search every tender by title, buyer or reference"
+           aria-label="Search every tender" [value]="search()" (input)="typed($any($event.target).value)" />
+  </label>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Tender corpus</h2>
+      <span class="sub">Newest first, by the date the portal published them.</span>
+    </div>
+    <span class="showing">Showing <b class="mono">{{ shown() }}</b> of <b class="mono">{{ total() | number }}</b></span>
+  </div>
+
+  @if (loading() && rows().length === 0) {
+    <div class="state"><span class="spinner"></span> Loading the corpus…</div>
+  } @else if (rows().length === 0) {
+    <div class="state">
+      @if (search()) {
+        Nothing matches “{{ search() }}”. Try a different word, or clear the filters.
+      } @else {
+        No tenders match these filters.
+      }
+    </div>
+  } @else {
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols">
+          <span>Tender</span><span>Source</span><span>Buyer</span><span>Sector</span>
+          <span>Published</span><span>Closes</span><span>Model</span><span></span>
+        </div>
+        @for (t of rows(); track t.id) {
+          <div class="trow cols compact" [class.closed]="t.closed">
+            <span class="body">
+              <span class="t">
+                @if (t.shortened) { <span class="ai-mark" title="Title shortened by the local model">AI</span> }
+                {{ t.title ?? '(untitled)' }}
+              </span>
+              <span class="e mono">{{ t.referenceNo ?? t.externalId }}</span>
+            </span>
+
+            <span class="source">
+              <span class="dot" [style.background]="dot(t.source)"></span>
+              {{ sourceLabel(t.source) }}
+            </span>
+
+            <span class="e">{{ t.buyer ?? '—' }}</span>
+            <span class="e">{{ t.sector ?? 'Not classified' }}</span>
+            <span class="small muted">{{ t.publishedAt ? (t.publishedAt | date: 'd MMM yyyy') : '—' }}</span>
+
+            <span class="small">
+              @if (t.closingAt) {
+                <span [class.muted]="t.closed">{{ t.closingAt | date: 'd MMM yyyy' }}</span>
+                @if (t.closed) { <span class="pill neutral mini">closed</span> }
+              } @else {
+                <span class="muted">not stated</span>
+              }
+            </span>
+
+            <span class="small">
+              <span class="pill mini" [class.ok]="t.aiStatus === 'DONE'" [class.neutral]="t.aiStatus === 'SKIPPED' || !t.aiStatus"
+                    [class.warn]="t.aiStatus === 'FAILED'">{{ aiLabel(t.aiStatus) }}</span>
+              @if (t.aiProcessedAt) { <span class="hint">{{ timeAgo(t.aiProcessedAt) }}</span> }
+            </span>
+
+            <span class="actions">
+              @if (t.sourceUrl) {
+                <a class="btn btn-sm" [href]="t.sourceUrl" target="_blank" rel="noopener noreferrer"
+                   [title]="'Open ' + (t.referenceNo ?? t.externalId) + ' on its portal'">Portal</a>
+              }
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+    <ts-pager [page]="page()" [size]="size()" [total]="total()"
+              (pageChange)="goTo($event)" (sizeChange)="setSize($event)" />
+  }
+</section>
