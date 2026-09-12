@@ -23,6 +23,8 @@ import com.bracit.tendersense.service.TenderTrackingService;
 import com.bracit.tendersense.util.TenderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import com.bracit.tendersense.entity.enums.ShortlistSort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,8 +47,9 @@ public class ShortlistServiceImpl implements ShortlistService {
 
     @Override
     public PageResponse<TenderSummaryResponse> list(Organisation organisation, ShortlistFilter filter,
-                                                    Pageable pageable) {
-        Page<MatchResult> ranked = ranked(organisation.getId(), filter, pageable);
+                                                    ShortlistSort sort, Pageable pageable) {
+        Page<MatchResult> ranked = ranked(organisation.getId(), filter,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), orderFor(sort)));
 
         // m.getTender() is a lazy proxy: reading its id is safe, reading its fields
         // outside the transaction is not. Load the real rows in one query instead.
@@ -89,7 +92,20 @@ public class ShortlistServiceImpl implements ShortlistService {
                 count(organisation, scope.withTracked(TrackingFilter.SAVED)),
                 // Includes closed tenders whatever the toggle says -- exactly as the
                 // Submitted filter does (ShortlistFilter.effectiveIncludeClosed).
-                count(organisation, scope.withTracked(TrackingFilter.SUBMITTED)));
+                count(organisation, scope.withTracked(TrackingFilter.SUBMITTED)),
+                matchResultRepository.newestPublishedAt(MatcherType.EMBEDDING, organisation.getId(),
+                        source, sector, includeClosed, LocalDateTime.now()));
+    }
+
+    /**
+     * A tender with no published date sorts last rather than first: "newest" should
+     * not be led by notices whose portal never said when they appeared. The id breaks
+     * ties, so paging stays stable when one run stamps many tenders alike.
+     */
+    private static Sort orderFor(ShortlistSort sort) {
+        return sort == ShortlistSort.NEWEST
+                ? Sort.by(Sort.Order.desc("tender.publishedAt").nullsLast(), Sort.Order.desc("tender.id"))
+                : Sort.by(Sort.Order.desc("score"));
     }
 
     private Page<MatchResult> ranked(Long organisationId, ShortlistFilter f, Pageable pageable) {

@@ -120,6 +120,34 @@
         </div>
 
         @if (evidence(); as ev) {
+          <div class="comparison">
+            @if (summaryPending()) {
+              <div class="writing" role="status" aria-live="polite">
+                <span class="spinner"></span> Loading matching criteria…
+              </div>
+            } @else if (summary(); as sum) {
+              @if (sum.comparison) { <p class="lede">{{ sum.comparison }}</p> }
+
+              @if (sum.matches.length) {
+                <span class="label">Where your work meets this tender</span>
+                <ul class="points">
+                  @for (m of sum.matches; track m) { <li>{{ m }}</li> }
+                </ul>
+              }
+
+              @if (sum.gaps.length) {
+                <span class="label">What this tender asks for that your profile does not show</span>
+                <ul class="points gaps">
+                  @for (g of sum.gaps; track g) { <li>{{ g }}</li> }
+                </ul>
+              }
+
+              @if (provenance(); as line) {
+                <span class="hint">{{ line }}</span>
+              }
+            }
+          </div>
+
           <div class="criteria">
             <span class="label">Sector</span>
             <div class="chips">

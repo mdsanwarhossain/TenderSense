@@ -15,6 +15,7 @@ import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.repository.TenderStagingRepository;
 import com.bracit.tendersense.service.LlmClient;
+import com.bracit.tendersense.service.ModelPriority;
 import com.bracit.tendersense.service.ScoringService;
 import com.bracit.tendersense.service.TenderIngestionService;
 import com.bracit.tendersense.service.TenderProcessingService;
@@ -52,6 +53,7 @@ public class TenderProcessingServiceImpl implements TenderProcessingService {
     private final ScoringService scoringService;
     private final OrganisationRepository organisationRepository;
     private final LlmClient llmClient;
+    private final ModelPriority modelPriority;
     private final LlmProperties llm;
     private final ProcessingProperties props;
     private final TransactionTemplate tx;
@@ -62,6 +64,11 @@ public class TenderProcessingServiceImpl implements TenderProcessingService {
 
     @Override
     public int processBatch(boolean useModel) {
+        // Someone is watching a spinner on a tender page. One Ollama serves both, so the
+        // batch waits: it runs again in 30 seconds and nobody is watching it.
+        if (useModel && modelPriority.someoneIsWaiting()) {
+            return 0;
+        }
         tx.executeWithoutResult(s -> stagingRepository.releaseStale(StagingStatus.PENDING,
                 StagingStatus.PROCESSING, Instant.now().minus(props.getLeaseMinutes(), ChronoUnit.MINUTES)));
 

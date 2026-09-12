@@ -90,65 +90,35 @@
     </section>
   </div>
 
-  <!-- 4. Activity and alerts. -->
-  <div class="split even">
-    <section class="card">
-      <div class="card-head">
-        <div>
-          <h2>New matches</h2>
-          <span class="sub">Tenders that newly matched your profile.</span>
-        </div>
-        @if (d.activity.unread > 0) {
-          <span class="pill accent">{{ d.activity.unread }} unread</span>
-        }
+  <!-- 4. New matches: what newly matched this profile. -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>New matches</h2>
+        <span class="sub">Tenders that newly matched your profile.</span>
       </div>
-      @for (n of d.activity.newMatches; track n.id) {
-        <a class="item alert" [routerLink]="['/tenders', n.tenderId]">
-          <span class="unread-dot" [class.read]="n.read" [attr.aria-label]="n.read ? null : 'Unread'"></span>
-          <span class="body">
-            <span class="t">{{ n.tenderTitle ?? '(untitled)' }}</span>
-            <span class="e">{{ n.procuringEntity ?? '' }}</span>
-          </span>
-          <span class="side">
-            <ts-grade-badge [grade]="n.grade" />
-            <span class="hint">{{ timeAgo(n.createdAt) }}</span>
-          </span>
-        </a>
-      } @empty {
-        <p class="empty">No alerts yet. New S- and A-grade matches appear here and on the bell.</p>
+      @if (d.activity.unread > 0) {
+        <span class="pill accent">{{ d.activity.unread }} unread</span>
       }
-    </section>
+    </div>
+    @for (n of d.activity.newMatches; track n.id) {
+      <a class="item alert" [routerLink]="['/tenders', n.tenderId]">
+        <span class="unread-dot" [class.read]="n.read" [attr.aria-label]="n.read ? null : 'Unread'"></span>
+        <span class="body">
+          <span class="t">{{ n.tenderTitle ?? '(untitled)' }}</span>
+          <span class="e">{{ n.procuringEntity ?? '' }}</span>
+        </span>
+        <span class="side">
+          <ts-grade-badge [grade]="n.grade" />
+          <span class="hint">{{ timeAgo(n.createdAt) }}</span>
+        </span>
+      </a>
+    } @empty {
+      <p class="empty">No alerts yet. New S- and A-grade matches appear here and on the bell.</p>
+    }
+    <a class="card-foot" routerLink="/shortlist" [queryParams]="{ sort: 'NEWEST' }">
+      See the newest tenders in the list →
+    </a>
+  </section>
 
-    <section class="card">
-      <div class="card-head">
-        <div>
-          <h2>Your activity</h2>
-          <span class="sub">What your team saved and submitted most recently.</span>
-        </div>
-      </div>
-      @for (a of d.activity.tracking; track a.tenderId) {
-        <a class="item track" [routerLink]="['/tenders', a.tenderId]">
-          <span class="body">
-            <span class="t">{{ a.title ?? '(untitled)' }}</span>
-            <span class="meta">
-              @if (a.submitted) { <span class="pill ok">Submitted</span> }
-              @if (a.saved) { <span class="pill accent">Saved</span> }
-              <span class="e">{{ sourceLabel(a.source) }}</span>
-            </span>
-          </span>
-          <span class="hint">{{ timeAgo(a.updatedAt) }}</span>
-        </a>
-      } @empty {
-        <p class="empty">Nothing saved or submitted yet. Use the heart and the tick on any tender.</p>
-      }
-      <p class="card-note">
-        @if (d.activity.scoring.lastScoredAt) {
-          {{ d.activity.scoring.scoredCount | number }} tenders scored against your profile, last on
-          {{ d.activity.scoring.lastScoredAt | date: 'd MMM, HH:mm' }}.
-        } @else {
-          Your tenders have not been scored yet.
-        }
-      </p>
-    </section>
-  </div>
 }

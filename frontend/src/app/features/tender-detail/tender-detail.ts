@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -6,11 +6,13 @@ import { ApiService } from '../../core/services/api.service';
 import { GradeBadge } from '../../shared/grade-badge';
 import { EligibilityChip } from '../../shared/eligibility-chip';
 import { TenderActions } from '../../shared/tender-actions';
+import { timeAgo } from '../../shared/format';
 import {
   BidAction,
   EligibilityReport,
   MatchEvidence,
   MatchGrade,
+  MatchSummary,
   SOURCE_LABELS,
   SourcePortal,
   TenderDetail as TenderDetailModel,
@@ -42,6 +44,14 @@ const NOTICE_LABELS: Record<string, string> = {
 const EVIDENCE_FLOOR = 0.2;
 
 /**
+ * How long to keep asking for a comparison the model is still writing. The server gives
+ * up on the model at 120s, so stopping a little later means the page always ends on the
+ * server's answer -- a fallback -- rather than on our own patience running out.
+ */
+const SUMMARY_POLL_MS = 3000;
+const SUMMARY_POLL_LIMIT = 45;
+
+/**
  * One tender in full, written for the tender team rather than for engineers: plain
  * words, percentages, and the matched services as chips instead of raw passages.
  */
@@ -60,6 +70,8 @@ export class TenderDetail {
 
   readonly tender = signal<TenderDetailModel | null>(null);
   readonly evidence = signal<MatchEvidence | null>(null);
+  /** null until the first answer arrives; the section shows its loader until then. */
+  readonly summary = signal<MatchSummary | null>(null);
   readonly eligibility = signal<EligibilityReport | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -163,8 +175,52 @@ export class TenderDetail {
     return out;
   });
 
+  /** True while the model is writing: the section shows "Loading matching criteria". */
+  readonly summaryPending = computed(() => {
+    const s = this.summary();
+    return s === null || s.status === 'GENERATING';
+  });
+
+  /**
+   * Built here rather than stitched together in the template: Angular keeps the
+   * whitespace around an inline @if, which put a space before the comma and the stop.
+   */
+  readonly provenance = computed(() => {
+    const s = this.summary();
+    if (!s?.writtenBy) return null;
+    const when = s.generatedAt ? timeAgo(s.generatedAt) : null;
+    return when ? `Written by ${s.writtenBy}, ${when}.` : `Written by ${s.writtenBy}.`;
+  });
+
+  private summaryTimer: ReturnType<typeof setTimeout> | undefined;
+
   constructor() {
     queueMicrotask(() => this.load());
+    // Polling must not outlive the page: leaving a tender stops the asking.
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.summaryTimer));
+  }
+
+  /**
+   * Asked for separately from the rest of the page, and never joined with it: a
+   * comparison the model has to write takes seconds, and everything else is ready now.
+   */
+  private loadSummary(id: number, attempt = 0): void {
+    this.api.getMatchSummary(id).subscribe({
+      next: (summary) => {
+        this.summary.set(summary);
+        if (summary.status === 'GENERATING' && attempt < SUMMARY_POLL_LIMIT) {
+          this.summaryTimer = setTimeout(() => this.loadSummary(id, attempt + 1), SUMMARY_POLL_MS);
+        } else if (summary.status === 'GENERATING') {
+          // Stop asking, and say so rather than spinning forever.
+          this.summary.set({ ...summary, status: 'UNAVAILABLE' });
+        }
+      },
+      // A failed poll is not worth an error banner over the whole page.
+      error: () => this.summary.set({
+        status: 'UNAVAILABLE', comparison: null, matches: [], gaps: [],
+        writtenBy: null, generatedAt: null,
+      }),
+    });
   }
 
   private load(): void {
@@ -188,6 +244,7 @@ export class TenderDetail {
         this.evidence.set(evidence);
         this.eligibility.set(eligibility);
         this.loading.set(false);
+        this.loadSummary(id);
       },
       error: (err) => {
         this.error.set(this.describe(err));

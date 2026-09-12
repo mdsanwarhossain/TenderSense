@@ -18,7 +18,7 @@ class DashboardServiceImplTest {
 
     private static TenderSummaryResponse tender(long id, MatchGrade grade, boolean saved, int closesInDays) {
         return new TenderSummaryResponse(id, "X" + id, SourcePortal.EGP_BANGLADESH, "T" + id, null, null, null,
-                NOW.plusDays(closesInDays), closesInDays, true, grade, 0.5, null, 0, null, null,
+                NOW.minusDays(3), NOW.plusDays(closesInDays), closesInDays, true, grade, 0.5, null, 0, null, null,
                 saved, false, null, null, null);
     }
 

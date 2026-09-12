@@ -1,12 +1,16 @@
 package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.config.LlmProperties;
+import com.bracit.tendersense.dto.MatchComparison;
+import com.bracit.tendersense.dto.MatchEvidenceResponse;
 import com.bracit.tendersense.dto.TenderEnrichment;
+import com.bracit.tendersense.entity.CapabilityProfile;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.exception.LlmCallException;
 import com.bracit.tendersense.exception.LlmUnavailableException;
 import com.bracit.tendersense.service.LlmClient;
 import com.bracit.tendersense.util.EnrichmentPrompt;
+import com.bracit.tendersense.util.MatchSummaryPrompt;
 import com.bracit.tendersense.util.MoneyTextParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -44,19 +48,71 @@ public class OllamaLlmClient implements LlmClient {
 
     private final LlmProperties props;
     private final RestClient http;
+    /** Same server, shorter patience: someone is waiting on this one. */
+    private final RestClient summaryHttp;
     private final ObjectMapper json = new ObjectMapper();
 
     public OllamaLlmClient(LlmProperties props) {
         this.props = props;
+        this.http = client(props.getBaseUrl(), props.getReadTimeoutSeconds());
+        this.summaryHttp = client(props.getBaseUrl(), props.getSummaryReadTimeoutSeconds());
+    }
+
+    private static RestClient client(String baseUrl, int readTimeoutSeconds) {
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(
                 HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build());
-        factory.setReadTimeout(Duration.ofSeconds(props.getReadTimeoutSeconds()));
-        this.http = RestClient.builder().baseUrl(props.getBaseUrl()).requestFactory(factory).build();
+        factory.setReadTimeout(Duration.ofSeconds(readTimeoutSeconds));
+        return RestClient.builder().baseUrl(baseUrl).requestFactory(factory).build();
     }
 
     @Override
     public String model() {
         return props.getModel();
+    }
+
+    @Override
+    public String summaryModel() {
+        return props.getSummaryModel();
+    }
+
+    /**
+     * The only model call a person waits for, so it is built to be quick and to give up
+     * early: the small model, fewer threads than the batch job, and its own timeout well
+     * under the batch ceiling. A caller that gets an exception falls back to the written
+     * summary rather than showing nothing.
+     */
+    @Override
+    public MatchComparison compare(Tender tender, CapabilityProfile profile,
+                                   List<MatchEvidenceResponse.EvidencePair> evidence, int attempt) {
+        Map<String, Object> options = new LinkedHashMap<>();
+        options.put("temperature", 0);
+        options.put("seed", props.getSeed() + attempt);
+        if (attempt > 0) {
+            options.put("repeat_penalty", 1.3);
+        }
+        options.put("num_ctx", props.getNumCtx());
+        options.put("num_thread", props.getSummaryNumThread());
+        options.put("num_predict", props.getSummaryNumPredict());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("model", props.getSummaryModel());
+        body.put("stream", false);
+        body.put("system", MatchSummaryPrompt.SYSTEM);
+        body.put("prompt", MatchSummaryPrompt.user(tender, profile, evidence));
+        body.put("format", MatchSummaryPrompt.schema());
+        body.put("keep_alive", props.getKeepAlive());
+        body.put("options", options);
+
+        long started = System.currentTimeMillis();
+        String raw = call(summaryHttp, body, props.getSummaryModel());
+        log.debug("compared tender {} with {} in {} ms", tender.getExternalId(), profile.getOrgName(),
+                System.currentTimeMillis() - started);
+        return parseComparison(raw);
+    }
+
+    MatchComparison parseComparison(String raw) {
+        JsonNode r = response(raw);
+        return new MatchComparison(text(r, "comparison"), list(r, "matches"), list(r, "gaps"));
     }
 
     @Override
@@ -86,16 +142,21 @@ public class OllamaLlmClient implements LlmClient {
         body.put("options", options);
 
         long started = System.currentTimeMillis();
-        String raw;
+        String raw = call(http, body, props.getModel());
+        log.debug("enriched tender {} in {} ms", tender.getExternalId(), System.currentTimeMillis() - started);
+        return parse(raw);
+    }
+
+    private String call(RestClient client, Map<String, Object> body, String model) {
         try {
-            raw = http.post().uri("/api/generate")
+            return client.post().uri("/api/generate")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(json.writeValueAsString(body))
                     .retrieve()
                     .body(String.class);
         } catch (HttpClientErrorException.NotFound e) {
-            throw new LlmUnavailableException("model " + props.getModel()
-                    + " is not installed -- run: ollama pull " + props.getModel(), e);
+            throw new LlmUnavailableException("model " + model
+                    + " is not installed -- run: ollama pull " + model, e);
         } catch (ResourceAccessException e) {
             if (connectFailure(e)) {
                 throw new LlmUnavailableException("Ollama is not reachable at " + props.getBaseUrl(), e);
@@ -105,11 +166,22 @@ public class OllamaLlmClient implements LlmClient {
             throw new LlmCallException("Ollama answered " + e.getStatusCode() + ": "
                     + e.getResponseBodyAsString(), e);
         }
-        log.debug("enriched tender {} in {} ms", tender.getExternalId(), System.currentTimeMillis() - started);
-        return parse(raw);
     }
 
     TenderEnrichment parse(String raw) {
+        JsonNode r = response(raw);
+        return new TenderEnrichment(
+                text(r, "short_title"),
+                text(r, "summary"),
+                list(r, "deliverables"),
+                text(r, "location"),
+                money(r, "min_turnover_bdt"),
+                integer(r, "min_experience_years"),
+                list(r, "certifications"));
+    }
+
+    /** Ollama wraps the model's JSON in an envelope; this unwraps and checks both. */
+    private JsonNode response(String raw) {
         JsonNode r;
         try {
             JsonNode envelope = json.readTree(raw == null ? "" : raw);
@@ -120,14 +192,7 @@ public class OllamaLlmClient implements LlmClient {
         if (r == null || !r.isObject()) {
             throw new LlmCallException("reply is not a JSON object");
         }
-        return new TenderEnrichment(
-                text(r, "short_title"),
-                text(r, "summary"),
-                list(r, "deliverables"),
-                text(r, "location"),
-                money(r, "min_turnover_bdt"),
-                integer(r, "min_experience_years"),
-                list(r, "certifications"));
+        return r;
     }
 
     private static String text(JsonNode r, String field) {

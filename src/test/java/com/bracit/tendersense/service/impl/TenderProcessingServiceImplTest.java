@@ -14,6 +14,7 @@ import com.bracit.tendersense.repository.OrganisationRepository;
 import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.repository.TenderStagingRepository;
 import com.bracit.tendersense.service.LlmClient;
+import com.bracit.tendersense.service.ModelPriority;
 import com.bracit.tendersense.service.ScoringService;
 import com.bracit.tendersense.service.TenderIngestionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +62,7 @@ class TenderProcessingServiceImplTest {
     @SuppressWarnings("unchecked")
     void setUp() {
         worker = new TenderProcessingServiceImpl(staging, tenders, ingestion, scoring, organisations,
-                model, new LlmProperties(), new ProcessingProperties(), tx);
+                model, new ModelPriority(), new LlmProperties(), new ProcessingProperties(), tx);
         when(model.model()).thenReturn("test-model");
         when(tx.execute(any())).thenAnswer(i -> ((TransactionCallback<Object>) i.getArgument(0)).doInTransaction(null));
         doAnswer(i -> {

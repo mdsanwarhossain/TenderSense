@@ -52,6 +52,7 @@ public class TenderMapper {
                 t.getProcuringEntity(),
                 t.getProcurementNature(),
                 t.getProcurementMethod(),
+                t.getPublishedAt(),
                 t.getClosingAt(),
                 days,
                 days != null && days <= URGENT_DAYS && days >= 0,

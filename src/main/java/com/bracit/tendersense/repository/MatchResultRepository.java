@@ -28,7 +28,12 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
             Long tenderId, Long organisationId, MatcherType matcherType);
 
     /**
-     * The shortlist query: ranked by score, filtered server-side, scoped to one company.
+     * The shortlist query: filtered server-side, scoped to one company, ordered by
+     * the caller's {@link Pageable} sort.
+     *
+     * <p>The ordering is deliberately NOT fixed here. Spring appends a Pageable's sort
+     * after any {@code order by} written into the query, so a hardcoded "score desc"
+     * would quietly remain the primary key of every ordering a caller asked for.
      *
      * <p>Closed tenders are excluded by default — a high-scoring notice whose deadline
      * passed months ago is not actionable, and the ranking will happily surface one.
@@ -56,7 +61,6 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
                       and tt.submittedAt is not null))
              and (:closingSoon = false or (m.tender.closingAt >= :soonFrom
                                            and m.tender.closingAt < :soonUntil))
-           order by m.score desc
            """)
     Page<MatchResult> findRanked(@Param("matcherType") MatcherType matcherType,
                                  @Param("organisationId") Long organisationId,
@@ -71,6 +75,29 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
                                  @Param("soonUntil") LocalDateTime soonUntil,
                                  @Param("now") LocalDateTime now,
                                  Pageable pageable);
+
+    /**
+     * The most recent publication date in the same scope the summary counts use.
+     *
+     * <p>Feeds the "Newest first" card: the card both states what the freshest notice is
+     * and turns on that ordering, so the number and the sort can never disagree.
+     */
+    @Query("""
+           select max(m.tender.publishedAt) from MatchResult m
+           where m.matcherType = :matcherType
+             and m.organisation.id = :organisationId
+             and (:source is null or m.tender.sourcePortal = :source)
+             and (:sector is null or m.tender.sector = :sector)
+             and (:includeClosed = true
+                  or m.tender.closingAt is null
+                  or m.tender.closingAt >= :now)
+           """)
+    LocalDateTime newestPublishedAt(@Param("matcherType") MatcherType matcherType,
+                                    @Param("organisationId") Long organisationId,
+                                    @Param("source") SourcePortal source,
+                                    @Param("sector") Sector sector,
+                                    @Param("includeClosed") boolean includeClosed,
+                                    @Param("now") LocalDateTime now);
 
     /** One query for a whole page, instead of one lookup per row. */
     @Query("""

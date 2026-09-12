@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -97,12 +98,18 @@ public class PipelineServiceImpl implements PipelineService {
                 .orElseGet(() -> recordSkipped("rescore:ALL"));
     }
 
+    /**
+     * The digest is "your best matches", so it states its own ordering: the shortlist
+     * query leaves that to the caller, and a page with no sort is database order.
+     */
+    private static final Sort BY_SCORE = Sort.by(Sort.Order.desc("score"));
+
     @Override
     public DigestResponse digest(Organisation organisation) {
         Page<MatchResult> ranked = matchResultRepository.findRanked(
                 MatcherType.EMBEDDING, organisation.getId(), null, null, null, false,
                 false, false, false, TenderMapper.urgentFrom(), TenderMapper.urgentUntil(),
-                LocalDateTime.now(), PageRequest.of(0, DIGEST_SIZE));
+                LocalDateTime.now(), PageRequest.of(0, DIGEST_SIZE, BY_SCORE));
 
         List<Long> ids = ranked.getContent().stream().map(m -> m.getTender().getId()).toList();
         Map<Long, Tender> tenders = new HashMap<>();

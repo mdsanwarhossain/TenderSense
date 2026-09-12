@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GradeBadge } from '../../shared/grade-badge';
+import { ShortlistSort } from '../../core/models/tender.models';
 import { ScoreBar } from '../../shared/score-bar';
 import { Deadline } from '../../shared/deadline';
 import { TenderActions } from '../../shared/tender-actions';
@@ -35,7 +37,7 @@ const SOURCE_DOTS: Record<SourcePortal, string> = {
 @Component({
   selector: 'ts-shortlist',
   standalone: true,
-  imports: [RouterLink, GradeBadge, ScoreBar, Deadline, TenderActions, Select, Pager],
+  imports: [DatePipe, RouterLink, GradeBadge, ScoreBar, Deadline, TenderActions, Select, Pager],
   templateUrl: './shortlist.html',
   styleUrl: './shortlist.css',
 })
@@ -61,6 +63,7 @@ export class Shortlist {
   readonly running = signal(false);
 
   /** Grade filter: each option in its table colours, with the band it stands for. */
+
   readonly gradeOptions: SelectOption[] = [
     { value: '', label: 'All grades' },
     ...(['S', 'A', 'B', 'C'] as MatchGrade[]).map((g) => ({
@@ -82,6 +85,7 @@ export class Shortlist {
   readonly activeTracked = signal<TrackingFilter | null>(null);
   /** The "Closing within 7 days" card's filter. */
   readonly closingSoon = signal(false);
+  readonly activeSort = signal<ShortlistSort>('BEST_MATCH');
 
   sourceLabel(source: SourcePortal): string {
     return SOURCE_LABELS[source];
@@ -106,6 +110,11 @@ export class Shortlist {
     );
   });
 
+  /** True when no card is narrowing the table -- the Total card's own on state. */
+  readonly showingEverything = computed(
+    () => !this.activeGrade() && !this.activeTracked() && !this.closingSoon(),
+  );
+
   constructor() {
     // The dashboard's cards link here with their filter in the address
     // (?grade=S, ?closingSoon=1, ?tracked=SAVED), so the list opens already narrowed.
@@ -121,6 +130,10 @@ export class Shortlist {
     const tracked = params.get('tracked');
     if (tracked === 'SAVED' || tracked === 'SUBMITTED') {
       this.activeTracked.set(tracked);
+    }
+    // The dashboard's New matches card links here asking for newest first.
+    if ((params.get('sort') ?? '').toUpperCase() === 'NEWEST') {
+      this.activeSort.set('NEWEST');
     }
     const soon = params.get('closingSoon');
     if (soon === '1' || soon === 'true') {
@@ -142,6 +155,7 @@ export class Shortlist {
         includeClosed: this.includeClosed(),
         tracked: this.activeTracked() ?? undefined,
         closingSoon: this.closingSoon(),
+        sort: this.activeSort(),
       })
       .subscribe({
       next: (res) => {
@@ -173,6 +187,19 @@ export class Shortlist {
     this.query.set(value);
   }
 
+  /**
+   * The Total card: back to every tender in scope. It clears what the cards narrow --
+   * grade, saved / submitted, closing soon -- and deliberately leaves Source, Include
+   * closed and the ordering alone, since those are scope and sort, not card state.
+   */
+  clearFilters(): void {
+    this.activeGrade.set(null);
+    this.activeTracked.set(null);
+    this.closingSoon.set(false);
+    this.page.set(0);
+    this.load();
+  }
+
   setGrade(value: string): void {
     this.activeGrade.set((value || null) as MatchGrade | null);
     this.page.set(0);
@@ -181,6 +208,16 @@ export class Shortlist {
 
   setSource(value: string): void {
     this.activeSource.set((value || null) as SourcePortal | null);
+    this.page.set(0);
+    this.load();
+  }
+
+  /**
+   * The Newest card is the ordering, not a filter: on means newest notice first, off
+   * means the list's usual best-match order. There is no third state to name.
+   */
+  toggleNewest(): void {
+    this.activeSort.set(this.activeSort() === 'NEWEST' ? 'BEST_MATCH' : 'NEWEST');
     this.page.set(0);
     this.load();
   }

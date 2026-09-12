@@ -17,6 +17,8 @@ public record TenderSummaryResponse(
         String procuringEntity,
         String procurementNature,
         String procurementMethod,
+        /** When the portal published it -- what "Newest first" orders by. */
+        LocalDateTime publishedAt,
         LocalDateTime closingAt,
         Integer daysToDeadline,
         boolean urgent,

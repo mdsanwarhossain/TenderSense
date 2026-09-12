@@ -188,3 +188,54 @@
   border-top: 1px solid var(--line-soft);
 }
 .ai-reqs ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+
+/* The model's comparison of this tender with the company's own work. */
+.comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* The same gutter and top rule as every other block in this card, so the
+     comparison lines up with Sector and the matched services below it. */
+  padding: 16px 22px;
+  border-top: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+.comparison .lede {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.comparison .points {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comparison .points li {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  /* A tender title can be one long unbroken string; it wraps rather than
+     running under the card's edge, which clips it. */
+  overflow-wrap: anywhere;
+}
+
+.comparison .points li::marker { color: var(--ok); }
+.comparison .points.gaps li::marker { color: var(--warn); }
+
+/* Holds the section's height while the model writes, so the card does not jump. */
+.comparison .writing {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--ink-3);
+  animation: fade-in var(--t) var(--ease-out) both;
+}

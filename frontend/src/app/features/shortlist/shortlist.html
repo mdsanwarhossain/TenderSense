@@ -1,5 +1,7 @@
 <div class="stat-strip">
-  <div class="stat">
+  <!-- Also a button: it clears the card filters and shows everything in scope. -->
+  <button type="button" class="stat stat-filter" [class.on]="showingEverything()"
+          [attr.aria-pressed]="showingEverything()" (click)="clearFilters()">
     <span class="stat-icon i-accent">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -10,9 +12,9 @@
       <span class="stat-label">Total tenders</span>
       <span class="stat-value">{{ summary()?.total ?? total() }}</span>
     </span>
-  </div>
+  </button>
 
-  <!-- The other cards are filters: click to narrow the table, click again to clear. -->
+  <!-- These cards narrow the table: click to filter, click again to clear. -->
   <button type="button" class="stat stat-filter" [class.on]="activeGrade() === 'S'"
           [attr.aria-pressed]="activeGrade() === 'S'" (click)="toggleSGrade()">
     <span class="stat-icon i-accent">
@@ -70,6 +72,23 @@
       <span class="stat-label">Submitted</span>
       <span class="stat-value ok">{{ summary()?.submitted ?? '—' }}</span>
       <span class="stat-foot">incl. closed tenders</span>
+    </span>
+  </button>
+
+  <!-- Not a filter like its neighbours: this one orders the table, newest notice first. -->
+  <button type="button" class="stat stat-filter" [class.on]="activeSort() === 'NEWEST'"
+          [attr.aria-pressed]="activeSort() === 'NEWEST'" (click)="toggleNewest()">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h9" /><path d="M4 12h6" /><path d="M4 18h3" />
+        <path d="M18 7v10" /><path d="m15 14 3 3 3-3" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Newest</span>
+      <span class="stat-value">{{ (summary()?.newestPublishedAt | date: 'd MMM') ?? '—' }}</span>
+      <span class="stat-foot">most recent notice</span>
     </span>
   </button>
 </div>
@@ -143,7 +162,7 @@
       <div class="table">
         <div class="thead cols">
           <span>Grade</span><span>Match</span><span>Tender</span>
-          <span>Source</span><span>Closes</span><span>Action</span>
+          <span>Source</span><span>Published</span><span>Closes</span><span>Action</span>
         </div>
 
         @for (row of visible(); track row.id) {
@@ -166,6 +185,10 @@
               <span class="dot" [class.wb]="row.source === 'WORLD_BANK'"
                     [class.ungm]="row.source === 'UNGM'" [class.isdb]="row.source === 'ISDB'" [class.brac]="row.source === 'BRAC'"></span>
               {{ sourceLabel(row.source) }}
+            </span>
+
+            <span class="published">
+              {{ row.publishedAt ? (row.publishedAt | date: 'd MMM y') : '—' }}
             </span>
 
             <ts-deadline [closingAt]="row.closingAt" [days]="row.daysToDeadline" />

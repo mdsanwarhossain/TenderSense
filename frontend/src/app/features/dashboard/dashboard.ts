@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -30,7 +30,7 @@ interface HeadlineCard {
 @Component({
   selector: 'ts-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, GradeBadge, ScoreBar, Deadline],
+  imports: [RouterLink, DecimalPipe, GradeBadge, ScoreBar, Deadline],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

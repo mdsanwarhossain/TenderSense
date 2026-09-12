@@ -1,13 +1,18 @@
 package com.bracit.tendersense.controller;
 
 import com.bracit.tendersense.entity.Organisation;
+import com.bracit.tendersense.entity.Tender;
+import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.repository.AccountRepository;
+import com.bracit.tendersense.repository.MatchResultRepository;
 import com.bracit.tendersense.repository.OrganisationRepository;
+import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.support.TestAuth;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
@@ -18,6 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,6 +47,10 @@ class ApiEndpointsIT {
     private AccountRepository accountRepository;
     @Autowired
     private OrganisationRepository organisationRepository;
+    @Autowired
+    private TenderRepository tenderRepository;
+    @Autowired
+    private MatchResultRepository matchResultRepository;
 
     private RequestPostProcessor as(String slug) {
         Organisation org = organisationRepository.findBySlug(slug)
@@ -78,6 +88,66 @@ class ApiEndpointsIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").isNumber());
+    }
+
+    @Test
+    @DisplayName("?sort=NEWEST returns the newest tenders first; the default still ranks by score")
+    void sortsByNewest() throws Exception {
+        Organisation bracit = organisationRepository.findBySlug("bracit").orElseThrow();
+
+        // The list never returns publishedAt, so the expected order is taken from the
+        // database and compared by id. That still exercises the real thing: the sort
+        // property path "tender.publishedAt" and its nulls-last handling.
+        List<Long> expected = tenderRepository.findAll(
+                        Sort.by(Sort.Order.desc("publishedAt").nullsLast(), Sort.Order.desc("id")))
+                .stream()
+                .map(Tender::getId)
+                .filter(id -> matchResultRepository.findByTenderIdAndOrganisationIdAndMatcherType(
+                        id, bracit.getId(), MatcherType.EMBEDDING).isPresent())
+                .toList();
+        Assumptions.assumeTrue(expected.size() >= 3, "not enough scored tenders to order");
+
+        List<Long> actual = ids(mockMvc.perform(get("/api/tenders")
+                        .param("size", "10").param("sort", "NEWEST").param("includeClosed", "true")
+                        .with(bracit()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        assertTrue(actual.size() >= 3, "expected a page of rows, got " + actual.size());
+        assertEquals(expected.subList(0, actual.size()), actual,
+                "?sort=NEWEST did not return the newest tenders first");
+
+        // The list's reason for existing: without the parameter, best match first.
+        List<Double> scores = scores(mockMvc.perform(get("/api/tenders").param("size", "10").with(bracit()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        for (int i = 1; i < scores.size(); i++) {
+            assertTrue(scores.get(i - 1) >= scores.get(i),
+                    "the default order is no longer by score: " + scores);
+        }
+    }
+
+    private static List<Long> ids(String json) {
+        List<Long> out = new ArrayList<>();
+        Matcher m = Pattern.compile("[{,]" + quoted("id") + ":([0-9]+)").matcher(json);
+        while (m.find()) {
+            out.add(Long.valueOf(m.group(1)));
+        }
+        return out;
+    }
+
+    private static List<Double> scores(String json) {
+        List<Double> out = new ArrayList<>();
+        Matcher m = Pattern.compile(quoted("score") + ":([0-9.eE+-]+)").matcher(json);
+        while (m.find()) {
+            out.add(Double.valueOf(m.group(1)));
+        }
+        return out;
+    }
+
+    /** A JSON field name in quotes, built without stacking backslashes. */
+    private static String quoted(String field) {
+        String q = String.valueOf((char) 34);
+        return q + field + q;
     }
 
     @Test

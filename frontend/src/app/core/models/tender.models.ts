@@ -33,6 +33,8 @@ export interface TenderSummary {
   procuringEntity: string | null;
   procurementNature: string | null;
   procurementMethod: string | null;
+  /** When the portal published it -- what "Newest first" orders by. */
+  publishedAt: string | null;
   closingAt: string | null;
   daysToDeadline: number | null;
   urgent: boolean;
@@ -60,6 +62,8 @@ export interface TenderListSummary {
   closingSoon: number;
   saved: number;
   submitted: number;
+  /** When the most recent notice in scope was published; null when none states one. */
+  newestPublishedAt: string | null;
 }
 
 /** Shortlist filter: only saved, or only submitted, tenders. */
@@ -137,6 +141,9 @@ export interface EvidencePair {
   similarity: number;
 }
 
+/** How the tender list is ordered. Best match is the default the list has always used. */
+export type ShortlistSort = 'BEST_MATCH' | 'NEWEST';
+
 export interface MatchEvidence {
   tenderId: number;
   grade: MatchGrade | null;
@@ -148,6 +155,19 @@ export interface MatchEvidence {
   demotedFor: string | null;
   demotionPenalty: number | null;
   evidence: EvidencePair[];
+}
+
+export type MatchSummaryStatus = 'READY' | 'GENERATING' | 'UNAVAILABLE';
+
+/** The local model's comparison of this tender with the company's own work. */
+export interface MatchSummary {
+  status: MatchSummaryStatus;
+  comparison: string | null;
+  matches: string[];
+  gaps: string[];
+  /** The model that wrote it, shown as provenance. */
+  writtenBy: string | null;
+  generatedAt: string | null;
 }
 
 export interface EligibilityGap {

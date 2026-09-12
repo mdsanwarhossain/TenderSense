@@ -5,6 +5,7 @@ import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.enums.Role;
 import com.bracit.tendersense.repository.AccountRepository;
 import com.bracit.tendersense.repository.OrganisationRepository;
+import com.bracit.tendersense.repository.TenderRepository;
 import com.bracit.tendersense.security.AccountPrincipal;
 import com.bracit.tendersense.support.TestAuth;
 import org.junit.jupiter.api.AfterEach;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,6 +42,7 @@ class SecurityIT {
     @Autowired private MockMvc mockMvc;
     @Autowired private AccountRepository accountRepository;
     @Autowired private OrganisationRepository organisationRepository;
+    @Autowired private TenderRepository tenderRepository;
 
     private RequestPostProcessor company;
     private RequestPostProcessor admin;
@@ -61,7 +64,7 @@ class SecurityIT {
     @DisplayName("signed out: every API but sign-in answers 401")
     void signedOut() throws Exception {
         for (String url : List.of("/api/tenders", "/api/dashboard", "/api/admin/dashboard",
-                "/api/pipeline/runs", "/api/pipeline/processing")) {
+                "/api/pipeline/runs", "/api/pipeline/processing", "/api/tenders/1/match-summary")) {
             mockMvc.perform(get(url)).andExpect(status().isUnauthorized());
         }
         // Sign-up lists sectors before an account exists.
@@ -77,6 +80,12 @@ class SecurityIT {
                 .andExpect(jsonPath("$.bestMatches").isArray())
                 .andExpect(jsonPath("$.activity.scoring.stale").isBoolean());
         mockMvc.perform(get("/api/pipeline/digest").with(company)).andExpect(status().isOk());
+
+        // The comparison is company-scoped, and answers at once whether or not the model
+        // has written one yet -- the page is never left waiting on a request.
+        mockMvc.perform(get("/api/tenders/{id}/match-summary", aTenderId()).with(company))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").isNotEmpty());
 
         for (String url : List.of("/api/admin/dashboard", "/api/admin/users", "/api/admin/schedule", "/api/pipeline/runs",
                 "/api/pipeline/schedule", "/api/pipeline/processing")) {
@@ -109,8 +118,10 @@ class SecurityIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jobs[0].key").value("egpDiscovery"));
 
-        // No company, so nothing to scope a tender list to.
+        // No company, so nothing to scope a tender list -- or a comparison -- to.
         mockMvc.perform(get("/api/tenders").with(admin)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/tenders/{id}/match-summary", aTenderId()).with(admin))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -174,5 +185,12 @@ class SecurityIT {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"short\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value("Passwords need at least 8 characters."));
+    }
+
+    /** Any real tender: these tests are about who may ask, not about which tender. */
+    private Long aTenderId() {
+        return tenderRepository.findAll(PageRequest.of(0, 1)).getContent().stream()
+                .findFirst().orElseThrow(() -> new IllegalStateException("no tenders in the database"))
+                .getId();
     }
 }

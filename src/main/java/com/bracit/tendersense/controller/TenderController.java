@@ -11,6 +11,7 @@ import com.bracit.tendersense.exception.NotFoundException;
 import com.bracit.tendersense.repository.EligibilityVerdictRepository;
 import com.bracit.tendersense.repository.MatchResultRepository;
 import com.bracit.tendersense.repository.TenderRepository;
+import com.bracit.tendersense.service.MatchSummaryService;
 import com.bracit.tendersense.service.ShortlistService;
 import com.bracit.tendersense.service.TenderTrackingService;
 import com.bracit.tendersense.util.TenderMapper;
@@ -45,6 +46,7 @@ public class TenderController {
     private final TenderMapper mapper;
     private final TenderTrackingService trackingService;
     private final ShortlistService shortlistService;
+    private final MatchSummaryService matchSummaryService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping
@@ -56,10 +58,12 @@ public class TenderController {
             @RequestParam(defaultValue = "false") boolean includeClosed,
             @RequestParam(required = false) TrackingFilter tracked,
             @RequestParam(defaultValue = "false") boolean closingSoon,
+            @RequestParam(required = false) ShortlistSort sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return shortlistService.list(organisation,
                 new ShortlistFilter(grade, source, sector, includeClosed, tracked, closingSoon),
+                sort == null ? ShortlistSort.BEST_MATCH : sort,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE)));
     }
 
@@ -103,6 +107,17 @@ public class TenderController {
                         readEvidence(m.getEvidenceJson())))
                 .orElseGet(() -> new MatchEvidenceResponse(id, null, 0d, null,
                         "Not yet scored.", null, null, null, List.of()));
+    }
+
+    /**
+     * The model's comparison of this tender with the company's profile. Answers at once,
+     * either with the comparison or with "I am writing one": the page polls for the rest.
+     */
+    @GetMapping("/{id}/match-summary")
+    public MatchSummaryResponse matchSummary(@CurrentOrganisation Organisation organisation,
+                                             @PathVariable Long id) {
+        require(id);
+        return matchSummaryService.forTender(organisation, id);
     }
 
     @GetMapping("/{id}/eligibility")

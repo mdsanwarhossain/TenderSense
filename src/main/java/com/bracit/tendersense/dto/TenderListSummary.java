@@ -1,5 +1,7 @@
 package com.bracit.tendersense.dto;
 
+import java.time.LocalDateTime;
+
 /**
  * Counts for the tender list's summary cards. Each (but {@code total}) is also a filter
  * on the table, and each count equals what that filter returns.
@@ -9,6 +11,8 @@ package com.bracit.tendersense.dto;
  * @param closingSoon of those, closing today or within the next seven days
  * @param saved       of those, saved by this company
  * @param submitted   marked submitted by this company -- closed tenders included
+ * @param newestPublishedAt when the most recent notice in scope was published; null when none states one
  */
-public record TenderListSummary(long total, long sGrade, long closingSoon, long saved, long submitted) {
+public record TenderListSummary(long total, long sGrade, long closingSoon, long saved, long submitted,
+                                LocalDateTime newestPublishedAt) {
 }
