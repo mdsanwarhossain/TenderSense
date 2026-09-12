@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { Organisation } from '../models/tender.models';
+import { SessionUser } from '../models/tender.models';
 
 export interface SignupPayload {
   companyName: string;
@@ -14,35 +14,38 @@ export interface SignupPayload {
 /**
  * Who is signed in.
  *
- * The company is held server-side against a same-origin session cookie, so there is
- * nothing to attach to a request and nothing to keep in local storage — the browser
- * sends the cookie on its own. This service only mirrors the answer so the UI can
- * render it.
+ * The session is held server-side (Spring Security) against a same-origin cookie, so
+ * there is nothing to attach to a request and nothing to keep in local storage — the
+ * browser sends the cookie on its own, and Angular echoes the XSRF-TOKEN cookie on
+ * writes. This service only mirrors the answer so the UI can render it.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
-  readonly company = signal<Organisation | null>(null);
+  readonly user = signal<SessionUser | null>(null);
+  /** The signed-in company; null for a platform admin, or when signed out. */
+  readonly company = computed(() => this.user()?.organisation ?? null);
+  readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
 
   /**
    * Memoised so the guard, the shell and any screen can all await the same in-flight
    * request rather than each firing their own `/me` on a cold load.
    */
-  private pending: Promise<Organisation | null> | null = null;
+  private pending: Promise<SessionUser | null> | null = null;
 
-  ensureLoaded(): Promise<Organisation | null> {
-    if (this.company()) {
-      return Promise.resolve(this.company());
+  ensureLoaded(): Promise<SessionUser | null> {
+    if (this.user()) {
+      return Promise.resolve(this.user());
     }
-    this.pending ??= firstValueFrom(this.http.get<Organisation>('/api/auth/me'))
-      .then((org) => {
-        this.company.set(org);
-        return org;
+    this.pending ??= firstValueFrom(this.http.get<SessionUser>('/api/auth/me'))
+      .then((user) => {
+        this.user.set(user);
+        return user;
       })
       .catch(() => {
-        this.company.set(null);
+        this.user.set(null);
         return null;
       })
       .finally(() => {
@@ -51,20 +54,26 @@ export class AuthService {
     return this.pending;
   }
 
-  async login(email: string, password: string): Promise<Organisation> {
-    const org = await firstValueFrom(
-      this.http.post<Organisation>('/api/auth/login', { email, password }),
-    );
-    this.company.set(org);
-    return org;
+  /** Where an account lands: a company on its dashboard, a platform admin on the admin panel. */
+  home(user: SessionUser | null = this.user()): string {
+    if (!user) return '/login';
+    return user.organisation ? '/dashboard' : '/admin';
   }
 
-  async signup(payload: SignupPayload): Promise<Organisation> {
-    const org = await firstValueFrom(
-      this.http.post<Organisation>('/api/auth/signup', payload),
+  async login(email: string, password: string): Promise<SessionUser> {
+    const user = await firstValueFrom(
+      this.http.post<SessionUser>('/api/auth/login', { email, password }),
     );
-    this.company.set(org);
-    return org;
+    this.user.set(user);
+    return user;
+  }
+
+  async signup(payload: SignupPayload): Promise<SessionUser> {
+    const user = await firstValueFrom(
+      this.http.post<SessionUser>('/api/auth/signup', payload),
+    );
+    this.user.set(user);
+    return user;
   }
 
   async logout(): Promise<void> {
@@ -81,7 +90,7 @@ export class AuthService {
 
   /** Called by the 401 interceptor when a session expires under an open page. */
   clear(): void {
-    this.company.set(null);
+    this.user.set(null);
     this.pending = null;
   }
 }

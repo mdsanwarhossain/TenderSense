@@ -29,10 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@code (tender, matcher)}. Scoring a second company overwrote the first one's numbers.
  * These assertions fail loudly if any of that comes back.
  */
-@SpringBootTest(properties = {"tendersense.source.mode=cached",
-        // Lets these tests name a company by header instead of signing in.
-        // Off everywhere else -- it is an authentication bypass.
-        "tendersense.auth.allow-header=true"})
+@SpringBootTest(properties = "tendersense.source.mode=cached")
 @Transactional(readOnly = true)
 class TenantIsolationIT {
 

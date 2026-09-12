@@ -50,8 +50,24 @@ services:
     networks:
       - tendersense-net
 
+  # Container/host monitoring UI. Needs the podman API socket on the host:
+  #   sudo systemctl enable --now podman.socket
+  # then browse to http://<host>:9000 to finish setup.
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: tendersense-portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock:Z
+      - tendersense-portainer:/data
+    networks:
+      - tendersense-net
+
 volumes:
   tendersense-pgdata:
+  tendersense-portainer:
 
 networks:
   tendersense-net:

@@ -64,30 +64,18 @@
   color: var(--ink-3);
   font-size: 13.5px;
   font-weight: 600;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, box-shadow var(--t) ease;
 }
-.rail-link svg { flex: none; }
+.rail-link svg { flex: none; transition: transform var(--t) var(--ease-out); }
+.rail-link:hover svg { transform: translateX(1px); }
 .rail-link .grow { flex: 1; }
 .rail-link:hover { background: var(--surface-3); color: var(--ink); text-decoration: none; }
 .rail-link.on {
   background: var(--accent);
   color: #fff;
-  box-shadow: var(--shadow-pill);
+  box-shadow: var(--btn-lift);
 }
 .rail-link.on:hover { background: var(--accent); color: #fff; }
-
-.rail-foot { margin-top: auto; }
-.rail-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px;
-  border-radius: var(--r);
-  background: var(--accent-soft);
-  border: 1px solid var(--line);
-}
-.rail-card .t { font-size: 12.5px; font-weight: 700; }
-.rail-card .d { font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
 
 /* ---- main column ---- */
 .main { display: flex; flex-direction: column; min-width: 0; }
@@ -133,6 +121,8 @@
   display: flex;
   flex-direction: column;
   padding: 24px 30px 40px;
+  /* Names this area for the page-to-page transition, so only the content crosses over. */
+  view-transition-name: page;
 }
 
 @media (max-width: 860px) {

@@ -37,29 +37,36 @@ public class TurnoverRule implements EligibilityRule {
     @Override
     public RuleOutcome evaluate(Tender tender, CapabilityProfile profile) {
         String text = tender.getEligibilityText();
+        // The local model's reading, already checked to be a figure the notice states.
+        // Used only where the sentence rule below cannot read the requirement itself.
+        BigDecimal readByAi = tender.getAiMinTurnoverBdt();
         if (text == null || text.isBlank()) {
-            return RuleOutcome.unknown(CODE, "Tender states no eligibility text; verify manually.");
+            return readByAi != null ? judge(readByAi, profile, true)
+                    : RuleOutcome.unknown(CODE, "Tender states no eligibility text; verify manually.");
         }
 
         Matcher m = TURNOVER_SENTENCE.matcher(text);
         if (!m.find()) {
-            return RuleOutcome.notApplicable(CODE);
+            return readByAi != null ? judge(readByAi, profile, true) : RuleOutcome.notApplicable(CODE);
         }
 
         BigDecimal required = MoneyTextParser.largest(m.group());
         if (required == null) {
-            return RuleOutcome.unknown(CODE,
+            return readByAi != null ? judge(readByAi, profile, true) : RuleOutcome.unknown(CODE,
                     "Turnover is mentioned but no figure could be read; verify manually.");
         }
+        return judge(required, profile, false);
+    }
 
+    private RuleOutcome judge(BigDecimal required, CapabilityProfile profile, boolean readByAi) {
         BigDecimal ours = profile.getAnnualTurnoverBdt();
         if (ours == null) {
             return RuleOutcome.unknown(CODE,
                     "Capability profile has no annual turnover recorded.");
         }
 
-        String requirement = "Minimum annual turnover " + money(required);
-        String actual = "BracIT annual turnover " + money(ours);
+        String requirement = "Minimum annual turnover " + money(required) + (readByAi ? " (read by AI)" : "");
+        String actual = "Your annual turnover " + money(ours);
 
         if (ours.compareTo(required) >= 0) {
             return RuleOutcome.pass(CODE, requirement, actual, "Turnover requirement met.");

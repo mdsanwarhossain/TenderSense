@@ -2,10 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  BenchmarkResult, BidDecisionRequest, CapabilityProfile, EligibilityReport,
-  MatchEvidence, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness,
-  SectorOption, SourcePortal, TenderDetail, TenderSummary,
-} from '../models/tender.models';
+  AdminCompany, AdminCompanyDetail, AdminDashboard, AdminTender, AdminUser,
+  BenchmarkResult, BidDecisionRequest, CapabilityProfile, Dashboard, EligibilityReport,
+  MatchEvidence,
+  MatchSummary,
+  ShortlistSort, MatchGrade, NotificationItem, PageResponse, PipelineRun, ProfileStaleness, Role,
+  RunSummary, Schedule, ScheduleJob, CronPreview, SectorOption, SourcePortal, TenderDetail, TenderSummary, TenderListSummary,
+  TrackingFilter, TrackingState, ProcessingStatus } from '../models/tender.models';
 
 /**
  * Single place the frontend talks to the backend.
@@ -21,7 +24,8 @@ export class ApiService {
 
   listTenders(opts: {
     page?: number; size?: number; grade?: MatchGrade; source?: SourcePortal;
-    includeClosed?: boolean;
+    includeClosed?: boolean; tracked?: TrackingFilter; closingSoon?: boolean;
+    sort?: ShortlistSort;
   } = {}): Observable<PageResponse<TenderSummary>> {
     let params = new HttpParams()
       .set('page', String(opts.page ?? 0))
@@ -29,7 +33,36 @@ export class ApiService {
       .set('includeClosed', String(opts.includeClosed ?? false));
     if (opts.grade) params = params.set('grade', opts.grade);
     if (opts.source) params = params.set('source', opts.source);
+    if (opts.tracked) params = params.set('tracked', opts.tracked);
+    if (opts.closingSoon) params = params.set('closingSoon', 'true');
+    // Left off when it is the default, so the usual request is unchanged.
+    if (opts.sort && opts.sort !== 'BEST_MATCH') params = params.set('sort', opts.sort);
     return this.http.get<PageResponse<TenderSummary>>(`${this.base}/tenders`, { params });
+  }
+
+  /**
+   * Counts for the summary cards, taken in the database rather than from the page of rows
+   * on screen. Scoped by source and Include closed only -- the cards themselves are the
+   * other filters, and clicking one must not change the others' counts.
+   */
+  getListSummary(opts: {
+    source?: SourcePortal; includeClosed?: boolean;
+  } = {}): Observable<TenderListSummary> {
+    let params = new HttpParams().set('includeClosed', String(opts.includeClosed ?? false));
+    if (opts.source) params = params.set('source', opts.source);
+    return this.http.get<TenderListSummary>(`${this.base}/tenders/summary`, { params });
+  }
+
+  /** Save for later (PUT) or remove from saved (DELETE). Idempotent, never a toggle. */
+  setWishlisted(tenderId: number, on: boolean): Observable<TrackingState> {
+    const url = `${this.base}/tenders/${tenderId}/wishlist`;
+    return on ? this.http.put<TrackingState>(url, null) : this.http.delete<TrackingState>(url);
+  }
+
+  /** Mark (PUT) or unmark (DELETE) a tender as submitted on its portal. */
+  setSubmitted(tenderId: number, on: boolean): Observable<TrackingState> {
+    const url = `${this.base}/tenders/${tenderId}/submission`;
+    return on ? this.http.put<TrackingState>(url, null) : this.http.delete<TrackingState>(url);
   }
 
   getTender(id: number): Observable<TenderDetail> {
@@ -38,6 +71,11 @@ export class ApiService {
 
   getEvidence(id: number): Observable<MatchEvidence> {
     return this.http.get<MatchEvidence>(`${this.base}/tenders/${id}/evidence`);
+  }
+
+  /** Returns immediately: GENERATING means ask again in a moment. */
+  getMatchSummary(id: number): Observable<MatchSummary> {
+    return this.http.get<MatchSummary>(`${this.base}/tenders/${id}/match-summary`);
   }
 
   getEligibility(id: number): Observable<EligibilityReport> {
@@ -83,8 +121,98 @@ export class ApiService {
     return this.http.post<PipelineRun[]>(`${this.base}/pipeline/run`, null, { params });
   }
 
-  getRuns(): Observable<PipelineRun[]> {
-    return this.http.get<PipelineRun[]>(`${this.base}/pipeline/runs`);
+  /** Collection runs, newest first, a page at a time. Admin only. */
+  getRuns(page = 0, size = 20): Observable<PageResponse<PipelineRun>> {
+    const params = new HttpParams().set('page', String(page)).set('size', String(size));
+    return this.http.get<PageResponse<PipelineRun>>(`${this.base}/pipeline/runs`, { params });
+  }
+
+  /** Totals over all runs, for the stat cards above the paged table. */
+  getRunSummary(): Observable<RunSummary> {
+    return this.http.get<RunSummary>(`${this.base}/pipeline/runs/summary`);
+  }
+
+  /** The schedule as configured, with each job's next and last run. */
+  getSchedule(): Observable<Schedule> {
+    return this.http.get<Schedule>(`${this.base}/pipeline/schedule`);
+  }
+
+  /** The signed-in company's landing page, in one request. */
+  getDashboard(): Observable<Dashboard> {
+    return this.http.get<Dashboard>(`${this.base}/dashboard`);
+  }
+
+  // ---- admin panel ----
+
+  getAdminDashboard(): Observable<AdminDashboard> {
+    return this.http.get<AdminDashboard>(`${this.base}/admin/dashboard`);
+  }
+
+  /** The whole corpus, admin view: every tender collected, no company in the picture. */
+  listAdminTenders(opts: {
+    page?: number; size?: number; source?: SourcePortal; aiStatus?: string;
+    includeClosed?: boolean; search?: string;
+  } = {}): Observable<PageResponse<AdminTender>> {
+    let params = new HttpParams()
+      .set('page', String(opts.page ?? 0))
+      .set('size', String(opts.size ?? 25))
+      .set('includeClosed', String(opts.includeClosed ?? true));
+    if (opts.source) params = params.set('source', opts.source);
+    if (opts.aiStatus) params = params.set('aiStatus', opts.aiStatus);
+    if (opts.search?.trim()) params = params.set('search', opts.search.trim());
+    return this.http.get<PageResponse<AdminTender>>(`${this.base}/admin/tenders`, { params });
+  }
+
+  listCompanies(): Observable<AdminCompany[]> {
+    return this.http.get<AdminCompany[]>(`${this.base}/admin/companies`);
+  }
+
+  getCompany(id: number): Observable<AdminCompanyDetail> {
+    return this.http.get<AdminCompanyDetail>(`${this.base}/admin/companies/${id}`);
+  }
+
+  setCompanyActive(id: number, active: boolean): Observable<AdminCompany> {
+    return this.http.patch<AdminCompany>(`${this.base}/admin/companies/${id}`, { active });
+  }
+
+  listUsers(): Observable<AdminUser[]> {
+    return this.http.get<AdminUser[]>(`${this.base}/admin/users`);
+  }
+
+  updateUser(id: number, change: { role?: Role; enabled?: boolean }): Observable<AdminUser> {
+    return this.http.patch<AdminUser>(`${this.base}/admin/users/${id}`, change);
+  }
+
+  resetPassword(id: number, password: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/admin/users/${id}/password`, { password });
+  }
+
+  createAdmin(email: string, password: string): Observable<AdminUser> {
+    return this.http.post<AdminUser>(`${this.base}/admin/users`, { email, password });
+  }
+
+  // ---- scheduler ----
+
+  getAdminSchedule(): Observable<Schedule> {
+    return this.http.get<Schedule>(`${this.base}/admin/schedule`);
+  }
+
+  updateScheduleJob(key: string, change: { enabled?: boolean; cron?: string }): Observable<ScheduleJob> {
+    return this.http.patch<ScheduleJob>(`${this.base}/admin/schedule/${key}`, change);
+  }
+
+  resetScheduleJob(key: string): Observable<ScheduleJob> {
+    return this.http.post<ScheduleJob>(`${this.base}/admin/schedule/${key}/reset`, null);
+  }
+
+  /** Checks a schedule without saving it: the next runs, or why it would be refused. */
+  previewCron(key: string, cron: string): Observable<CronPreview> {
+    const params = new HttpParams().set('cron', cron);
+    return this.http.get<CronPreview>(`${this.base}/admin/schedule/${key}/preview`, { params });
+  }
+
+  getProcessingStatus(): Observable<ProcessingStatus> {
+    return this.http.get<ProcessingStatus>(`${this.base}/pipeline/processing`);
   }
 
   listNotifications(opts: { unreadOnly?: boolean; page?: number; size?: number } = {}):

@@ -1,16 +1,17 @@
 // Mirrors the Java DTOs in com.bracit.tendersense.dto.
 // The contract is frozen: change both sides together.
 
-export type SourcePortal = 'EGP_BANGLADESH' | 'WORLD_BANK' | 'UNGM' | 'ISDB';
+export type SourcePortal = 'EGP_BANGLADESH' | 'WORLD_BANK' | 'UNGM' | 'ISDB' | 'BRAC';
 
 export const SOURCE_LABELS: Record<SourcePortal, string> = {
   EGP_BANGLADESH: 'e-GP Bangladesh',
   WORLD_BANK: 'World Bank',
   UNGM: 'UN Global Marketplace',
   ISDB: 'Islamic Development Bank',
+  BRAC: 'BRAC e-Tender',
 };
 
-export const SOURCE_OPTIONS: SourcePortal[] = ['EGP_BANGLADESH', 'WORLD_BANK', 'UNGM', 'ISDB'];
+export const SOURCE_OPTIONS: SourcePortal[] = ['EGP_BANGLADESH', 'WORLD_BANK', 'UNGM', 'ISDB', 'BRAC'];
 export type MatchGrade = 'S' | 'A' | 'B' | 'C';
 export type BidAction = 'BID' | 'HOLD' | 'SKIP';
 export type EligibilityStatus = 'ELIGIBLE' | 'INELIGIBLE' | 'NEEDS_VERIFICATION';
@@ -32,6 +33,8 @@ export interface TenderSummary {
   procuringEntity: string | null;
   procurementNature: string | null;
   procurementMethod: string | null;
+  /** When the portal published it -- what "Newest first" orders by. */
+  publishedAt: string | null;
   closingAt: string | null;
   daysToDeadline: number | null;
   urgent: boolean;
@@ -41,6 +44,38 @@ export interface TenderSummary {
   blockingGapCount: number;
   recommendation: BidAction | null;
   whyMatched: string | null;
+  /** This company saved it for later. */
+  wishlisted: boolean;
+  /** This company marked it as submitted on the portal. */
+  submitted: boolean;
+  submittedAt: string | null;
+  /** The tender's own page on its portal; null when it cannot be built. */
+  sourceUrl: string | null;
+  /** The local model's shorter title, when the portal's is too long to scan. */
+  shortTitle: string | null;
+}
+
+/** Headline counts for the tender list, over the same filters as the list. */
+export interface TenderListSummary {
+  total: number;
+  sGrade: number;
+  closingSoon: number;
+  saved: number;
+  submitted: number;
+  /** When the most recent notice in scope was published; null when none states one. */
+  newestPublishedAt: string | null;
+}
+
+/** Shortlist filter: only saved, or only submitted, tenders. */
+export type TrackingFilter = 'SAVED' | 'SUBMITTED';
+
+/** A company's saved / submitted state for one tender, as the tracking endpoints return it. */
+export interface TrackingState {
+  tenderId: number;
+  wishlisted: boolean;
+  wishlistedAt: string | null;
+  submitted: boolean;
+  submittedAt: string | null;
 }
 
 export interface TenderDetail {
@@ -71,6 +106,33 @@ export interface TenderDetail {
   rawSnapshotPath: string | null;
   contentHash: string | null;
   revisionCount: number;
+  sector: string | null;
+  /** The sector as the screen shows it, e.g. "IT services". */
+  sectorLabel: string | null;
+  wishlisted: boolean;
+  submitted: boolean;
+  submittedAt: string | null;
+  /** The tender's own page on its portal; null when there is no verified link. */
+  sourceUrl: string | null;
+  // Standard form: the same meaning for every portal.
+  buyer: string | null;
+  partOf: string | null;
+  location: string | null;
+  category: 'GOODS' | 'WORKS' | 'CONSULTING' | 'OTHER_SERVICES' | null;
+  noticeType: 'TENDER' | 'EXPRESSION_OF_INTEREST' | 'PREQUALIFICATION' | 'CONTRACT_AWARD' | 'GENERAL_NOTICE' | null;
+  openTo: 'NATIONAL' | 'INTERNATIONAL' | null;
+  methodLabel: string | null;
+  fundedBy: string | null;
+  amendments: number | null;
+  // Read by the local model; null until read, or where a field failed its check.
+  aiShortTitle: string | null;
+  aiSummary: string | null;
+  aiDeliverables: string[];
+  aiLocation: string | null;
+  aiMinTurnoverBdt: number | null;
+  aiMinExperienceYears: number | null;
+  aiCertifications: string[];
+  aiStatus: 'DONE' | 'FAILED' | 'SKIPPED' | null;
 }
 
 export interface EvidencePair {
@@ -78,6 +140,9 @@ export interface EvidencePair {
   tenderText: string;
   similarity: number;
 }
+
+/** How the tender list is ordered. Best match is the default the list has always used. */
+export type ShortlistSort = 'BEST_MATCH' | 'NEWEST';
 
 export interface MatchEvidence {
   tenderId: number;
@@ -90,6 +155,19 @@ export interface MatchEvidence {
   demotedFor: string | null;
   demotionPenalty: number | null;
   evidence: EvidencePair[];
+}
+
+export type MatchSummaryStatus = 'READY' | 'GENERATING' | 'UNAVAILABLE';
+
+/** The local model's comparison of this tender with the company's own work. */
+export interface MatchSummary {
+  status: MatchSummaryStatus;
+  comparison: string | null;
+  matches: string[];
+  gaps: string[];
+  /** The model that wrote it, shown as provenance. */
+  writtenBy: string | null;
+  generatedAt: string | null;
 }
 
 export interface EligibilityGap {
@@ -128,6 +206,24 @@ export interface BenchmarkResult {
   }[];
   /** Shown verbatim in the UI: the metric's honest limitations. */
   caveat: string | null;
+}
+
+/** The staging queue between the scrapers and the tender list. */
+export interface ProcessingStatus {
+  modelEnabled: boolean;
+  workerEnabled: boolean;
+  model: string;
+  waiting: number;
+  waitingOpen: number;
+  inProgress: number;
+  awaitingScore: number;
+  done: number;
+  failed: number;
+  readLastHour: number;
+  secondsPerRead: number | null;
+  etaMinutes: number | null;
+  lastError: string | null;
+  lastErrorAt: string | null;
 }
 
 export interface PipelineRun {
@@ -200,4 +296,178 @@ export interface NotificationItem {
   closingAt: string | null;
   read: boolean;
   createdAt: string;
+}
+
+// ---- accounts and roles -------------------------------------------------------
+
+export type Role = 'USER' | 'ADMIN';
+
+/** Who is signed in. A platform admin has no company (organisation is null). */
+export interface SessionUser {
+  accountId: number;
+  email: string;
+  role: Role;
+  organisation: Organisation | null;
+}
+
+// ---- pipeline (admin) ---------------------------------------------------------
+
+/** Totals over every collection run, computed in the database. */
+export interface RunSummary {
+  runsTotal: number;
+  failedTotal: number;
+  failedLast24h: number;
+  lastSuccessAt: string | null;
+  tendersScored: number;
+}
+
+export interface ScheduleJob {
+  key: string;
+  label: string;
+  description: string;
+  cron: string;
+  /** What "Back to default" restores. */
+  defaultCron: string;
+  /** The admin's on/off switch. */
+  enabled: boolean;
+  /** Sitting out its runs after repeated failures. */
+  paused: boolean;
+  nextRunAt: string | null;
+  /** When the scheduler last fired it (or, before firings were recorded, its last run). */
+  lastFiredAt: string | null;
+  lastRunAt: string | null;
+  lastStatus: RunStatus | null;
+  avgDurationMs: number | null;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+/** A schedule checked before saving: its next runs, or why it would be refused. */
+export interface CronPreview {
+  cron: string;
+  valid: boolean;
+  message: string | null;
+  nextRuns: string[];
+}
+
+export interface Schedule {
+  enabled: boolean;
+  zone: string;
+  jobs: ScheduleJob[];
+}
+
+// ---- company dashboard --------------------------------------------------------
+
+export interface TrackingChange {
+  tenderId: number;
+  title: string | null;
+  source: SourcePortal;
+  saved: boolean;
+  submitted: boolean;
+  updatedAt: string;
+}
+
+export interface Dashboard {
+  numbers: {
+    open: number; sGrade: number; aGrade: number;
+    closingSoon: number; saved: number; submitted: number;
+  };
+  bestMatches: TenderSummary[];
+  closingSoon: TenderSummary[];
+  activity: {
+    unread: number;
+    newMatches: NotificationItem[];
+    tracking: TrackingChange[];
+    scoring: ProfileStaleness;
+  };
+}
+
+// ---- admin panel --------------------------------------------------------------
+
+export interface PortalCorpus {
+  portal: SourcePortal;
+  total: number; open: number; closed: number;
+  newToday: number; newThisWeek: number;
+  aiRead: number; aiSkipped: number; aiFailed: number; aiNone: number;
+}
+
+export interface CompanyGrades {
+  organisationId: number;
+  name: string;
+  active: boolean;
+  s: number; a: number; b: number; c: number;
+}
+
+export interface AdminDashboard {
+  companies: {
+    total: number; active: number; demonstration: number;
+    newest: { id: number; name: string; slug: string; active: boolean; createdAt: string | null }[];
+  };
+  users: {
+    total: number; enabled: number; admins: number;
+    recentSignIns: { id: number; email: string; company: string | null; role: Role; lastLoginAt: string }[];
+  };
+  corpus: PortalCorpus[];
+  grades: CompanyGrades[];
+  runs: RunSummary;
+  schedule: Schedule;
+  processing: ProcessingStatus;
+}
+
+/** One tender in the admin corpus list: no score, no grade, no saved/submitted marks. */
+export interface AdminTender {
+  id: number;
+  source: SourcePortal;
+  externalId: string;
+  referenceNo: string | null;
+  title: string | null;
+  /** The title above came from the local model. */
+  shortened: boolean;
+  buyer: string | null;
+  sector: string | null;
+  category: string | null;
+  noticeType: string | null;
+  publishedAt: string | null;
+  closingAt: string | null;
+  closed: boolean;
+  aiStatus: 'DONE' | 'FAILED' | 'SKIPPED' | null;
+  aiProcessedAt: string | null;
+  firstSeenAt: string | null;
+  sourceUrl: string | null;
+}
+
+export interface AdminCompany {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  sectors: string[];
+  active: boolean;
+  demonstration: boolean;
+  createdAt: string | null;
+  accountId: number | null;
+  accountEmail: string | null;
+  lastLoginAt: string | null;
+  sOpen: number;
+  aOpen: number;
+}
+
+export interface AdminCompanyDetail {
+  company: AdminCompany;
+  profile: CapabilityProfile | null;
+  scoring: ProfileStaleness;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  role: Role;
+  enabled: boolean;
+  organisationId: number | null;
+  organisationName: string | null;
+  organisationActive: boolean;
+  createdAt: string | null;
+  lastLoginAt: string | null;
+  /** The signed-in admin's own row: its role and switch are locked. */
+  you: boolean;
 }

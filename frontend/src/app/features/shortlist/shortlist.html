@@ -1,32 +1,7 @@
-<div class="page-intro">
-  <div>
-    <h1>
-      {{ total() }} tracked {{ total() === 1 ? 'tender' : 'tenders' }}, ranked against
-      {{ org()?.name ?? 'your profile' }}
-    </h1>
-    <p class="lede">
-      Every tender in the corpus is scored against this company's capability profile and gated
-      to the sectors it subscribes to. Grades are calibrated on the live distribution, so S is
-      the top slice of what is open today, not a fixed score threshold.
-    </p>
-  </div>
-  <div class="intro-actions">
-    <button class="btn btn-primary" (click)="runCollection()" [disabled]="running()">
-      @if (running()) {
-        <span class="spinner light"></span> Collecting…
-      } @else {
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
-        </svg>
-        Run collection now
-      }
-    </button>
-  </div>
-</div>
-
 <div class="stat-strip">
-  <div class="stat">
+  <!-- Also a button: it clears the card filters and shows everything in scope. -->
+  <button type="button" class="stat stat-filter" [class.on]="showingEverything()"
+          [attr.aria-pressed]="showingEverything()" (click)="clearFilters()">
     <span class="stat-icon i-accent">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -34,12 +9,14 @@
       </svg>
     </span>
     <span class="stat-body">
-      <span class="stat-label">Tenders tracked</span>
-      <span class="stat-value">{{ total() }}</span>
-      <span class="stat-foot">across both portals</span>
+      <span class="stat-label">Total tenders</span>
+      <span class="stat-value">{{ summary()?.total ?? total() }}</span>
     </span>
-  </div>
-  <div class="stat">
+  </button>
+
+  <!-- These cards narrow the table: click to filter, click again to clear. -->
+  <button type="button" class="stat stat-filter" [class.on]="activeGrade() === 'S'"
+          [attr.aria-pressed]="activeGrade() === 'S'" (click)="toggleSGrade()">
     <span class="stat-icon i-accent">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -47,25 +24,14 @@
       </svg>
     </span>
     <span class="stat-body">
-      <span class="stat-label">S-grade on this page</span>
-      <span class="stat-value accent">{{ counts().s }}</span>
-      <span class="stat-foot">the strongest matches open now</span>
+      <span class="stat-label">Total S-grade</span>
+      <span class="stat-value accent">{{ summary()?.sGrade ?? '—' }}</span>
+      <span class="stat-foot">strongest matches</span>
     </span>
-  </div>
-  <div class="stat">
-    <span class="stat-icon i-accent">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-6" />
-      </svg>
-    </span>
-    <span class="stat-body">
-      <span class="stat-label">A-grade on this page</span>
-      <span class="stat-value">{{ counts().a }}</span>
-      <span class="stat-foot">worth a read this week</span>
-    </span>
-  </div>
-  <div class="stat">
+  </button>
+
+  <button type="button" class="stat stat-filter" [class.on]="closingSoon()"
+          [attr.aria-pressed]="closingSoon()" (click)="toggleClosingSoon()">
     <span class="stat-icon i-warn">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -74,68 +40,103 @@
     </span>
     <span class="stat-body">
       <span class="stat-label">Closing within 7 days</span>
-      <span class="stat-value warn">{{ counts().urgent }}</span>
-      <span class="stat-foot">flagged on the row edge</span>
+      <span class="stat-value warn">{{ summary()?.closingSoon ?? '—' }}</span>
+      <span class="stat-foot">amber on the list</span>
     </span>
-  </div>
-  <div class="stat">
-    <span class="stat-icon i-warn">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  </button>
+
+  <button type="button" class="stat stat-filter" [class.on]="activeTracked() === 'SAVED'"
+          [attr.aria-pressed]="activeTracked() === 'SAVED'" (click)="toggleTracked('SAVED')">
+    <span class="stat-icon i-accent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9" /><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4v1.4" />
-        <path d="M12.9 16.4v.01" />
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
       </svg>
     </span>
     <span class="stat-body">
-      <span class="stat-label">Need verification</span>
-      <span class="stat-value">{{ counts().verify }}</span>
-      <span class="stat-foot">eligibility not settled by the rules</span>
+      <span class="stat-label">Saved</span>
+      <span class="stat-value">{{ summary()?.saved ?? '—' }}</span>
+      <span class="stat-foot">for later</span>
     </span>
-  </div>
+  </button>
+
+  <button type="button" class="stat stat-filter" [class.on]="activeTracked() === 'SUBMITTED'"
+          [attr.aria-pressed]="activeTracked() === 'SUBMITTED'" (click)="toggleTracked('SUBMITTED')">
+    <span class="stat-icon i-ok">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.8 2.8L16.5 9.5" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Submitted</span>
+      <span class="stat-value ok">{{ summary()?.submitted ?? '—' }}</span>
+      <span class="stat-foot">incl. closed tenders</span>
+    </span>
+  </button>
+
+  <!-- Not a filter like its neighbours: this one orders the table, newest notice first. -->
+  <button type="button" class="stat stat-filter" [class.on]="activeSort() === 'NEWEST'"
+          [attr.aria-pressed]="activeSort() === 'NEWEST'" (click)="toggleNewest()">
+    <span class="stat-icon i-accent">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h9" /><path d="M4 12h6" /><path d="M4 18h3" />
+        <path d="M18 7v10" /><path d="m15 14 3 3 3-3" />
+      </svg>
+    </span>
+    <span class="stat-body">
+      <span class="stat-label">Newest</span>
+      <span class="stat-value">{{ (summary()?.newestPublishedAt | date: 'd MMM') ?? '—' }}</span>
+      <span class="stat-foot">most recent notice</span>
+    </span>
+  </button>
 </div>
+
+<!-- Filters on the left, search on the right, in their own bar above the table. -->
+<section class="toolbar" aria-label="Search and filters">
+  <ts-select label="Grade" [options]="gradeOptions" [value]="activeGrade() ?? ''" (changed)="setGrade($event)" />
+  <ts-select label="Source" [options]="sourceOptions" [value]="activeSource() ?? ''" (changed)="setSource($event)" />
+  <button class="chip closed-toggle" [class.on]="includeClosed()" [attr.aria-pressed]="includeClosed()"
+          (click)="toggleClosed()">Include closed</button>
+  <label class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
+    </svg>
+    <input type="search" placeholder="Search this page by title or buyer" aria-label="Search this page"
+           [value]="query()" (input)="filter($any($event.target).value)" />
+  </label>
+</section>
 
 <section class="card">
   <div class="card-head">
-    <div>
-      <h2>Ranked shortlist</h2>
-      <span class="sub">
-        Ordered by match score across the whole corpus. Tenders closing within a week carry an
-        amber edge.
-      </span>
-    </div>
+    <h2>Tender list</h2>
     <div class="card-tools">
-      <label class="search-inline">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round">
-          <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
-        </svg>
-        <input type="search" placeholder="Filter this page" aria-label="Filter this page"
-               [value]="query()" (input)="filter($any($event.target).value)" />
-      </label>
+      <span class="showing">
+        Showing <b class="mono">{{ visible().length }}</b> of <b class="mono">{{ total() }}</b>
+      </span>
+      <!-- Collects for every company at once, so only TenderSense staff get the button. -->
+      @if (isAdmin()) {
+        <button class="btn btn-sm btn-sync" (click)="runCollection()" [disabled]="running()"
+                title="Collect new tenders from every portal now">
+          @if (running()) {
+            <span class="spinner light"></span> Syncing…
+          } @else {
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-2.6-6.4" /><path d="M21 4v5h-5" />
+            </svg>
+            Sync
+          }
+        </button>
+      }
     </div>
   </div>
 
-  <div class="filters">
-    <div class="group">
-      <span class="glabel">Grade</span>
-      @for (g of grades; track g) {
-        <button class="chip" [class.on]="activeGrade() === g" (click)="toggleGrade(g)">{{ g }}</button>
-      }
-    </div>
-    <span class="divider"></span>
-    <div class="group">
-      <span class="glabel">Source</span>
-      @for (s of sources; track s) {
-        <button class="chip" [class.on]="activeSource() === s"
-                (click)="toggleSource(s)">{{ sourceLabel(s) }}</button>
-      }
-    </div>
-    <span class="divider"></span>
-    <button class="chip" [class.on]="includeClosed()" (click)="toggleClosed()">Include closed</button>
-    <span class="showing">
-      Showing <b class="mono">{{ visible().length }}</b> of <b class="mono">{{ total() }}</b>
-    </span>
-  </div>
+  @if (actionError(); as m) {
+    <div class="state-wrap"><div class="banner error" role="alert">{{ m }}</div></div>
+  }
 
   @if (error(); as message) {
     <div class="state-wrap"><div class="banner error">{{ message }}</div></div>
@@ -145,6 +146,13 @@
     <div class="state">
       @if (query()) {
         Nothing on this page matches “{{ query() }}”. Clear the filter, or page on.
+      } @else if (activeTracked() === 'SAVED') {
+        Nothing saved yet. Use the heart on any tender to save it for later.
+      } @else if (closingSoon()) {
+        Nothing closes in the next seven days with these filters.
+      } @else if (activeTracked() === 'SUBMITTED') {
+        Nothing marked as submitted yet. After bidding on the portal, use the tick on that
+        tender to track it here.
       } @else {
         No tenders match these filters. Widen the grade, or include closed tenders.
       }
@@ -154,48 +162,46 @@
       <div class="table">
         <div class="thead cols">
           <span>Grade</span><span>Match</span><span>Tender</span>
-          <span>Source</span><span>Closes</span><span>Eligibility</span><span>Action</span>
+          <span>Source</span><span>Published</span><span>Closes</span><span>Action</span>
         </div>
 
         @for (row of visible(); track row.id) {
-          <a class="trow cols" [class.urgent]="row.urgent" [routerLink]="['/tenders', row.id]">
+          <div class="trow cols linked" [class.urgent]="row.urgent">
             <ts-grade-badge [grade]="row.grade" />
-            <ts-score-bar [score]="row.score" [strong]="row.grade === 'S'" />
+            <ts-score-bar [score]="row.score" />
 
-            <span class="cell-title">
-              <span class="t">{{ row.title ?? '(untitled)' }}</span>
+            <!-- The title is the row's link; .row-link stretches it over the whole row. -->
+            <a class="cell-title row-link" [routerLink]="['/tenders', row.id]">
+              <span class="t" [title]="row.shortTitle ? 'Full title: ' + row.title : (row.title ?? '')">
+                @if (row.shortTitle) {
+                  <span class="ai-mark">AI</span>
+                }
+                {{ row.shortTitle ?? row.title ?? '(untitled)' }}
+              </span>
               @if (row.procuringEntity) { <span class="e">{{ row.procuringEntity }}</span> }
-            </span>
+            </a>
 
             <span class="source">
               <span class="dot" [class.wb]="row.source === 'WORLD_BANK'"
-                    [class.ungm]="row.source === 'UNGM'" [class.isdb]="row.source === 'ISDB'"></span>
+                    [class.ungm]="row.source === 'UNGM'" [class.isdb]="row.source === 'ISDB'" [class.brac]="row.source === 'BRAC'"></span>
               {{ sourceLabel(row.source) }}
             </span>
 
-            <ts-deadline [closingAt]="row.closingAt" [days]="row.daysToDeadline" />
-            <ts-eligibility-chip [status]="row.eligibility" />
+            <span class="published">
+              {{ row.publishedAt ? (row.publishedAt | date: 'd MMM y') : '—' }}
+            </span>
 
-            @if (row.recommendation; as action) {
-              <span class="pill" [class.accent]="action === 'BID'"
-                    [class.neutral]="action === 'HOLD'" [class.ghost]="action === 'SKIP'">{{ action }}</span>
-            } @else {
-              <span class="pill ghost">—</span>
-            }
-          </a>
+            <ts-deadline [closingAt]="row.closingAt" [days]="row.daysToDeadline" />
+
+            <!-- Above the row link, so these act on their own instead of opening the tender. -->
+            <ts-tender-actions class="above-link" [row]="row"
+                               (changed)="onTracked($event)" (failed)="actionError.set($event)" />
+          </div>
         }
       </div>
     </div>
 
-    <footer class="pager">
-      <span class="hint">
-        Page {{ page() + 1 }} of {{ pageCount() }} · {{ size }} tenders per page
-      </span>
-      <span class="buttons">
-        <button class="btn btn-sm" (click)="prevPage()" [disabled]="page() === 0">Previous</button>
-        <button class="btn btn-sm" (click)="nextPage()"
-                [disabled]="(page() + 1) * size >= total()">Next</button>
-      </span>
-    </footer>
+    <ts-pager [page]="page()" [size]="size()" [total]="total()"
+              (pageChange)="goTo($event)" (sizeChange)="setSize($event)" />
   }
 </section>

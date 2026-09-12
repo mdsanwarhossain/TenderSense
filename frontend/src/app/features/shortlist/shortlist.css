@@ -5,54 +5,31 @@
   min-width: 0;
 }
 
-.stat-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* Six separate cards rather than the shared segmented strip. */
+.stat-strip {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.stat-strip .stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
 
 /* Seven columns: the tender title takes whatever the fixed ones leave. */
-.cols { grid-template-columns: 52px 96px minmax(260px, 1fr) 150px 110px 128px 96px; }
-.table { min-width: 1080px; }
+.cols { grid-template-columns: 52px 96px minmax(260px, 1fr) 150px 104px 110px 112px; }
+.table { min-width: 1064px; }
 
-.search-inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 230px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  color: var(--ink-4);
-}
-.search-inline input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--ink);
-  outline: none;
-}
-.search-inline input::placeholder { color: var(--ink-4); }
+/* Three icon buttons: sized to their content, not stretched across the cell. */
+.trow > ts-tender-actions { justify-self: start; }
 
-.filters {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 14px 22px;
-  border-top: 1px solid var(--line-soft);
-}
-.filters .group { display: flex; align-items: center; gap: 7px; }
-.filters .glabel {
-  margin-right: 2px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--ink-4);
-}
-.filters .divider { width: 1px; height: 22px; background: var(--line); }
-.filters .showing { margin-left: auto; font-size: 12px; color: var(--ink-3); }
-.filters .showing b { color: var(--ink); font-weight: 600; }
+
 
 .source {
   display: inline-flex;
@@ -66,5 +43,125 @@
 .source .dot.wb { background: #2f8fbe; }
 .source .dot.ungm { background: #c9781f; }
 .source .dot.isdb { background: #1a9e6b; }
+.source .dot.brac { background: #d81b7a; }
 
 .state-wrap { padding: 20px 22px; }
+
+/* Grade and source as dropdowns. */
+
+@media (max-width: 1320px) {
+  .stat-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Summary cards that filter the table. A button, so it is reachable by keyboard and
+   announces its on/off state; styled to read as the same card as its neighbours. */
+.stat-filter {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.stat-strip .stat-filter:hover { border-color: var(--accent); }
+.stat-filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stat-strip .stat-filter.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent), var(--shadow-card);
+}
+.stat-value.ok { color: var(--ok); }
+
+/* Long portal titles stop at two lines; the full title is on hover and on the detail page. */
+.cell-title .t {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Marks a title the local model shortened. */
+.ai-mark {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  vertical-align: 2px;
+}
+
+/* ---- Search and filters: their own bar above the table ----
+   Not .card: that clips overflow, and the dropdown lists hang below the bar. The bar
+   stacks above the table card so an open list is never hidden behind it. */
+.toolbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Half the bar at most, pushed to the right edge; the filters keep the left. */
+  flex: 0 1 420px;
+  margin-left: auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--ink-4);
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.search-box:focus-within {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+.search-box input::placeholder { color: var(--ink-4); }
+.closed-toggle { height: 40px; padding: 0 16px; }
+
+.card-tools .showing { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.card-tools .showing b { color: var(--ink); font-weight: 600; }
+
+/* On a narrow screen the search box takes its own full-width row. */
+@media (max-width: 900px) {
+  .search-box { flex: 1 1 100%; margin-left: 0; }
+}
+
+/* The pager is shared/pager.ts. */
+
+/* Sync: collect new tenders now. Green, the same hue as an S grade; flat like every button. */
+.btn-sync { background: hsl(142 64% 34%); border-color: hsl(142 64% 34%); color: #fff; box-shadow: var(--btn-lift); }
+.btn-sync:hover:not(:disabled) { background: hsl(142 66% 28%); border-color: hsl(142 66% 28%); box-shadow: var(--btn-lift-hover); }
+.btn-sync:active:not(:disabled) { box-shadow: var(--btn-press); }
+
+
+/* The date the portal published it. Quiet by default: it only earns attention
+   when the list is sorted newest first. */
+.published {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}

@@ -11,19 +11,18 @@ import com.bracit.tendersense.exception.NotFoundException;
 import com.bracit.tendersense.repository.EligibilityVerdictRepository;
 import com.bracit.tendersense.repository.MatchResultRepository;
 import com.bracit.tendersense.repository.TenderRepository;
+import com.bracit.tendersense.service.MatchSummaryService;
+import com.bracit.tendersense.service.ShortlistService;
+import com.bracit.tendersense.service.TenderTrackingService;
 import com.bracit.tendersense.util.TenderMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.core.type.TypeReference;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -45,6 +44,9 @@ public class TenderController {
     private final MatchResultRepository matchResultRepository;
     private final EligibilityVerdictRepository eligibilityRepository;
     private final TenderMapper mapper;
+    private final TenderTrackingService trackingService;
+    private final ShortlistService shortlistService;
+    private final MatchSummaryService matchSummaryService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping
@@ -54,44 +56,37 @@ public class TenderController {
             @RequestParam(required = false) SourcePortal source,
             @RequestParam(required = false) Sector sector,
             @RequestParam(defaultValue = "false") boolean includeClosed,
+            @RequestParam(required = false) TrackingFilter tracked,
+            @RequestParam(defaultValue = "false") boolean closingSoon,
+            @RequestParam(required = false) ShortlistSort sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-
-        Pageable pageable = PageRequest.of(
-                Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE));
-
-        Page<MatchResult> ranked =
-                matchResultRepository.findRanked(MatcherType.EMBEDDING, organisation.getId(),
-                        grade, source, sector, includeClosed,
-                        java.time.LocalDateTime.now(), pageable);
-
-        // m.getTender() is a lazy proxy: reading its id is safe, reading its fields
-        // outside the transaction is not. Load the real rows in one query instead.
-        List<Long> tenderIds = ranked.getContent().stream()
-                .map(m -> m.getTender().getId())
-                .toList();
-        Map<Long, Tender> tenders = new HashMap<>();
-        tenderRepository.findAllById(tenderIds).forEach(t -> tenders.put(t.getId(), t));
-
-        Map<Long, EligibilityVerdictView> verdicts =
-                verdictsFor(organisation, List.copyOf(tenders.values()));
-
-        List<TenderSummaryResponse> rows = ranked.getContent().stream()
-                .map(m -> {
-                    Tender tender = tenders.get(m.getTender().getId());
-                    return tender == null ? null
-                            : mapper.toSummary(tender, m, verdicts.get(tender.getId()));
-                })
-                .filter(java.util.Objects::nonNull)
-                .toList();
-
-        return PageResponse.of(rows, ranked.getNumber(), ranked.getSize(),
-                ranked.getTotalElements());
+        return shortlistService.list(organisation,
+                new ShortlistFilter(grade, source, sector, includeClosed, tracked, closingSoon),
+                sort == null ? ShortlistSort.BEST_MATCH : sort,
+                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_PAGE_SIZE)));
     }
 
+    /**
+     * Counts for the summary cards, taken in the database -- not from the page of rows the
+     * browser holds. See {@link ShortlistService#summary} for which filters they follow.
+     */
+    @GetMapping("/summary")
+    public TenderListSummary summary(
+            @CurrentOrganisation Organisation organisation,
+            @RequestParam(required = false) SourcePortal source,
+            @RequestParam(required = false) Sector sector,
+            @RequestParam(defaultValue = "false") boolean includeClosed) {
+        return shortlistService.summary(organisation, source, sector, includeClosed);
+    }
+
+    /** Carries this company's save / submit marks, so the page shows the same buttons as the list. */
     @GetMapping("/{id}")
-    public TenderDetailResponse detail(@PathVariable Long id) {
-        return mapper.toDetail(require(id));
+    public TenderDetailResponse detail(@CurrentOrganisation Organisation organisation,
+                                       @PathVariable Long id) {
+        Tender tender = require(id);
+        TrackingState tracking = trackingService.statesFor(organisation, List.of(id)).get(id);
+        return mapper.toDetail(tender, tracking);
     }
 
     @GetMapping("/{id}/evidence")
@@ -112,6 +107,17 @@ public class TenderController {
                         readEvidence(m.getEvidenceJson())))
                 .orElseGet(() -> new MatchEvidenceResponse(id, null, 0d, null,
                         "Not yet scored.", null, null, null, List.of()));
+    }
+
+    /**
+     * The model's comparison of this tender with the company's profile. Answers at once,
+     * either with the comparison or with "I am writing one": the page polls for the rest.
+     */
+    @GetMapping("/{id}/match-summary")
+    public MatchSummaryResponse matchSummary(@CurrentOrganisation Organisation organisation,
+                                             @PathVariable Long id) {
+        require(id);
+        return matchSummaryService.forTender(organisation, id);
     }
 
     @GetMapping("/{id}/eligibility")
@@ -146,32 +152,15 @@ public class TenderController {
     }
 
     /**
-     * Reads status and blocking-gap count via a projection. Touching the gaps
-     * collection here would trigger lazy loading outside the transaction.
+     * Status and blocking-gap count via a projection. Touching the gaps collection here
+     * would trigger lazy loading outside the transaction.
      */
-    /** Single-tender projection, built on the same query the list endpoint uses. */
     private EligibilityVerdictView verdictViewFor(Organisation organisation, Long tenderId) {
         for (Object[] row : eligibilityRepository.findSummariesByTenderIds(
                 List.of(tenderId), organisation.getId())) {
             return new EligibilityVerdictView((EligibilityStatus) row[1], ((Number) row[2]).intValue());
         }
         return null;
-    }
-
-    private Map<Long, EligibilityVerdictView> verdictsFor(Organisation organisation,
-                                                          List<Tender> tenders) {
-        if (tenders.isEmpty()) {
-            return Map.of();
-        }
-        List<Long> ids = tenders.stream().map(Tender::getId).toList();
-        Map<Long, EligibilityVerdictView> out = new HashMap<>();
-        for (Object[] row : eligibilityRepository.findSummariesByTenderIds(
-                ids, organisation.getId())) {
-            out.put(((Number) row[0]).longValue(),
-                    new EligibilityVerdictView((EligibilityStatus) row[1],
-                            ((Number) row[2]).intValue()));
-        }
-        return out;
     }
 
     private Tender require(Long id) {

@@ -239,6 +239,7 @@ public class UngmTenderFetchServiceImpl implements TenderFetchService {
                 .publishedAt(parsePublished(published))
                 .closingAt(parseDeadline(deadlineRaw))
                 .contentHash(contentHash)
+                .rawPayload(row.outerHtml())
                 .firstSeenAt(now)
                 .lastSeenAt(now)
                 .build();

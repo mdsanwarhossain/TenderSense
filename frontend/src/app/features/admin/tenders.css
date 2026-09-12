@@ -1,0 +1,99 @@
+.cols {
+  grid-template-columns:
+    minmax(260px, 1.8fr) minmax(150px, 0.9fr) minmax(150px, 1fr) minmax(110px, 0.7fr)
+    108px 132px 132px 92px;
+}
+.table { min-width: 1260px; }
+.trow.compact { min-height: 56px; }
+/* A closed tender is history, not an opportunity: it recedes. */
+.trow.closed { background: var(--surface-2); }
+.trow.closed .t { color: var(--ink-3); }
+
+.body .t {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+.body .e { font-size: 11px; }
+.small { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.pill.mini { height: 20px; padding: 0 8px; font-size: 10.5px; align-self: flex-start; }
+.actions { justify-self: end; }
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.source .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+
+/* Marks a title the local model shortened, as the tender list does. */
+.ai-mark {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  vertical-align: 2px;
+}
+
+/* Filters in their own bar: a card would clip the open dropdown lists. */
+.toolbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 1 420px;
+  margin-left: auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--ink-4);
+  transition: border-color var(--t-fast) ease, background var(--t-fast) ease, box-shadow var(--t-fast) ease;
+}
+.search-box:focus-within {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+.search-box input::placeholder { color: var(--ink-4); }
+
+.card-head .showing { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.card-head .showing b { color: var(--ink); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .search-box { flex: 1 1 100%; margin-left: 0; }
+}

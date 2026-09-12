@@ -12,6 +12,9 @@ public class UngmProperties {
 
     private String searchPath = "/Public/Notice/Search";
 
+    /** Public page for one notice; {@code {id}} is the listing's {@code data-noticeid}. */
+    private String noticeUrl = "https://www.ungm.org/Public/Notice/{id}";
+
     /**
      * UNGM's own numeric id for the beneficiary-country filter -- not an ISO code.
      * 2309 is Bangladesh, read off the country <select> on the public notice page;

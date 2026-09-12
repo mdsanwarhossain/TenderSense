@@ -12,7 +12,6 @@
 .detail-head {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 26px;
   flex-wrap: wrap;
   padding: 22px;
@@ -40,15 +39,26 @@
 }
 .detail-meta .sep { color: var(--line); }
 
-.detail-figures { display: flex; align-items: center; gap: 26px; }
-.figure { display: flex; flex-direction: column; gap: 2px; }
+.detail-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px;
+  margin-left: auto;
+  align-self: stretch;
+}
+.detail-figures { display: flex; align-items: flex-start; gap: 28px; }
+.figure { display: flex; flex-direction: column; gap: 4px; }
 .figure .num {
-  font-size: 27px;
-  font-weight: 600;
-  letter-spacing: -1px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
 }
 .figure .num.warn { color: var(--warn); }
-.pill.rec { height: 32px; padding: 0 16px; font-size: 12.5px; }
+/* A badge, not a bar: keep it to its own width inside the figure column. */
+.pill.rec { align-self: flex-start; height: 32px; padding: 0 18px; font-size: 13px; cursor: help; }
 
 /* ---- particulars ---- */
 .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -63,13 +73,6 @@
 .fact:last-child:nth-child(odd) { border-right: 0; }
 .fact .val { font-size: 13px; font-weight: 600; }
 .fact .val.warn { color: var(--warn); }
-.fact .val.break {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 400;
-  color: var(--ink-2);
-  word-break: break-all;
-}
 
 .prose {
   margin: 0;
@@ -80,48 +83,36 @@
   color: var(--ink-2);
 }
 
-/* ---- evidence ----
-   The pair is the point of the screen: a bid manager should be able to read our
-   sentence against theirs and judge the match wrong. */
-.ev {
+/* ---- matched criteria ---- */
+.criteria {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 16px 22px;
   border-top: 1px solid var(--line-soft);
 }
-.ev-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.ev-score { font-size: 13px; font-weight: 600; color: var(--ink-3); }
-.ev-score.strong { font-size: 15px; color: var(--accent-ink); }
-
-.track {
-  display: block;
-  width: 100%;
-  height: 8px;
-  border-radius: 99px;
-  background: var(--accent-wash);
-  overflow: hidden;
-}
-.track .fill { display: block; height: 100%; border-radius: 99px; background: var(--accent); opacity: 0.55; }
-.track .fill.strong { opacity: 1; }
-
-.weak { font-size: 11.5px; font-weight: 600; color: var(--warn); }
-
-.pair { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 12px; align-items: start; }
-.side {
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mchip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  height: 21px;
+  gap: 6px;
+  max-width: 100%;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
   border-radius: var(--r-pill);
-  background: var(--surface-3);
-  color: var(--ink-4);
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
 }
-.side.ours { background: var(--accent-wash); color: var(--accent-ink); }
-.pair .text { font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+.mchip svg { flex: none; }
+.mchip { transition: border-color var(--t-fast) ease, background var(--t-fast) ease, transform var(--t-fast) var(--ease-out); }
+.mchip:hover { border-color: var(--ink-4); transform: translateY(-1px); }
+.mchip.top:hover, .mchip.sector:hover, .mchip.warn:hover { border-color: transparent; }
+.mchip.top { background: var(--accent-wash); border-color: transparent; color: var(--accent-ink); }
+.mchip.sector { background: var(--ok-wash); border-color: transparent; color: var(--ok); }
+.mchip.warn { background: var(--warn-wash); border-color: transparent; color: var(--warn); }
 
 /* ---- eligibility gaps: severity on the edge, so it reads before the words ---- */
 .gap {
@@ -131,7 +122,11 @@
   padding: 15px 22px;
   border-top: 1px solid var(--line-soft);
   border-left: 3px solid transparent;
+  animation: fade-in var(--t-slow) var(--ease-out) both;
 }
+.gap:nth-child(3) { animation-delay: 30ms; }
+.gap:nth-child(4) { animation-delay: 60ms; }
+.gap:nth-child(n + 5) { animation-delay: 90ms; }
 .gap .icon { flex: none; margin-top: 1px; }
 .gap.blocking {
   border-left-color: var(--bad);
@@ -150,19 +145,97 @@
 .gap-msg.bad { color: var(--bad); }
 .gap-msg.warn { color: var(--warn); }
 
-/* ---- decision ---- */
-.decide { display: flex; flex-direction: column; gap: 12px; padding: 20px 22px; }
-.decide .buttons { display: flex; gap: 10px; }
-.saved {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ok);
-}
-
 @media (max-width: 640px) {
   .facts { grid-template-columns: minmax(0, 1fr); }
   .fact:nth-child(odd) { border-right: 0; }
+  .detail-side { align-items: flex-start; margin-left: 0; }
+  .detail-figures { flex-wrap: wrap; gap: 20px; }
+}
+
+/* ---- read by the local model ---- */
+.ai-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.full-title {
+  margin: 10px 0 0;
+  max-width: 80ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+.full-title .ai-tag { height: 19px; margin-right: 6px; font-size: 10.5px; }
+.deliverables {
+  margin: 0;
+  padding: 0 22px 20px 42px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+.ai-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line-soft);
+}
+.ai-reqs ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+
+/* The model's comparison of this tender with the company's own work. */
+.comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* The same gutter and top rule as every other block in this card, so the
+     comparison lines up with Sector and the matched services below it. */
+  padding: 16px 22px;
+  border-top: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+.comparison .lede {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.comparison .points {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comparison .points li {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  /* A tender title can be one long unbroken string; it wraps rather than
+     running under the card's edge, which clips it. */
+  overflow-wrap: anywhere;
+}
+
+.comparison .points li::marker { color: var(--ok); }
+.comparison .points.gaps li::marker { color: var(--warn); }
+
+/* Holds the section's height while the model writes, so the card does not jump. */
+.comparison .writing {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--ink-3);
+  animation: fade-in var(--t) var(--ease-out) both;
 }

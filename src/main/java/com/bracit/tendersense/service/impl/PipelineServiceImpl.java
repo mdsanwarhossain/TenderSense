@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -46,6 +47,9 @@ public class PipelineServiceImpl implements PipelineService {
     private final TenderMapper mapper;
     private final OrganisationRepository organisationRepository;
     private final PipelineLock pipelineLock;
+    private final TenderStagingService stagingService;
+    private final TenderProcessingService processingService;
+    private final com.bracit.tendersense.config.LlmProperties llm;
 
     @Override
     public List<PipelineRunResponse> runAll(boolean full) {
@@ -54,11 +58,7 @@ public class PipelineServiceImpl implements PipelineService {
                 .runExclusively(job, () -> {
                     List<PipelineRunResponse> runs =
                             fetchServices.stream().map(s -> execute(s, full)).toList();
-                    // Grades are comparative, so new scores shift the thresholds for
-                    // everyone. Recalibrate once after the batch, not per source.
-                    if (runs.stream().anyMatch(r -> (r.tendersScored() != null && r.tendersScored() > 0))) {
-                        activeOrganisations().forEach(scoringService::recalibrateGrades);
-                    }
+                    // scorePersisted() already recalibrated grades for what it scored.
                     return runs;
                 })
                 .orElseGet(() -> List.of(recordSkipped(job)));
@@ -75,11 +75,7 @@ public class PipelineServiceImpl implements PipelineService {
         String job = (full ? "reconcile:" : "discovery:") + portal;
         return pipelineLock
                 .runExclusively(job, () -> {
-                    PipelineRunResponse run = execute(source.get(), full);
-                    if (run.tendersScored() != null && run.tendersScored() > 0) {
-                        activeOrganisations().forEach(scoringService::recalibrateGrades);
-                    }
-                    return run;
+                    return execute(source.get(), full);
                 })
                 .orElseGet(() -> recordSkipped(job));
     }
@@ -102,11 +98,18 @@ public class PipelineServiceImpl implements PipelineService {
                 .orElseGet(() -> recordSkipped("rescore:ALL"));
     }
 
+    /**
+     * The digest is "your best matches", so it states its own ordering: the shortlist
+     * query leaves that to the caller, and a page with no sort is database order.
+     */
+    private static final Sort BY_SCORE = Sort.by(Sort.Order.desc("score"));
+
     @Override
     public DigestResponse digest(Organisation organisation) {
         Page<MatchResult> ranked = matchResultRepository.findRanked(
                 MatcherType.EMBEDDING, organisation.getId(), null, null, null, false,
-                LocalDateTime.now(), PageRequest.of(0, DIGEST_SIZE));
+                false, false, false, TenderMapper.urgentFrom(), TenderMapper.urgentUntil(),
+                LocalDateTime.now(), PageRequest.of(0, DIGEST_SIZE, BY_SCORE));
 
         List<Long> ids = ranked.getContent().stream().map(m -> m.getTender().getId()).toList();
         Map<Long, Tender> tenders = new HashMap<>();
@@ -156,14 +159,17 @@ public class PipelineServiceImpl implements PipelineService {
                     ? source.fetchAll()
                     : source.discover(ingestionService.knownExternalIds(source.portal()));
 
-            // Only new and revised tenders are scored: unchanged ones already have
-            // results, and re-embedding them would spend the whole run's budget.
-            List<Tender> ingested = ingestionService.ingest(fetched);
+            // Everything fetched lands in the staging table first. Only new and revised
+            // tenders are queued: unchanged ones are just marked as still seen.
+            stagingService.stage(fetched);
 
-            // Collection and classification happen once; scoring happens per company.
+            // With the model on, the processing worker takes it from here, a few tenders
+            // at a time. With it off, go straight through by rules -- the behaviour
+            // before the staging table existed.
             int scored = 0;
-            for (Organisation org : activeOrganisations()) {
-                scored += scoringService.scoreAll(org, ingested);
+            if (!llm.isEnabled()) {
+                processingService.drainWithoutModel();
+                scored = processingService.scorePersisted();
             }
 
             run.setStatus(RunStatus.SUCCESS);

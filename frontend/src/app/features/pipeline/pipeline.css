@@ -6,11 +6,13 @@
 }
 
 .stat-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat-value.small { font-size: 19px; letter-spacing: -0.4px; }
 
 .cols-run { grid-template-columns: minmax(180px, 1fr) 130px 100px 84px 84px 150px; }
 .table { min-width: 820px; }
+.trow { min-height: 54px; }
 .trow.failed { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad-wash) 35%, transparent); }
-.job { font-size: 12.5px; font-weight: 600; }
+.job { font-size: 12.5px; font-weight: 700; }
 
 /* ---- schedule ---- */
 .sched {
@@ -20,12 +22,19 @@
   gap: 14px;
   padding: 14px 22px;
   border-top: 1px solid var(--line-soft);
+  animation: fade-in var(--t-slow) var(--ease-out) both;
 }
-.sched-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sched:nth-child(3) { animation-delay: 30ms; }
+.sched:nth-child(4) { animation-delay: 60ms; }
+.sched:nth-child(n + 5) { animation-delay: 90ms; }
+.sched-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.when { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--ink-3); }
+.head-link { font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.cron { font-size: 11px; color: var(--ink-2); background: var(--surface-3); border-radius: var(--r-sm); padding: 0 6px; }
 
 /* ---- run status ----
    Dot plus word: the status survives a greyscale screenshot in a status report. */
-.status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
 .status .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .status.success { color: var(--ok); }
 .status.success .dot { background: var(--ok); }
@@ -43,4 +52,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

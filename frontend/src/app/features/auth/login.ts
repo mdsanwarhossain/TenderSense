@@ -71,10 +71,11 @@ export class Login {
     this.busy.set(true);
     this.error.set(null);
     try {
-      await this.auth.login(this.email, this.password);
-      // Resume whatever they were trying to reach before the guard intervened.
+      const user = await this.auth.login(this.email, this.password);
+      // Resume whatever they were trying to reach before the guard intervened; otherwise
+      // the account's own home -- the company dashboard, or the admin panel.
       const next = this.route.snapshot.queryParamMap.get('next');
-      await this.router.navigateByUrl(next && next.startsWith('/') ? next : '/shortlist');
+      await this.router.navigateByUrl(next && next.startsWith('/') ? next : this.auth.home(user));
     } catch (e: unknown) {
       this.error.set(message(e, 'Email or password is incorrect'));
     } finally {

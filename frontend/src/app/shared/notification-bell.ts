@@ -27,7 +27,7 @@ import { GradeBadge } from './grade-badge';
       </button>
 
       @if (open()) {
-        <div class="panel" role="menu">
+        <div class="panel" role="menu" animate.enter="opening" animate.leave="closing">
           <div class="ph">
             <span class="pt">Notifications</span>
             @if (notifications.unreadCount() > 0) {
@@ -76,7 +76,9 @@ import { GradeBadge } from './grade-badge';
       background: var(--surface); color: var(--ink-2);
       cursor: pointer;
     }
+    .trigger { transition: border-color var(--t-fast) ease, color var(--t-fast) ease, background var(--t-fast) ease; }
     .trigger:hover, .trigger.open { border-color: var(--accent); color: var(--ink); }
+    .trigger:active { transform: scale(0.94); }
     .trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .badge {
@@ -94,7 +96,10 @@ import { GradeBadge } from './grade-badge';
       background: var(--surface); border: 1px solid var(--line);
       border-radius: var(--r); box-shadow: var(--shadow-pop);
       overflow: hidden;
+      transform-origin: top right;
     }
+    .panel.opening { animation: pop-in var(--t-fast) var(--ease-out) both; }
+    .panel.closing { animation: pop-out var(--t-fast) var(--ease-in) both; }
     .ph {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       padding: 12px 14px; border-bottom: 1px solid var(--line-soft);
@@ -123,6 +128,7 @@ import { GradeBadge } from './grade-badge';
       color: inherit; cursor: pointer;
     }
     .item:last-child { border-bottom: 0; }
+    .item { transition: background var(--t-fast) ease; }
     .item:hover, .item:focus-visible { background: var(--surface-3); text-decoration: none; }
     .item.unread { background: var(--accent-soft); }
     .item.unread:hover { background: var(--accent-wash); }
