@@ -1,0 +1,102 @@
+<div class="page-intro">
+  <div>
+    <h1>{{ rows().length }} accounts, {{ admins() }} admin{{ admins() === 1 ? '' : 's' }}</h1>
+    <p class="lede">
+      Company accounts see their own tenders. Admins run the platform: companies, accounts and the
+      collection pipeline. A company account made admin keeps its company screens too.
+    </p>
+  </div>
+</div>
+
+@if (error(); as message) {
+  <div class="banner error" role="alert">{{ message }}</div>
+}
+@if (notice(); as message) {
+  <div class="banner ok-banner" role="status">{{ message }}</div>
+}
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Add an admin</h2>
+      <span class="sub">A TenderSense staff account, with no company of its own.</span>
+    </div>
+  </div>
+  <form class="add-form" (submit)="$event.preventDefault(); create()">
+    <input class="input" type="email" placeholder="Email" aria-label="Email" autocomplete="off"
+           [value]="newEmail()" (input)="newEmail.set($any($event.target).value)" />
+    <input class="input" type="password" placeholder="Password, 8 characters or more" aria-label="Password"
+           autocomplete="new-password" [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" />
+    <button class="btn btn-primary btn-sm" type="submit" [disabled]="creating() || !newEmail() || !newPassword()">
+      @if (creating()) { <span class="spinner light"></span> } Add admin
+    </button>
+  </form>
+</section>
+
+<section class="card">
+  @if (loading()) {
+    <div class="state"><span class="spinner"></span> Loading accounts…</div>
+  } @else {
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols">
+          <span>Account</span><span>Company</span><span>Role</span><span>Access</span>
+          <span>Last sign-in</span><span></span>
+        </div>
+        @for (u of rows(); track u.id) {
+          <div class="trow cols" [class.off]="!u.enabled">
+            <span class="body">
+              <span class="t">{{ u.email }}@if (u.you) { <span class="tag you">you</span> }</span>
+            </span>
+            <span class="body">
+              @if (u.organisationName) {
+                <span class="e">{{ u.organisationName }}</span>
+                @if (!u.organisationActive) { <span class="pill warn mini">company off</span> }
+              } @else {
+                <span class="e muted">TenderSense staff</span>
+              }
+            </span>
+            <span>
+              @if (u.you || !u.organisationId) {
+                <!-- Your own role is locked; a staff account can only be an admin. -->
+                <span class="pill" [class.accent]="u.role === 'ADMIN'" [class.neutral]="u.role !== 'ADMIN'">
+                  {{ u.role === 'ADMIN' ? 'Admin' : 'Company user' }}
+                </span>
+              } @else {
+                <span class="seg" role="group" [attr.aria-label]="'Role of ' + u.email">
+                  <button type="button" [class.on]="u.role === 'USER'" [attr.aria-pressed]="u.role === 'USER'"
+                          [disabled]="busy() === u.id" (click)="setRole(u, 'USER')">Company user</button>
+                  <button type="button" [class.on]="u.role === 'ADMIN'" [attr.aria-pressed]="u.role === 'ADMIN'"
+                          [disabled]="busy() === u.id" (click)="setRole(u, 'ADMIN')">Admin</button>
+                </span>
+              }
+            </span>
+            <span class="switch-row">
+              <button type="button" role="switch" class="switch" [class.on]="u.enabled" [attr.aria-checked]="u.enabled"
+                      [attr.aria-label]="(u.enabled ? 'Switch off ' : 'Switch on ') + u.email"
+                      [disabled]="u.you || busy() === u.id" (click)="toggle(u)"><span class="knob"></span></button>
+              {{ u.enabled ? 'On' : 'Off' }}
+            </span>
+            <span class="small muted">{{ u.lastLoginAt ? timeAgo(u.lastLoginAt) : 'never' }}</span>
+            <span class="actions">
+              <button type="button" class="btn btn-sm" (click)="startReset(u)">
+                {{ resetFor() === u.id ? 'Cancel' : 'Reset password' }}
+              </button>
+            </span>
+          </div>
+          @if (resetFor() === u.id) {
+            <form class="reset" (submit)="$event.preventDefault(); saveReset(u)">
+              <span class="hint">New password for <b>{{ u.email }}</b></span>
+              <input class="input" type="password" placeholder="8 characters or more" aria-label="New password"
+                     autocomplete="new-password" [value]="resetPassword()"
+                     (input)="resetPassword.set($any($event.target).value)" />
+              <button class="btn btn-primary btn-sm" type="submit" [disabled]="busy() === u.id || !resetPassword()">
+                Set password
+              </button>
+            </form>
+          }
+        }
+      </div>
+    </div>
+  }
+</section>

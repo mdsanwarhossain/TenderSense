@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DecimalPipe, PercentPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { BenchmarkResult } from '../../core/models/tender.models';
@@ -14,7 +14,7 @@ import { BenchmarkResult } from '../../core/models/tender.models';
 @Component({
   selector: 'ts-benchmark',
   standalone: true,
-  imports: [DecimalPipe, PercentPipe, RouterLink],
+  imports: [DecimalPipe, RouterLink],
   templateUrl: './benchmark.html',
   styleUrl: './benchmark.css',
 })
@@ -28,6 +28,12 @@ export class Benchmark {
   readonly relevantCount = computed(
     () => this.result()?.comparisons.filter((c) => c.labelledRelevant).length ?? 0,
   );
+
+  /** Stated on the page next to the verdict, so "ahead" always carries by how much. */
+  readonly delta = computed(() => {
+    const r = this.result();
+    return r ? Math.abs(r.semantic.precisionAtK - r.keyword.precisionAtK) : 0;
+  });
 
   /** Neither matcher clearly ahead is a real outcome, and it is stated as one. */
   readonly verdict = computed(() => {

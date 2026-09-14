@@ -1,0 +1,83 @@
+{
+  "_NOTE": "Ordered rules — FIRST MATCH WINS, so order is load-bearing. Patterns are matched case-insensitively as substrings against the tender's CPV category string (and, as a fallback, its title). Derived from the 277 distinct top-level CPV values observed across the 3,237-tender snapshot; keyword rules rather than exact values so the long tail and any new portal category still resolve.",
+
+  "rules": [
+    { "sector": "CONSULTANCY", "why": "CPV 71/79 professional services — must precede CONSTRUCTION because the label itself contains 'construction'",
+      "patterns": ["architectural, engineering, construction, legal", "business services", "management consultancy", "accounting and auditing", "legal services", "research and development services", "market research"] },
+
+    { "sector": "IT_SERVICES", "why": "CPV 72 — services, checked before IT_HARDWARE so 'computer and related services' does not land on hardware",
+      "patterns": ["computer and related services", "software programming", "software package", "information technolog", "systems and technical consultancy", "data services", "database services", "internet services", "it services"] },
+
+    { "sector": "IT_HARDWARE",
+      "patterns": ["computing machinery", "computer equipment", "computer supplies", "office and computing", "data processing machinery", "printers", "photocopying"] },
+
+    { "sector": "TELECOM",
+      "patterns": ["telecommunication", "radio, television, communication", "network equipment", "telephone"] },
+
+    { "sector": "STAFFING", "why": "Manpower and facility labour — the category BracIT excludes; kept as its own sector so the exclusion is visible rather than buried in OTHER",
+      "patterns": ["supply services of personnel", "personnel and temporary", "security services", "guard services", "cleaning services", "manpower", "outsourcing", "labour supply", "recruitment services"] },
+
+    { "sector": "MEDICAL",
+      "patterns": ["medical and laboratory devices", "medical equipment", "pharmaceutical", "laboratory", "surgical", "dental", "optical and precision"] },
+
+    { "sector": "HEALTH_SERVICES",
+      "patterns": ["health and social work", "health services", "hospital services", "medical services"] },
+
+    { "sector": "EDUCATION",
+      "patterns": ["education and training", "school", "educational equipment", "training services"] },
+
+    { "sector": "MAINTENANCE", "why": "Repair and maintenance across asset classes — precedes CONSTRUCTION and VEHICLES because those words appear inside these labels",
+      "patterns": ["repair, maintenance and installation", "repair and maintenance services", "repair, maintenance and associated services", "maintenance services"] },
+
+    { "sector": "CONSTRUCTION",
+      "patterns": ["construction work", "site preparation", "building demolition", "civil engineering work", "works for complete or part construction", "building installation work", "building completion work", "roofing", "plumbing"] },
+
+    { "sector": "ENGINEERING",
+      "patterns": ["engineering works and construction works", "engineering services", "engineering design", "surveying"] },
+
+    { "sector": "ELECTRICAL",
+      "patterns": ["electrical machinery", "electricity, heating, solar", "electrical equipment", "lighting equipment", "electric motors", "transformers"] },
+
+    { "sector": "MACHINERY",
+      "patterns": ["machinery, equipment, appliances", "machinery for the production", "industrial machinery", "engines and engine parts", "pumps and compressors", "agricultural machinery"] },
+
+    { "sector": "VEHICLES",
+      "patterns": ["motor vehicles", "vehicle parts", "parts and accessories for vehicles", "transport equipment", "marine and aircraft", "aircraft"] },
+
+    { "sector": "LOGISTICS",
+      "patterns": ["transport services", "land transport", "postal and courier", "freight", "storage and warehousing", "supporting and auxiliary transport"] },
+
+    { "sector": "FOOD",
+      "patterns": ["food products and beverages", "food, beverages, tobacco", "catering services", "beverages"] },
+
+    { "sector": "AGRICULTURE",
+      "patterns": ["agricultural, horticultural", "agricultural products", "farming", "forestry", "seeds", "fertiliser", "fertilizer", "live animals", "fish"] },
+
+    { "sector": "CHEMICALS",
+      "patterns": ["chemicals, chemical products", "chemicals", "rubber, plastic and film", "petroleum products", "fuels", "gases"] },
+
+    { "sector": "TEXTILES",
+      "patterns": ["textiles and textile articles", "clothing and accessories", "leather", "footwear"] },
+
+    { "sector": "FURNITURE",
+      "patterns": ["furniture", "manufactured goods, furniture", "fabricated products and materials", "wood, wood products", "basic metals", "construction materials"] },
+
+    { "sector": "PRINTING",
+      "patterns": ["printed matter", "articles for printing", "pulp, paper and paper products", "publishing", "advertising"] },
+
+    { "sector": "UTILITIES",
+      "patterns": ["collected and purified water", "public utilities", "sewage", "refuse", "sanitation", "electricity distribution", "water supply"] }
+  ],
+
+  "_METHOD_HINTS": "Procurement method disambiguates where CPV is silent: QCBS, SBCQ, LCS, SFB and IC are consultancy selections; OTM, RFQ, LTM, TSTM and DC are goods and works.",
+
+  "methodConsultancy": ["QCBS", "SBCQ", "LCS", "SFB", "IC", "Quality and Cost Based", "Selection Based on Consultant", "Least Cost Selection", "Individual Consultant"],
+
+  "_WORLD_BANK": "World Bank notices carry no CPV. procurement_group maps directly.",
+  "worldBankGroup": {
+    "CS": "CONSULTANCY",
+    "GO": "OTHER",
+    "CW": "CONSTRUCTION",
+    "NC": "STAFFING"
+  }
+}

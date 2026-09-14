@@ -1,0 +1,52 @@
+.cols { grid-template-columns: minmax(230px, 1.3fr) minmax(170px, 1fr) 220px 100px 110px 150px; }
+.table { min-width: 1040px; }
+.trow { min-height: 60px; }
+.trow.off { background: var(--surface-2); }
+.trow.off .t { color: var(--ink-3); }
+.actions { justify-self: end; }
+.pill.mini { height: 20px; padding: 0 8px; font-size: 10.5px; align-self: flex-start; }
+
+.add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 22px 20px;
+}
+.add-form .input { flex: 1 1 240px; }
+
+/* Company user | Admin, as one two-way control. */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.seg button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.seg button { transition: background var(--t-fast) ease, color var(--t-fast) ease, box-shadow var(--t-fast) ease; }
+.seg button:hover:not(:disabled):not(.on) { color: var(--ink); }
+.seg button.on { background: var(--surface); color: var(--accent-ink); box-shadow: var(--btn-edge); cursor: default; }
+.seg button:disabled { cursor: wait; }
+
+.reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px 16px 25px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--line-soft);
+  animation: rise-in var(--t) var(--ease-out) both;
+}
+.reset .input { flex: 0 1 280px; }
+.reset b { color: var(--ink); }

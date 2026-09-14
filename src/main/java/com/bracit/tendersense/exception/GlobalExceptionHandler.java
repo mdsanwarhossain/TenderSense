@@ -15,6 +15,11 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
+    @ExceptionHandler(UnauthenticatedException.class)
+    ProblemDetail unauthenticated(UnauthenticatedException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
+
     @ExceptionHandler(FetchException.class)
     ProblemDetail fetchFailed(FetchException e) {
         log.warn("fetch failed: {}", e.getMessage());

@@ -2,6 +2,7 @@ package com.bracit.tendersense.service.impl;
 
 import com.bracit.tendersense.dto.BenchmarkResponse;
 import com.bracit.tendersense.entity.MatchResult;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.MatcherType;
 import com.bracit.tendersense.entity.enums.SourcePortal;
@@ -47,7 +48,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     @Override
     @Transactional(readOnly = true)
-    public BenchmarkResponse benchmark() {
+    public BenchmarkResponse benchmark(Organisation organisation) {
         List<Label> labels = loadLabels();
         List<Label> heldOut = labels.stream().filter(l -> "HELDOUT".equals(l.split())).toList();
         if (heldOut.isEmpty()) {
@@ -69,8 +70,8 @@ public class EvaluationServiceImpl implements EvaluationService {
         }
 
         List<Long> ids = new ArrayList<>(byTenderId.keySet());
-        Map<Long, Integer> semanticRank = rank(MatcherType.EMBEDDING, ids);
-        Map<Long, Integer> keywordRank = rank(MatcherType.KEYWORD, ids);
+        Map<Long, Integer> semanticRank = rank(organisation, MatcherType.EMBEDDING, ids);
+        Map<Long, Integer> keywordRank = rank(organisation, MatcherType.KEYWORD, ids);
 
         long relevantTotal = byTenderId.values().stream().filter(Label::relevant).count();
         int effectiveK = (int) Math.min(k, Math.min(ids.size(), Math.max(1, relevantTotal * 2)));
@@ -101,10 +102,12 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     /** 1-based rank of each tender under one matcher, best score first. */
-    private Map<Long, Integer> rank(MatcherType type, List<Long> ids) {
+    private Map<Long, Integer> rank(Organisation organisation, MatcherType type, List<Long> ids) {
         List<MatchResult> results = new ArrayList<>();
         for (Long id : ids) {
-            matchResultRepository.findByTenderIdAndMatcherType(id, type).ifPresent(results::add);
+            matchResultRepository
+                    .findByTenderIdAndOrganisationIdAndMatcherType(id, organisation.getId(), type)
+                    .ifPresent(results::add);
         }
         results.sort(Comparator.comparingDouble(MatchResult::getScore).reversed());
 

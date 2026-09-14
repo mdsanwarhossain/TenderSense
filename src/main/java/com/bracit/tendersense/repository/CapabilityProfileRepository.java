@@ -7,5 +7,7 @@ import java.util.Optional;
 
 public interface CapabilityProfileRepository extends JpaRepository<CapabilityProfile, Long> {
 
-    Optional<CapabilityProfile> findFirstByOrderByIdAsc();
+    Optional<CapabilityProfile> findByOrganisationId(Long organisationId);
+
+    Optional<CapabilityProfile> findByOrganisationSlug(String slug);
 }

@@ -1,6 +1,8 @@
 package com.bracit.tendersense.controller;
 
+import com.bracit.tendersense.config.CurrentOrganisation;
 import com.bracit.tendersense.dto.BenchmarkResponse;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.service.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +19,7 @@ public class BenchmarkController {
     private final EvaluationService evaluationService;
 
     @GetMapping
-    public BenchmarkResponse benchmark() {
-        return evaluationService.benchmark();
+    public BenchmarkResponse benchmark(@CurrentOrganisation Organisation organisation) {
+        return evaluationService.benchmark(organisation);
     }
 }

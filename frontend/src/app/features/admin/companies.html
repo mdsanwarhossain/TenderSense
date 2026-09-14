@@ -1,0 +1,116 @@
+<div class="page-intro">
+  <div>
+    <h1>{{ activeCount() }} of {{ rows().length }} companies active</h1>
+    <p class="lede">
+      Switch a company off to stop its account signing in. Its tenders, scores and profile are kept,
+      and switching it back on restores everything.
+    </p>
+  </div>
+  <input class="input search" type="search" placeholder="Find a company or email" aria-label="Find a company"
+         [value]="query()" (input)="query.set($any($event.target).value)" />
+</div>
+
+@if (error(); as message) {
+  <div class="banner error" role="alert">{{ message }}</div>
+}
+
+<section class="card">
+  @if (loading()) {
+    <div class="state"><span class="spinner"></span> Loading companies…</div>
+  } @else if (visible().length === 0) {
+    <div class="state">{{ query() ? 'No company matches “' + query() + '”.' : 'No companies yet.' }}</div>
+  } @else {
+    <div class="table-scroll">
+      <div class="table">
+        <div class="thead cols">
+          <span>Company</span><span>Account</span><span>Sectors</span>
+          <span>Open S / A</span><span>Last sign-in</span><span>Status</span>
+        </div>
+        @for (c of visible(); track c.id) {
+          <div class="trow cols" [class.off]="!c.active" [class.open]="expanded() === c.id">
+            <button type="button" class="name" (click)="expand(c)" [attr.aria-expanded]="expanded() === c.id"
+                    title="Show this company's profile">
+              <span class="caret" aria-hidden="true">{{ expanded() === c.id ? '▾' : '▸' }}</span>
+              <span class="body">
+                <span class="t">{{ c.name }}@if (c.demonstration) { <span class="tag demo">demo</span> }</span>
+                <span class="e mono">{{ c.slug }}</span>
+              </span>
+            </button>
+            <span class="e">{{ c.accountEmail ?? 'no account' }}</span>
+            <span class="sectors">
+              @for (s of c.sectors.slice(0, 2); track s) { <span class="pill neutral">{{ s }}</span> }
+              @if (c.sectors.length > 2) { <span class="hint">+{{ c.sectors.length - 2 }}</span> }
+            </span>
+            <span class="grades">
+              <span class="gcount" [style.background]="tint.S.bg" [style.color]="tint.S.fg">S {{ c.sOpen | number }}</span>
+              <span class="gcount" [style.background]="tint.A.bg" [style.color]="tint.A.fg">A {{ c.aOpen | number }}</span>
+            </span>
+            <span class="small muted">{{ c.lastLoginAt ? timeAgo(c.lastLoginAt) : 'never' }}</span>
+            <span class="switch-row">
+              <button type="button" role="switch" class="switch" [class.on]="c.active" [attr.aria-checked]="c.active"
+                      [attr.aria-label]="(c.active ? 'Switch off ' : 'Switch on ') + c.name"
+                      [disabled]="busy() === c.id" (click)="toggle(c)"><span class="knob"></span></button>
+              {{ c.active ? 'On' : 'Off' }}
+            </span>
+          </div>
+
+          @if (expanded() === c.id) {
+            <!-- Makes room for itself as it opens, and gives the room back as it shuts. -->
+            <div class="detail-wrap" animate.enter="opening" animate.leave="closing">
+            <div class="detail">
+              @if (detail(); as d) {
+                <div class="detail-grid">
+                  <div class="block wide">
+                    <span class="label">About</span>
+                    <p>{{ d.profile?.summary || d.company.description || 'No summary written yet.' }}</p>
+                  </div>
+                  <div class="block">
+                    <span class="label">Services · {{ d.profile?.services?.length ?? 0 }}</span>
+                    <!-- The first few; a full profile lists two dozen and would push the table off screen. -->
+                    <div class="chips">
+                      @for (s of (d.profile?.services ?? []).slice(0, 6); track $index) { <span class="pill neutral">{{ s }}</span> }
+                      @empty { <span class="hint">none listed</span> }
+                      @if ((d.profile?.services?.length ?? 0) > 6) {
+                        <span class="hint">+{{ d.profile!.services.length - 6 }} more</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="block">
+                    <span class="label">Sectors</span>
+                    <div class="chips">
+                      @for (s of d.company.sectors; track s) { <span class="pill accent">{{ s }}</span> }
+                      @empty { <span class="hint">every sector</span> }
+                    </div>
+                  </div>
+                  <div class="block">
+                    <span class="label">Track record</span>
+                    <p>
+                      {{ d.profile?.pastProjects?.length ?? 0 }} past projects ·
+                      {{ d.profile?.certifications?.length ?? 0 }} certifications
+                      @if (d.profile?.annualTurnoverBdt) { · turnover BDT {{ d.profile!.annualTurnoverBdt | number }} }
+                    </p>
+                  </div>
+                  <div class="block">
+                    <span class="label">Scoring</span>
+                    <p>
+                      {{ d.scoring.scoredCount | number }} of {{ d.scoring.scorable | number }} tenders in its sectors scored
+                      @if (d.scoring.lastScoredAt) { · last {{ d.scoring.lastScoredAt | date: 'd MMM, HH:mm' }} }
+                      @if (d.scoring.stale) { <span class="pill warn">profile changed since</span> }
+                    </p>
+                  </div>
+                  <div class="block">
+                    <span class="label">Joined</span>
+                    <p>{{ d.company.createdAt ? (d.company.createdAt | date: 'd MMM yyyy') : '—' }}</p>
+                  </div>
+                </div>
+              } @else {
+                <div class="state"><span class="spinner"></span> Loading profile…</div>
+              }
+            </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</section>

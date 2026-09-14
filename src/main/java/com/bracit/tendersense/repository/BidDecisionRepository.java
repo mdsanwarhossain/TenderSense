@@ -9,8 +9,9 @@ import java.util.Optional;
 
 public interface BidDecisionRepository extends JpaRepository<BidDecision, Long> {
 
-    Optional<BidDecision> findFirstByTenderIdOrderByDecidedAtDesc(Long tenderId);
+    Optional<BidDecision> findFirstByTenderIdAndOrganisationIdOrderByDecidedAtDesc(
+            Long tenderId, Long organisationId);
 
     /** Negative examples for the feedback loop. */
-    List<BidDecision> findByAction(BidAction action);
+    List<BidDecision> findByOrganisationIdAndAction(Long organisationId, BidAction action);
 }

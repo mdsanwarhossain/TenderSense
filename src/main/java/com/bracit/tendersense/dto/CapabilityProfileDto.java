@@ -9,6 +9,8 @@ public record CapabilityProfileDto(
         String summary,
         BigDecimal annualTurnoverBdt,
         List<String> services,
+        List<String> exclusions,
+        List<String> sectors,
         List<String> geographies,
         List<ProjectDto> pastProjects,
         List<CertificationDto> certifications) {

@@ -1,0 +1,95 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Six separate cards, each a link into the filtered tender list. */
+.cards {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.cards .stat {
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+}
+.cards .stat:hover { border-color: var(--accent); transform: translateY(-1px); text-decoration: none; color: inherit; }
+.cards .stat-icon { width: 40px; height: 40px; }
+.cards .stat-value { font-size: 23px; }
+.stat-value.ok { color: var(--ok); }
+@media (max-width: 1440px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .cards .stat { transition: none; } .cards .stat:hover { transform: none; } }
+
+.banner a { font-weight: 700; margin-left: 4px; }
+
+/* ---- list rows inside the cards ---- */
+.item {
+  display: grid;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--line-soft);
+  border-left: 3px solid transparent;
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--t-fast) ease, border-color var(--t-fast) ease;
+  animation: fade-in var(--t-slow) var(--ease-out) both;
+}
+.item:nth-child(3) { animation-delay: 30ms; }
+.item:nth-child(4) { animation-delay: 60ms; }
+.item:nth-child(5) { animation-delay: 90ms; }
+.item:nth-child(n + 6) { animation-delay: 120ms; }
+.item:hover { background: var(--surface-3); color: inherit; text-decoration: none; }
+.item.match { grid-template-columns: 40px 64px minmax(0, 1fr) auto; }
+.item.soon { grid-template-columns: minmax(0, 1fr) auto; }
+.item.alert { grid-template-columns: 10px minmax(0, 1fr) auto; }
+.item.urgent { border-left-color: var(--warn); }
+.item > ts-grade-badge { justify-self: start; }
+
+.body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.t {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+.e { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.meta .pill { height: 22px; padding: 0 9px; font-size: 11px; }
+.side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+.unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.unread-dot.read { background: transparent; border: 1px solid var(--line); }
+
+.empty {
+  margin: 0;
+  padding: 26px 22px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+.card-foot {
+  margin-top: auto;
+  padding: 13px 22px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.card-note { margin: auto 0 0; }

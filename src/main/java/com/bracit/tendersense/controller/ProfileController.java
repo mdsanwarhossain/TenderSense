@@ -1,42 +1,44 @@
 package com.bracit.tendersense.controller;
 
+import com.bracit.tendersense.config.CurrentOrganisation;
 import com.bracit.tendersense.dto.CapabilityProfileDto;
+import com.bracit.tendersense.dto.ProfileStaleness;
+import com.bracit.tendersense.dto.ProfileUpdateRequest;
 import com.bracit.tendersense.entity.CapabilityProfile;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.repository.CapabilityProfileRepository;
+import com.bracit.tendersense.service.CapabilityProfileService;
+import com.bracit.tendersense.service.ProfileStatusService;
+import com.bracit.tendersense.util.ProfileMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Objects;
-
-/** BracIT's capability profile: what every tender is matched against. */
+/** The signed-in company's capability profile: what every tender is matched against. */
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
 public class ProfileController {
 
     private final CapabilityProfileRepository profileRepository;
+    private final CapabilityProfileService profileService;
+    private final ProfileStatusService profileStatusService;
 
     @GetMapping
-    public CapabilityProfileDto profile() {
-        return profileRepository.findFirstByOrderByIdAsc().map(this::toDto).orElse(null);
+    public CapabilityProfileDto profile(@CurrentOrganisation Organisation organisation) {
+        return profileRepository.findByOrganisationId(organisation.getId())
+                .map(p -> ProfileMapper.toDto(p, organisation)).orElse(null);
     }
 
-    private CapabilityProfileDto toDto(CapabilityProfile p) {
-        return new CapabilityProfileDto(
-                p.getId(), p.getOrgName(), p.getSummary(), p.getAnnualTurnoverBdt(),
-                p.getServices(), p.getGeographies(),
-                p.getPastProjects().stream()
-                        .map(x -> new CapabilityProfileDto.ProjectDto(
-                                x.getId(), x.getTitle(), x.getClient(), x.getDescription(),
-                                x.getSector(), x.getValueBdt(), x.getYear()))
-                        .toList(),
-                p.getCertifications().stream()
-                        .map(c -> new CapabilityProfileDto.CertificationDto(
-                                c.getId(), c.getCode(), c.getName(),
-                                Objects.toString(c.getValidUntil(), null)))
-                        .toList());
+    @PutMapping
+    public CapabilityProfileDto update(@CurrentOrganisation Organisation organisation,
+                                       @RequestBody ProfileUpdateRequest request) {
+        CapabilityProfile saved = profileService.update(organisation, request);
+        return ProfileMapper.toDto(saved, organisation);
+    }
+
+    /** Whether the stored scores still reflect the stored profile; drives the re-score banner. */
+    @GetMapping("/staleness")
+    public ProfileStaleness staleness(@CurrentOrganisation Organisation organisation) {
+        return profileStatusService.staleness(organisation);
     }
 }

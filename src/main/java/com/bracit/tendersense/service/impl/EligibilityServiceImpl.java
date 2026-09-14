@@ -4,6 +4,7 @@ import com.bracit.tendersense.dto.RuleOutcome;
 import com.bracit.tendersense.entity.CapabilityProfile;
 import com.bracit.tendersense.entity.EligibilityGap;
 import com.bracit.tendersense.entity.EligibilityVerdict;
+import com.bracit.tendersense.entity.Organisation;
 import com.bracit.tendersense.entity.Tender;
 import com.bracit.tendersense.entity.enums.EligibilityStatus;
 import com.bracit.tendersense.repository.EligibilityVerdictRepository;
@@ -45,19 +46,19 @@ public class EligibilityServiceImpl implements EligibilityService {
 
     @Override
     @Transactional
-    public EligibilityVerdict evaluate(Tender tender) {
-        return persist(tender, profileService.current());
+    public EligibilityVerdict evaluate(Organisation organisation, Tender tender) {
+        return persist(organisation, tender, profileService.forOrganisation(organisation));
     }
 
     @Override
     @Transactional
-    public List<EligibilityVerdict> evaluateAll(List<Tender> tenders) {
-        CapabilityProfile profile = profileService.current();
+    public List<EligibilityVerdict> evaluateAll(Organisation organisation, List<Tender> tenders) {
+        CapabilityProfile profile = profileService.forOrganisation(organisation);
         List<EligibilityVerdict> out = new ArrayList<>(tenders.size());
         int eligible = 0, ineligible = 0, verify = 0;
 
         for (Tender tender : tenders) {
-            EligibilityVerdict verdict = persist(tender, profile);
+            EligibilityVerdict verdict = persist(organisation, tender, profile);
             out.add(verdict);
             switch (verdict.getStatus()) {
                 case ELIGIBLE -> eligible++;
@@ -66,12 +67,13 @@ public class EligibilityServiceImpl implements EligibilityService {
             }
         }
 
-        log.info("eligibility: {} eligible, {} ineligible, {} need verification",
-                eligible, ineligible, verify);
+        log.info("eligibility for {}: {} eligible, {} ineligible, {} need verification",
+                organisation.getSlug(), eligible, ineligible, verify);
         return out;
     }
 
-    private EligibilityVerdict persist(Tender tender, CapabilityProfile profile) {
+    private EligibilityVerdict persist(Organisation organisation, Tender tender,
+                                       CapabilityProfile profile) {
         List<RuleOutcome> outcomes = rules.stream()
                 .map(rule -> safeEvaluate(rule, tender, profile))
                 .toList();
@@ -83,8 +85,10 @@ public class EligibilityServiceImpl implements EligibilityService {
                 : anyUnknown ? EligibilityStatus.NEEDS_VERIFICATION
                 : EligibilityStatus.ELIGIBLE;
 
-        EligibilityVerdict verdict = verdictRepository.findByTenderId(tender.getId())
-                .orElseGet(() -> EligibilityVerdict.builder().tender(tender).build());
+        EligibilityVerdict verdict = verdictRepository
+                .findByTenderIdAndOrganisationId(tender.getId(), organisation.getId())
+                .orElseGet(() -> EligibilityVerdict.builder()
+                        .tender(tender).organisation(organisation).build());
 
         verdict.setStatus(status);
         verdict.setCheckedAt(Instant.now());
